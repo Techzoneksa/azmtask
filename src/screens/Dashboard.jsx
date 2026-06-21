@@ -1,20 +1,17 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { useAuth, useData } from '../context/AuthContext';
-import { calculateReadiness, calculateOverallProgress } from '../data/store';
+import { useAuth } from '../context/AuthContext';
+import { useData } from '../context/DataContext';
 import { 
   CheckCircle, 
   AlertCircle, 
   Clock, 
   TrendingUp, 
   Rocket,
-  ArrowLeft,
-  Star,
   Calendar,
   AlertTriangle,
   Zap,
   Target,
-  FileText,
   ChevronLeft
 } from 'lucide-react';
 
@@ -22,19 +19,54 @@ export default function Dashboard() {
   const { user } = useAuth();
   const { data, refreshData } = useData();
   const [readiness, setReadiness] = useState(null);
-  const [overallProgress, setOverallProgress] = useState(0);
 
   useEffect(() => {
-    setReadiness(calculateReadiness());
-    setOverallProgress(calculateOverallProgress());
+    if (data.tasks.length > 0) {
+      calculateReadiness();
+    }
   }, [data]);
+
+  const calculateReadiness = () => {
+    const completedTasks = data.tasks.filter(t => t.status === 'completed').length;
+    const totalTasks = data.tasks.length;
+    const delayedTasks = data.tasks.filter(t => t.status === 'blocked' || t.status === 'delayed').length;
+    const openObstacles = data.blockers?.filter(o => o.status === 'open').length || 0;
+    
+    const completedStages = data.stages.filter(stage => {
+      const stageTasks = data.tasks.filter(t => t.stage_id === stage.id);
+      return stageTasks.length > 0 && stageTasks.every(t => t.status === 'completed');
+    }).length;
+    
+    const stageProgress = (completedStages / (data.stages.length || 1)) * 100;
+    const taskProgress = (completedTasks / (totalTasks || 1)) * 100;
+    
+    let score = (stageProgress * 0.4) + (taskProgress * 0.4) + (20 - (delayedTasks * 2) - (openObstacles * 3));
+    score = Math.max(0, Math.min(100, score));
+    
+    let status;
+    if (score < 30) status = 'غير جاهز';
+    else if (score < 60) status = 'يحتاج استكمال';
+    else if (score < 85) status = 'قريب من الجاهزية';
+    else status = 'جاهز للانطلاق';
+    
+    setReadiness({ 
+      score: Math.round(score), 
+      status, 
+      completedTasks, 
+      totalTasks, 
+      delayedTasks, 
+      openObstacles, 
+      completedStages, 
+      totalStages: data.stages.length 
+    });
+  };
 
   const getTasksForToday = () => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     
     return data.tasks.filter(task => {
-      const due = new Date(task.dueDate);
+      const due = new Date(task.due_date);
       due.setHours(0, 0, 0, 0);
       return due.getTime() <= today.getTime() && task.status !== 'completed';
     });
@@ -45,7 +77,7 @@ export default function Dashboard() {
     today.setHours(0, 0, 0, 0);
     
     return data.tasks.filter(task => {
-      const due = new Date(task.dueDate);
+      const due = new Date(task.due_date);
       due.setHours(0, 0, 0, 0);
       return due.getTime() < today.getTime() && task.status !== 'completed';
     });
@@ -55,32 +87,28 @@ export default function Dashboard() {
     return data.tasks.filter(task => task.status === 'pending-review');
   };
 
-  const getRecentCompletedTasks = () => {
-    return data.tasks
-      .filter(task => task.status === 'completed')
-      .sort((a, b) => new Date(b.updatedAt || b.createdAt) - new Date(a.updatedAt || a.createdAt))
-      .slice(0, 5);
-  };
-
   const getTopPriorities = () => {
     return data.tasks
       .filter(task => task.status !== 'completed' && task.priority === 'high')
-      .sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate))
+      .sort((a, b) => new Date(a.due_date) - new Date(b.due_date))
       .slice(0, 3);
   };
 
   const getOpenObstacles = () => {
-    return data.obstacles.filter(o => o.status === 'open');
+    return data.blockers?.filter(o => o.status === 'open') || [];
   };
 
-  const getLatestNotes = () => {
-    return (data.notes || [])
-      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
-      .slice(0, 3);
+  const getRecentCompletedTasks = () => {
+    return data.tasks
+      .filter(task => task.status === 'completed')
+      .sort((a, b) => new Date(b.updated_at || b.created_at) - new Date(a.updated_at || a.created_at))
+      .slice(0, 5);
   };
 
-  const getUserById = (id) => {
-    return data.users.find(u => u.id === id);
+  const getOverallProgress = () => {
+    if (data.tasks.length === 0) return 0;
+    const totalProgress = data.tasks.reduce((sum, t) => sum + (t.progress || 0), 0);
+    return Math.round(totalProgress / data.tasks.length);
   };
 
   const readinessColor = () => {
@@ -99,13 +127,23 @@ export default function Dashboard() {
     return 'text-green-600';
   };
 
+  if (data.isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-pulse">
+          <div className="w-12 h-12 bg-azm-green rounded-xl"></div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6 animate-fade-in">
       {/* Welcome Section */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-800">مرحباً، {user?.name}</h1>
-          <p className="text-gray-500">{user?.position}</p>
+          <h1 className="text-2xl font-bold text-gray-800">مرحباً، {user?.name || 'المستخدم'}</h1>
+          <p className="text-gray-500">{user?.position || 'مستخدم'}</p>
         </div>
         <Link 
           to="/today" 
@@ -145,7 +183,7 @@ export default function Dashboard() {
           'bg-red-100 text-red-700'
         }`}>
           {readiness?.status === 'جاهز للانطلاق' && <CheckCircle className="w-4 h-4" />}
-          {readiness?.status}
+          {readiness?.status || 'جاري التحميل...'}
         </div>
         
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
@@ -187,7 +225,7 @@ export default function Dashboard() {
               <div className="flex-1 min-w-0">
                 <p className="font-medium text-gray-800 truncate">{task.title}</p>
                 <p className="text-xs text-gray-500">
-                  المرحلة: {data.stages?.find(s => s.id === task.stageId)?.name}
+                  المرحلة: {data.stages.find(s => s.id === task.stage_id)?.name}
                 </p>
               </div>
               <ChevronLeft className="w-5 h-5 text-gray-400" />
@@ -225,7 +263,10 @@ export default function Dashboard() {
                   task.status === 'in-progress' ? 'badge-orange' :
                   task.status === 'blocked' ? 'badge-red' : 'badge-gray'
                 } text-xs`}>
-                  {data.statuses?.find(s => s.id === task.status)?.name || task.status}
+                  {task.status === 'in-progress' ? 'قيد التنفيذ' : 
+                   task.status === 'blocked' ? 'متعثر' : 
+                   task.status === 'pending-review' ? 'بان等待 المراجعة' :
+                   task.status === 'completed' ? 'مكتمل' : 'جديد'}
                 </span>
               </Link>
             ))}
@@ -257,7 +298,7 @@ export default function Dashboard() {
                 <div className="flex-1 min-w-0">
                   <p className="font-medium text-gray-800 text-sm truncate">{task.title}</p>
                   <p className="text-xs text-red-500">
-                    متأخر منذ {Math.ceil((new Date() - new Date(task.dueDate)) / (1000 * 60 * 60 * 24))} يوم
+                    متأخر منذ {Math.ceil((new Date() - new Date(task.due_date)) / (1000 * 60 * 60 * 24))} يوم
                   </p>
                 </div>
               </Link>
@@ -276,7 +317,7 @@ export default function Dashboard() {
         {/* Pending Review */}
         <div className="card">
           <h3 className="section-title flex items-center gap-2">
-            <Star className="w-5 h-5 text-purple-500" />
+            <CheckCircle className="w-5 h-5 text-purple-500" />
             بانتظار اعتمادك
           </h3>
           <div className="space-y-2">
@@ -287,11 +328,11 @@ export default function Dashboard() {
                 className="flex items-center gap-3 p-3 bg-purple-50 rounded-xl hover:bg-purple-100 transition-colors"
               >
                 <div className="w-8 h-8 rounded-full bg-purple-500 text-white flex items-center justify-center text-sm">
-                  {getUserById(task.assignedTo)?.name?.charAt(0) || '?'}
+                  ?
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="font-medium text-gray-800 text-sm truncate">{task.title}</p>
-                  <p className="text-xs text-gray-500">{getUserById(task.assignedTo)?.name}</p>
+                  <p className="text-xs text-gray-500">جاري تحميل المسؤول...</p>
                 </div>
                 <span className="badge badge-green text-xs">{task.progress}%</span>
               </Link>
@@ -356,7 +397,7 @@ export default function Dashboard() {
               <CheckCircle className="w-5 h-5 text-green-500" />
               <div className="flex-1 min-w-0">
                 <p className="font-medium text-gray-800 text-sm truncate">{task.title}</p>
-                <p className="text-xs text-gray-500">{getUserById(task.assignedTo)?.name}</p>
+                <p className="text-xs text-gray-500">مكتمل</p>
               </div>
             </Link>
           ))}
@@ -375,10 +416,10 @@ export default function Dashboard() {
         <div className="flex items-center gap-4">
           <div className="flex-1">
             <div className="progress-bar h-4">
-              <div className="progress-fill" style={{ width: `${overallProgress}%` }} />
+              <div className="progress-fill" style={{ width: `${getOverallProgress()}%` }} />
             </div>
           </div>
-          <span className="text-2xl font-bold text-azm-green">{overallProgress}%</span>
+          <span className="text-2xl font-bold text-azm-green">{getOverallProgress()}%</span>
         </div>
         <div className="grid grid-cols-3 gap-4 mt-4">
           <div className="text-center">

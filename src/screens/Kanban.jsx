@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { useAuth, useData } from '../context/AuthContext';
+import { useAuth } from '../context/AuthContext';
+import { useData } from '../context/DataContext';
 import { 
   LayoutGrid, 
   ChevronLeft,
@@ -13,9 +14,8 @@ import {
   GripVertical
 } from 'lucide-react';
 
-function TaskCard({ task, users, stages, onDragStart, isDragging = false }) {
-  const user = users.find(u => u.id === task.assignedTo);
-  const stage = stages.find(s => s.id === task.stageId);
+function TaskCard({ task, stages, onDragStart, isDragging = false }) {
+  const stage = stages.find(s => s.id === task.stage_id);
   
   const statusColors = {
     'new': 'bg-blue-50 border-blue-200',
@@ -50,9 +50,6 @@ function TaskCard({ task, users, stages, onDragStart, isDragging = false }) {
         >
           {stage?.name}
         </span>
-        <span className="text-xs text-gray-400">
-          {user?.name}
-        </span>
       </div>
       
       <div className="flex items-center gap-2 mt-3 mr-6">
@@ -69,7 +66,7 @@ function TaskCard({ task, users, stages, onDragStart, isDragging = false }) {
   );
 }
 
-function KanbanColumn({ status, tasks, users, stages, title, color, icon: Icon, onDrop, onDragStart, draggedTask }) {
+function KanbanColumn({ status, tasks, stages, title, color, icon: Icon, onDrop, onDragStart, draggedTask }) {
   return (
     <div 
       className="kanban-column"
@@ -91,7 +88,6 @@ function KanbanColumn({ status, tasks, users, stages, title, color, icon: Icon, 
           <Link key={task.id} to={`/task/${task.id}`}>
             <TaskCard 
               task={task} 
-              users={users} 
               stages={stages}
               onDragStart={onDragStart}
               isDragging={draggedTask?.id === task.id}
@@ -110,9 +106,8 @@ function KanbanColumn({ status, tasks, users, stages, title, color, icon: Icon, 
 
 export default function Kanban() {
   const { user } = useAuth();
-  const { data, updateData } = useData();
+  const { data, updateTask } = useData();
   const [draggedTask, setDraggedTask] = useState(null);
-  const [showAddModal, setShowAddModal] = useState(false);
 
   const statuses = [
     { id: 'new', name: 'جديد', color: '#3b82f6', icon: Clock },
@@ -128,53 +123,23 @@ export default function Kanban() {
     e.dataTransfer.effectAllowed = 'move';
   };
 
-  const handleDrop = (e, newStatus) => {
+  const handleDrop = async (e, newStatus) => {
     e.preventDefault();
     
     if (!draggedTask) return;
 
-    if (user.role !== 'director' && newStatus === 'completed') {
+    if (user?.role !== 'director' && newStatus === 'completed') {
       alert('لا يمكن نقل المهمة إلى مكتمل. يجب اعتمادها من المدير العام.');
       setDraggedTask(null);
       return;
     }
 
     if (draggedTask.status !== newStatus) {
-      const updatedTasks = data.tasks.map(t => {
-        if (t.id === draggedTask.id) {
-          return {
-            ...t,
-            status: newStatus,
-            updatedAt: new Date().toISOString(),
-            logs: [...t.logs, {
-              action: 'status_changed',
-              from: t.status,
-              to: newStatus,
-              userId: user.id,
-              timestamp: new Date().toISOString()
-            }]
-          };
-        }
-        return t;
-      });
-
-      updateData({ ...data, tasks: updatedTasks });
-
-      const newNotification = {
-        id: 'notif-' + Date.now(),
-        title: 'تم تغيير حالة المهمة',
-        message: `تم نقل "${draggedTask.title}" إلى ${statuses.find(s => s.id === newStatus)?.name}`,
-        userId: draggedTask.assignedTo,
-        taskId: draggedTask.id,
-        read: false,
-        createdAt: new Date().toISOString()
-      };
-
-      updateData({ 
-        ...data, 
-        tasks: updatedTasks,
-        notifications: [...(data.notifications || []), newNotification]
-      });
+      const result = await updateTask(draggedTask.id, { status: newStatus });
+      
+      if (!result.success) {
+        alert('حدث خطأ أثناء تحديث المهمة');
+      }
     }
     
     setDraggedTask(null);
@@ -201,16 +166,6 @@ export default function Kanban() {
             <p className="text-gray-500">اسحب وأفلت المهام لتغيير حالتها</p>
           </div>
         </div>
-        
-        {user.role === 'director' && (
-          <button 
-            onClick={() => setShowAddModal(true)}
-            className="btn-primary flex items-center gap-2 text-sm"
-          >
-            <Plus className="w-4 h-4" />
-            إضافة مهمة
-          </button>
-        )}
       </div>
 
       {/* Kanban Board */}
@@ -223,7 +178,6 @@ export default function Kanban() {
             key={status.id}
             status={status.id}
             tasks={getTasksByStatus(status.id)}
-            users={data.users}
             stages={data.stages}
             title={status.name}
             color={status.color}

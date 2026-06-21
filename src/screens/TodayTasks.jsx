@@ -1,20 +1,20 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { useAuth, useData } from '../context/AuthContext';
+import { useAuth } from '../context/AuthContext';
+import { useData } from '../context/DataContext';
 import { 
   Calendar, 
   Clock, 
   AlertTriangle, 
   CheckCircle,
   ChevronLeft,
-  Star,
   Zap,
   CalendarCheck
 } from 'lucide-react';
 
 export default function TodayTasks() {
   const { user } = useAuth();
-  const { data, refreshData } = useData();
+  const { data } = useData();
   const [activeTab, setActiveTab] = useState('all');
 
   const getTodaysTasks = () => {
@@ -22,7 +22,7 @@ export default function TodayTasks() {
     today.setHours(0, 0, 0, 0);
     
     return data.tasks.filter(task => {
-      const due = new Date(task.dueDate);
+      const due = new Date(task.due_date);
       due.setHours(0, 0, 0, 0);
       return due.getTime() <= today.getTime() && task.status !== 'completed';
     });
@@ -33,7 +33,7 @@ export default function TodayTasks() {
     today.setHours(0, 0, 0, 0);
     
     return data.tasks.filter(task => {
-      const due = new Date(task.dueDate);
+      const due = new Date(task.due_date);
       due.setHours(0, 0, 0, 0);
       return due.getTime() < today.getTime() && task.status !== 'completed';
     });
@@ -56,14 +56,10 @@ export default function TodayTasks() {
     dayAfter.setDate(dayAfter.getDate() + 1);
     
     return data.tasks.filter(task => {
-      const due = new Date(task.dueDate);
+      const due = new Date(task.due_date);
       due.setHours(0, 0, 0, 0);
       return due.getTime() >= tomorrow.getTime() && due.getTime() < dayAfter.getTime();
     });
-  };
-
-  const getUserById = (id) => {
-    return data.users.find(u => u.id === id);
   };
 
   const getStageById = (id) => {
@@ -113,6 +109,18 @@ export default function TodayTasks() {
     return `بعد ${days} يوم`;
   };
 
+  const getStatusLabel = (status) => {
+    const labels = {
+      'new': 'جديد',
+      'in-progress': 'قيد التنفيذ',
+      'pending-review': 'بان等待 المراجعة',
+      'completed': 'مكتمل',
+      'blocked': 'متعثر',
+      'delayed': 'مؤجل'
+    };
+    return labels[status] || status;
+  };
+
   return (
     <div className="space-y-6 animate-fade-in">
       {/* Header */}
@@ -155,7 +163,7 @@ export default function TodayTasks() {
               onClick={() => setActiveTab(tab.id)}
               className={`flex items-center gap-2 px-4 py-2 rounded-xl font-medium transition-all ${
                 activeTab === tab.id
-                  ? `${tab.color} text-white`
+                  ? `${tab.color} text-white` 
                   : 'bg-white text-gray-600 hover:bg-gray-50'
               }`}
             >
@@ -210,25 +218,16 @@ export default function TodayTasks() {
                 <p className="text-sm text-gray-500 mt-1 line-clamp-2">{task.description}</p>
                 
                 <div className="flex items-center gap-4 mt-3 flex-wrap">
-                  <span className="text-xs text-gray-400 flex items-center gap-1">
-                    <div className="w-5 h-5 rounded-full bg-azm-green text-white flex items-center justify-center text-xs">
-                      {getUserById(task.assignedTo)?.name?.charAt(0)}
-                    </div>
-                    {getUserById(task.assignedTo)?.name}
-                  </span>
-                  
-                  <span className={`text-xs px-2 py-1 rounded-full ${
-                    getStageById(task.stageId)?.color ? '' : 'bg-gray-100'
-                  }`}
-                  style={{ backgroundColor: getStageById(task.stageId)?.color + '20', color: getStageById(task.stageId)?.color }}
+                  <span className={`text-xs px-2 py-1 rounded-full`}
+                  style={{ backgroundColor: getStageById(task.stage_id)?.color + '20', color: getStageById(task.stage_id)?.color }}
                   >
-                    {getStageById(task.stageId)?.name}
+                    {getStageById(task.stage_id)?.name}
                   </span>
                   
                   <span className={`text-xs font-medium ${
-                    formatDate(task.dueDate).includes('متأخر') ? 'text-red-500' : 'text-gray-500'
+                    formatDate(task.due_date).includes('متأخر') ? 'text-red-500' : 'text-gray-500'
                   }`}>
-                    {formatDate(task.dueDate)}
+                    {formatDate(task.due_date)}
                   </span>
                 </div>
                 

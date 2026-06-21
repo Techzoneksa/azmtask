@@ -1,71 +1,36 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { useAuth, useData } from '../context/AuthContext';
+import { useAuth } from '../context/AuthContext';
+import { useData } from '../context/DataContext';
 import { 
   MessageSquare, 
-  ChevronLeft,
   Plus,
-  CheckCircle,
-  XCircle,
-  Eye,
-  Send
+  Send,
+  Check
 } from 'lucide-react';
 
 export default function Notes() {
   const { user } = useAuth();
-  const { data, updateData } = useData();
+  const { data, addNote } = useData();
   const [showAddModal, setShowAddModal] = useState(false);
   const [newNote, setNewNote] = useState({ title: '', content: '', taskId: '' });
 
   const notes = data.notes || [];
-  const sortedNotes = [...notes].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+  const sortedNotes = [...notes].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 
-  const handleAddNote = () => {
+  const handleAddNote = async () => {
     if (!newNote.content.trim()) return;
     
-    const note = {
-      id: 'note-' + Date.now(),
-      title: newNote.title || 'ملاحظة جديدة',
+    const result = await addNote({
+      title: newNote.title,
       content: newNote.content,
-      taskId: newNote.taskId || null,
-      createdBy: user.id,
-      createdByName: user.name,
-      createdAt: new Date().toISOString(),
-      read: false,
-      status: 'active'
-    };
-    
-    updateData({
-      ...data,
-      notes: [...notes, note]
+      taskId: newNote.taskId
     });
     
-    const notification = {
-      id: 'notif-' + Date.now(),
-      title: 'ملاحظة جديدة',
-      message: `${user.name}: ${newNote.content.substring(0, 50)}...`,
-      userId: user.role === 'director' ? '2' : '1',
-      read: false,
-      createdAt: new Date().toISOString()
-    };
-    updateData({
-      ...data,
-      notes: [...notes, note],
-      notifications: [...(data.notifications || []), notification]
-    });
-    
-    setNewNote({ title: '', content: '', taskId: '' });
-    setShowAddModal(false);
-  };
-
-  const handleMarkAsRead = (noteId) => {
-    const updatedNotes = notes.map(n => {
-      if (n.id === noteId) {
-        return { ...n, read: true };
-      }
-      return n;
-    });
-    updateData({ ...data, notes: updatedNotes });
+    if (result.success) {
+      setNewNote({ title: '', content: '', taskId: '' });
+      setShowAddModal(false);
+    }
   };
 
   const getTaskById = (taskId) => {
@@ -82,7 +47,7 @@ export default function Notes() {
     });
   };
 
-  const unreadCount = notes.filter(n => !n.read && n.createdBy !== user.id).length;
+  const unreadCount = notes.filter(n => !n.read && n.created_by !== user?.id).length;
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -153,20 +118,6 @@ export default function Notes() {
                 />
               </div>
               
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">ربط بمهمة (اختياري)</label>
-                <select
-                  value={newNote.taskId}
-                  onChange={(e) => setNewNote({ ...newNote, taskId: e.target.value })}
-                  className="input-field"
-                >
-                  <option value="">بدون ربط بمهمة</option>
-                  {data.tasks?.map(task => (
-                    <option key={task.id} value={task.id}>{task.title}</option>
-                  ))}
-                </select>
-              </div>
-              
               <button onClick={handleAddNote} className="btn-primary w-full">
                 إضافة الملاحظة
               </button>
@@ -178,8 +129,8 @@ export default function Notes() {
       {/* Notes List */}
       <div className="space-y-4">
         {sortedNotes.map(note => {
-          const relatedTask = note.taskId ? getTaskById(note.taskId) : null;
-          const isOwnNote = note.createdBy === user.id;
+          const relatedTask = note.task_id ? getTaskById(note.task_id) : null;
+          const isOwnNote = note.created_by === user?.id;
           
           return (
             <div key={note.id} className={`card ${note.read || isOwnNote ? '' : 'border-r-4 border-r-indigo-500'}`}>
@@ -187,28 +138,18 @@ export default function Notes() {
                 <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
                   isOwnNote ? 'bg-azm-green text-white' : 'bg-gray-200 text-gray-600'
                 }`}>
-                  {note.createdByName?.charAt(0)}
+                  {note.created_by_name?.charAt(0)}
                 </div>
                 
                 <div className="flex-1">
                   <div className="flex items-center justify-between mb-2">
                     <div>
                       <h3 className="font-semibold text-gray-800">{note.title}</h3>
-                      <span className="text-sm text-gray-500">{note.createdByName}</span>
+                      <span className="text-sm text-gray-500">{note.created_by_name}</span>
                     </div>
-                    <div className="flex items-center gap-2">
-                      {note.read && (
-                        <span className="badge badge-green text-xs">مقروء</span>
-                      )}
-                      {!note.read && !isOwnNote && (
-                        <button 
-                          onClick={() => handleMarkAsRead(note.id)}
-                          className="text-xs text-indigo-600 hover:underline"
-                        >
-                          تحديد كمقروء
-                        </button>
-                      )}
-                    </div>
+                    {note.read && (
+                      <span className="badge badge-green text-xs">مقروء</span>
+                    )}
                   </div>
                   
                   <p className="text-gray-600 mb-3">{note.content}</p>
@@ -223,7 +164,7 @@ export default function Notes() {
                     </Link>
                   )}
                   
-                  <p className="text-xs text-gray-400 mt-3">{formatDate(note.createdAt)}</p>
+                  <p className="text-xs text-gray-400 mt-3">{formatDate(note.created_at)}</p>
                 </div>
               </div>
             </div>

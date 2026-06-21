@@ -1,23 +1,23 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { useAuth, useData } from '../context/AuthContext';
+import { useData } from '../context/DataContext';
 import { 
   Map, 
-  ChevronLeft,
   CheckCircle,
   Clock,
   AlertTriangle,
-  Users,
   FileText,
   Building,
   Truck,
+  Users,
   Monitor,
   ClipboardList,
   FileSignature,
   Palette,
   PlayCircle,
   Rocket,
-  Stamp
+  Stamp,
+  ChevronLeft
 } from 'lucide-react';
 
 const iconMap = {
@@ -35,32 +35,29 @@ const iconMap = {
 };
 
 export default function Roadmap() {
-  const { user } = useAuth();
-  const { data, refreshData } = useData();
+  const { data } = useData();
   const [selectedStage, setSelectedStage] = useState(null);
-  const [viewMode, setViewMode] = useState('grid');
 
   const getStageStats = (stageId) => {
-    const stageTasks = data.tasks.filter(t => t.stageId === stageId);
+    const stageTasks = data.tasks.filter(t => t.stage_id === stageId);
     const completed = stageTasks.filter(t => t.status === 'completed').length;
     const delayed = stageTasks.filter(t => t.status === 'blocked' || t.status === 'delayed').length;
-    const inProgress = stageTasks.filter(t => t.status === 'in-progress').length;
     const progress = stageTasks.length > 0 
       ? Math.round(stageTasks.reduce((sum, t) => sum + t.progress, 0) / stageTasks.length)
       : 0;
     
-    return { total: stageTasks.length, completed, delayed, inProgress, progress };
+    return { total: stageTasks.length, completed, delayed, progress };
   };
 
   const getStageTasks = (stageId) => {
-    return data.tasks.filter(t => t.stageId === stageId);
-  };
-
-  const getUserById = (id) => {
-    return data.users.find(u => u.id === id);
+    return data.tasks.filter(t => t.stage_id === stageId);
   };
 
   const sortedStages = [...data.stages].sort((a, b) => a.order - b.order);
+
+  const overallProgress = data.tasks.length > 0 
+    ? Math.round(data.tasks.reduce((sum, t) => sum + (t.progress || 0), 0) / data.tasks.length)
+    : 0;
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -88,15 +85,10 @@ export default function Roadmap() {
         <div className="flex items-center gap-4">
           <div className="flex-1">
             <div className="progress-bar h-3">
-              <div 
-                className="progress-fill" 
-                style={{ width: `${Math.round(data.tasks.reduce((sum, t) => sum + t.progress, 0) / (data.tasks.length || 1))}%` }} 
-              />
+              <div className="progress-fill" style={{ width: `${overallProgress}%` }} />
             </div>
           </div>
-          <span className="text-xl font-bold text-azm-green">
-            {Math.round(data.tasks.reduce((sum, t) => sum + t.progress, 0) / (data.tasks.length || 1))}%
-          </span>
+          <span className="text-xl font-bold text-azm-green">{overallProgress}%</span>
         </div>
         <div className="grid grid-cols-3 gap-4 mt-4">
           <div className="text-center">
@@ -171,7 +163,6 @@ export default function Roadmap() {
                     <div className="flex-1">
                       <h4 className="font-medium text-gray-800">{task.title}</h4>
                       <div className="flex items-center gap-2 mt-2">
-                        <span className="text-xs text-gray-500">{getUserById(task.assignedTo)?.name}</span>
                         <span className="text-xs px-2 py-0.5 rounded-full bg-gray-200">{task.progress}%</span>
                       </div>
                     </div>

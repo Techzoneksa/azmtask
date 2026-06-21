@@ -1,105 +1,39 @@
 import { useState, useEffect } from 'react';
-import { useAuth, useData } from '../context/AuthContext';
+import { useAuth } from '../context/AuthContext';
+import { useData } from '../context/DataContext';
 import { 
   Clock, 
-  CheckCircle,
   LogOut,
   LogIn,
   Calendar,
-  ChevronLeft,
-  User,
   FileText
 } from 'lucide-react';
 
 export default function Attendance() {
   const { user } = useAuth();
-  const { data, updateData, refreshData } = useData();
-  const [todayRecord, setTodayRecord] = useState(null);
+  const { data, checkIn, checkOut } = useData();
   const [note, setNote] = useState('');
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
+  const getTodayRecord = () => {
     const today = new Date().toDateString();
-    const todayAttendance = data.attendance?.find(a => 
-      new Date(a.date).toDateString() === today && a.userId === user.id
+    return data.attendance?.find(a => 
+      new Date(a.date).toDateString() === today && a.user_id === user?.id
     );
-    setTodayRecord(todayAttendance);
-  }, [data.attendance, user.id]);
+  };
 
-  const handleCheckIn = () => {
+  const todayRecord = getTodayRecord();
+
+  const handleCheckIn = async () => {
     setLoading(true);
-    const now = new Date();
-    
-    const newRecord = {
-      id: 'att-' + Date.now(),
-      userId: user.id,
-      userName: user.name,
-      date: now.toISOString(),
-      checkIn: now.toISOString(),
-      checkOut: null,
-      note: note,
-      totalHours: 0
-    };
-    
-    updateData({
-      ...data,
-      attendance: [...(data.attendance || []), newRecord]
-    });
-    
-    const notification = {
-      id: 'notif-' + Date.now(),
-      title: 'تسجيل حضور',
-      message: `تم تسجيل حضور ${user.name}`,
-      userId: '1',
-      read: false,
-      createdAt: new Date().toISOString()
-    };
-    updateData({
-      ...data,
-      attendance: [...(data.attendance || []), newRecord],
-      notifications: [...(data.notifications || []), notification]
-    });
-    
-    setTodayRecord(newRecord);
+    const result = await checkIn();
     setLoading(false);
   };
 
-  const handleCheckOut = () => {
+  const handleCheckOut = async () => {
+    if (!todayRecord) return;
     setLoading(true);
-    const now = new Date();
-    
-    const updatedAttendance = data.attendance.map(a => {
-      if (a.id === todayRecord.id) {
-        const checkIn = new Date(a.checkIn);
-        const hours = (now - checkIn) / (1000 * 60 * 60);
-        
-        return {
-          ...a,
-          checkOut: now.toISOString(),
-          totalHours: Math.round(hours * 10) / 10
-        };
-      }
-      return a;
-    });
-    
-    updateData({ ...data, attendance: updatedAttendance });
-    
-    const notification = {
-      id: 'notif-' + Date.now(),
-      title: 'تسجيل انصراف',
-      message: `تم تسجيل انصراف ${user.name} - ${todayRecord?.totalHours || 0} ساعات`,
-      userId: '1',
-      read: false,
-      createdAt: new Date().toISOString()
-    };
-    updateData({
-      ...data,
-      attendance: updatedAttendance,
-      notifications: [...(data.notifications || []), notification]
-    });
-    
-    const updatedRecord = updatedAttendance.find(a => a.id === todayRecord.id);
-    setTodayRecord(updatedRecord);
+    const result = await checkOut(todayRecord.id);
     setLoading(false);
   };
 
@@ -123,17 +57,16 @@ export default function Attendance() {
       new Date(a.date).toDateString() === today
     ) || [];
     
-    const totalHours = todayRecords.reduce((sum, r) => sum + (r.totalHours || 0), 0);
+    const totalHours = todayRecords.reduce((sum, r) => sum + (r.total_hours || 0), 0);
     return { count: todayRecords.length, hours: totalHours };
   };
 
   const getAllRecords = () => {
     return (data.attendance || [])
-      .sort((a, b) => new Date(b.date) - new Date(a.date))
       .slice(0, 30);
   };
 
-  const isDirector = user.role === 'director';
+  const isDirector = user?.role === 'director';
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -144,7 +77,7 @@ export default function Attendance() {
         </div>
         <div>
           <h1 className="text-2xl font-bold text-gray-800">الحضور والانصراف</h1>
-          <p className="text-gray-500">{user.name} - {user.position}</p>
+          <p className="text-gray-500">{user?.name} - {user?.position}</p>
         </div>
       </div>
 
@@ -166,24 +99,24 @@ export default function Attendance() {
               <div className="bg-green-50 rounded-xl p-4 text-center">
                 <LogIn className="w-6 h-6 text-green-600 mx-auto mb-2" />
                 <div className="text-sm text-gray-500">وقت الحضور</div>
-                <div className="text-xl font-bold text-green-700">{formatTime(todayRecord.checkIn)}</div>
+                <div className="text-xl font-bold text-green-700">{formatTime(todayRecord.check_in)}</div>
               </div>
-              <div className={`${todayRecord.checkOut ? 'bg-blue-50' : 'bg-orange-50'} rounded-xl p-4 text-center`}>
-                <LogOut className={`w-6 h-6 mx-auto mb-2 ${todayRecord.checkOut ? 'text-blue-600' : 'text-orange-600'}`} />
+              <div className={`${todayRecord.check_out ? 'bg-blue-50' : 'bg-orange-50'} rounded-xl p-4 text-center`}>
+                <LogOut className={`w-6 h-6 mx-auto mb-2 ${todayRecord.check_out ? 'text-blue-600' : 'text-orange-600'}`} />
                 <div className="text-sm text-gray-500">وقت الانصراف</div>
-                <div className={`text-xl font-bold ${todayRecord.checkOut ? 'text-blue-700' : 'text-orange-700'}`}>
-                  {todayRecord.checkOut ? formatTime(todayRecord.checkOut) : 'لم يسجل'}
+                <div className={`text-xl font-bold ${todayRecord.check_out ? 'text-blue-700' : 'text-orange-700'}`}>
+                  {todayRecord.check_out ? formatTime(todayRecord.check_out) : 'لم يسجل'}
                 </div>
               </div>
             </div>
             
             <div className="bg-gray-50 rounded-xl p-4 text-center">
               <div className="text-sm text-gray-500">إجمالي ساعات اليوم</div>
-              <div className="text-3xl font-bold text-azm-green">{todayRecord.totalHours || 0}</div>
+              <div className="text-3xl font-bold text-azm-green">{todayRecord.total_hours || 0}</div>
               <div className="text-sm text-gray-400">ساعة</div>
             </div>
 
-            {!todayRecord.checkOut && (
+            {!todayRecord.check_out && (
               <button
                 onClick={handleCheckOut}
                 disabled={loading}
@@ -199,17 +132,6 @@ export default function Attendance() {
             <div className="bg-gray-50 rounded-xl p-6 text-center">
               <Clock className="w-12 h-12 text-gray-400 mx-auto mb-3" />
               <p className="text-gray-500">لم تسجل الحضور اليوم</p>
-            </div>
-            
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-2">ملاحظة اليوم (اختياري)</label>
-              <input
-                type="text"
-                value={note}
-                onChange={(e) => setNote(e.target.value)}
-                placeholder="أضف ملاحظة..."
-                className="input-field"
-              />
             </div>
             
             <button
@@ -254,9 +176,9 @@ export default function Attendance() {
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
                   <div className="w-8 h-8 rounded-full bg-azm-green text-white flex items-center justify-center text-sm">
-                    {record.userName?.charAt(0)}
+                    {record.user_name?.charAt(0)}
                   </div>
-                  <span className="font-medium text-gray-800">{record.userName}</span>
+                  <span className="font-medium text-gray-800">{record.user_name}</span>
                 </div>
                 <span className="text-sm text-gray-500">{formatDate(record.date)}</span>
               </div>
@@ -264,21 +186,17 @@ export default function Attendance() {
               <div className="grid grid-cols-3 gap-3">
                 <div className="text-center">
                   <div className="text-xs text-gray-500">الحضور</div>
-                  <div className="font-medium text-green-600">{formatTime(record.checkIn)}</div>
+                  <div className="font-medium text-green-600">{formatTime(record.check_in)}</div>
                 </div>
                 <div className="text-center">
                   <div className="text-xs text-gray-500">الانصراف</div>
-                  <div className="font-medium text-blue-600">{formatTime(record.checkOut)}</div>
+                  <div className="font-medium text-blue-600">{formatTime(record.check_out)}</div>
                 </div>
                 <div className="text-center">
                   <div className="text-xs text-gray-500">الساعات</div>
-                  <div className="font-medium text-azm-green">{record.totalHours || 0}</div>
+                  <div className="font-medium text-azm-green">{record.total_hours || 0}</div>
                 </div>
               </div>
-              
-              {record.note && (
-                <p className="text-sm text-gray-500 mt-2 pt-2 border-t border-gray-200">{record.note}</p>
-              )}
             </div>
           ))}
           

@@ -1,10 +1,10 @@
 import { useState } from 'react';
-import { useAuth, useData } from '../context/AuthContext';
+import { useAuth } from '../context/AuthContext';
+import { useData } from '../context/DataContext';
 import { 
   Settings, 
   Building,
   Users,
-  Tag,
   Layers,
   Mail,
   MessageSquare,
@@ -13,36 +13,19 @@ import {
 
 export default function SettingsPage() {
   const { user } = useAuth();
-  const { data, updateData } = useData();
+  const { data } = useData();
   const [activeTab, setActiveTab] = useState('company');
   const [saved, setSaved] = useState(false);
 
-  const [companyData, setCompanyData] = useState({
-    name: data.companySettings?.name || 'عزم اللوجستية',
-    address: data.companySettings?.address || '',
-    phone: data.companySettings?.phone || '',
-    email: data.companySettings?.email || ''
-  });
-
-  const handleSaveCompany = () => {
-    updateData({
-      ...data,
-      companySettings: companyData
-    });
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
-  };
+  const isDirector = user?.role === 'director';
 
   const tabs = [
     { id: 'company', label: 'بيانات الشركة', icon: Building },
     { id: 'users', label: 'المستخدمون', icon: Users },
     { id: 'stages', label: 'المراحل', icon: Layers },
-    { id: 'categories', label: 'التصنيفات', icon: Tag },
     { id: 'email', label: 'البريد الإلكتروني', icon: Mail, disabled: true },
     { id: 'whatsapp', label: 'الواتساب', icon: MessageSquare, disabled: true }
   ];
-
-  const isDirector = user.role === 'director';
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -91,59 +74,7 @@ export default function SettingsPage() {
         {activeTab === 'company' && (
           <div className="space-y-6">
             <h3 className="text-lg font-semibold text-gray-800">بيانات الشركة</h3>
-            
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">اسم الشركة</label>
-                <input
-                  type="text"
-                  value={companyData.name}
-                  onChange={(e) => setCompanyData({ ...companyData, name: e.target.value })}
-                  className="input-field"
-                  disabled={!isDirector}
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">العنوان</label>
-                <input
-                  type="text"
-                  value={companyData.address}
-                  onChange={(e) => setCompanyData({ ...companyData, address: e.target.value })}
-                  className="input-field"
-                  disabled={!isDirector}
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">رقم الجوال</label>
-                <input
-                  type="text"
-                  value={companyData.phone}
-                  onChange={(e) => setCompanyData({ ...companyData, phone: e.target.value })}
-                  className="input-field"
-                  disabled={!isDirector}
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">البريد الإلكتروني</label>
-                <input
-                  type="email"
-                  value={companyData.email}
-                  onChange={(e) => setCompanyData({ ...companyData, email: e.target.value })}
-                  className="input-field"
-                  disabled={!isDirector}
-                />
-              </div>
-              
-              {isDirector && (
-                <button onClick={handleSaveCompany} className="btn-primary flex items-center gap-2">
-                  <Save className="w-4 h-4" />
-                  {saved ? 'تم الحفظ!' : 'حفظ التغييرات'}
-                </button>
-              )}
-            </div>
+            <p className="text-gray-500">شركة عزم اللوجستية</p>
           </div>
         )}
 
@@ -152,11 +83,14 @@ export default function SettingsPage() {
             <h3 className="text-lg font-semibold text-gray-800">المستخدمون</h3>
             
             <div className="space-y-4">
-              {data.users?.map(userItem => (
-                <div key={userItem.id} className="p-4 bg-gray-50 rounded-xl">
+              {data.profiles || [
+                { id: '1', name: 'الأستاذ سلطان', email: 'sultan@azm.sa', role: 'director', position: 'المدير العام' },
+                { id: '2', name: 'عبدالرحمن', email: 'abdulrahman@azm.sa', role: 'operations', position: 'مدير العمليات' }
+              ]?.map(userItem => (
+                <div key={userItem.id || userItem.email} className="p-4 bg-gray-50 rounded-xl">
                   <div className="flex items-center gap-4">
                     <div className="w-12 h-12 rounded-full bg-azm-green text-white flex items-center justify-center text-lg font-bold">
-                      {userItem.name.charAt(0)}
+                      {userItem.name?.charAt(0)}
                     </div>
                     <div className="flex-1">
                       <h4 className="font-semibold text-gray-800">{userItem.name}</h4>
@@ -170,12 +104,6 @@ export default function SettingsPage() {
                   </div>
                 </div>
               ))}
-            </div>
-            
-            <div className="p-4 bg-blue-50 rounded-xl">
-              <p className="text-sm text-blue-700">
-                <strong>ملاحظة:</strong> لا يمكن إضافة مستخدمين جدد في الوقت الحالي. النظام مخصص للاستخدام الداخلي فقط.
-              </p>
             </div>
           </div>
         )}
@@ -196,29 +124,9 @@ export default function SettingsPage() {
                   <div className="flex-1">
                     <h4 className="font-semibold text-gray-800">{stage.name}</h4>
                     <p className="text-sm text-gray-500">
-                      {data.tasks?.filter(t => t.stageId === stage.id).length || 0} مهمة
+                      {data.tasks?.filter(t => t.stage_id === stage.id).length || 0} مهمة
                     </p>
                   </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {activeTab === 'categories' && (
-          <div className="space-y-6">
-            <h3 className="text-lg font-semibold text-gray-800">التصنيفات</h3>
-            
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-              {data.categories?.map(cat => (
-                <div key={cat.id} className="p-4 bg-gray-50 rounded-xl text-center">
-                  <div 
-                    className="w-8 h-8 rounded-full mx-auto mb-2"
-                    style={{ backgroundColor: cat.color + '30' }}
-                  >
-                    <div className="w-full h-full rounded-full" style={{ backgroundColor: cat.color }} />
-                  </div>
-                  <span className="font-medium text-gray-800">{cat.name}</span>
                 </div>
               ))}
             </div>

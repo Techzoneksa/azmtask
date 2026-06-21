@@ -1,46 +1,26 @@
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { useAuth, useData } from '../context/AuthContext';
+import { useAuth } from '../context/AuthContext';
+import { useData } from '../context/DataContext';
 import { 
   Bell, 
-  ChevronLeft,
   Check,
   BellRing,
   Calendar,
   CheckCircle,
   AlertTriangle,
-  Clock,
   MessageSquare
 } from 'lucide-react';
 
 export default function Notifications() {
   const { user } = useAuth();
-  const { data, updateData } = useData();
+  const { data, markNotificationRead } = useData();
 
   const notifications = (data.notifications || [])
-    .filter(n => n.userId === user.id)
-    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 
   const unreadCount = notifications.filter(n => !n.read).length;
 
-  const handleMarkAllAsRead = () => {
-    const updatedNotifications = notifications.map(n => ({ ...n, read: true }));
-    const allNotifications = data.notifications?.map(n => {
-      const updated = updatedNotifications.find(un => un.id === n.id);
-      return updated || n;
-    }) || updatedNotifications;
-    
-    updateData({ ...data, notifications: allNotifications });
-  };
-
-  const handleMarkAsRead = (id) => {
-    const updatedNotifications = data.notifications?.map(n => {
-      if (n.id === id) {
-        return { ...n, read: true };
-      }
-      return n;
-    }) || [];
-    updateData({ ...data, notifications: updatedNotifications });
+  const handleMarkAsRead = async (id) => {
+    await markNotificationRead(id);
   };
 
   const getNotificationIcon = (notification) => {
@@ -88,16 +68,6 @@ export default function Notifications() {
             </p>
           </div>
         </div>
-        
-        {unreadCount > 0 && (
-          <button 
-            onClick={handleMarkAllAsRead}
-            className="btn-secondary text-sm flex items-center gap-2"
-          >
-            <Check className="w-4 h-4" />
-            تحديد الكل كمقروء
-          </button>
-        )}
       </div>
 
       {/* Notifications List */}
@@ -125,7 +95,7 @@ export default function Notifications() {
                   </div>
                   <p className="text-sm text-gray-600 mb-2">{notification.message}</p>
                   <div className="flex items-center justify-between">
-                    <span className="text-xs text-gray-400">{formatDate(notification.createdAt)}</span>
+                    <span className="text-xs text-gray-400">{formatDate(notification.created_at)}</span>
                     {!isRead && (
                       <button 
                         onClick={() => handleMarkAsRead(notification.id)}
@@ -148,37 +118,6 @@ export default function Notifications() {
             <p className="text-gray-500">ستظهر التنبيهات عند أحداث معينة</p>
           </div>
         )}
-      </div>
-
-      {/* Notification Types Info */}
-      <div className="card bg-gray-50">
-        <h3 className="font-medium text-gray-700 mb-4">أنواع التنبيهات</h3>
-        <div className="grid grid-cols-2 gap-3 text-sm">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center">
-              <Calendar className="w-4 h-4 text-blue-600" />
-            </div>
-            <span className="text-gray-600">الحضور والانصراف</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-green-100 flex items-center justify-center">
-              <CheckCircle className="w-4 h-4 text-green-600" />
-            </div>
-            <span className="text-gray-600">اعتماد المهام</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-red-100 flex items-center justify-center">
-              <AlertTriangle className="w-4 h-4 text-red-600" />
-            </div>
-            <span className="text-gray-600">رفض المهام</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-purple-100 flex items-center justify-center">
-              <MessageSquare className="w-4 h-4 text-purple-600" />
-            </div>
-            <span className="text-gray-600">الملاحظات الجديدة</span>
-          </div>
-        </div>
       </div>
     </div>
   );

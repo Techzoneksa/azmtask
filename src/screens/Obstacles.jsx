@@ -1,9 +1,8 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { useAuth, useData } from '../context/AuthContext';
+import { useAuth } from '../context/AuthContext';
+import { useData } from '../context/DataContext';
 import { 
   AlertTriangle, 
-  ChevronLeft,
   CheckCircle,
   Plus,
   X
@@ -11,74 +10,31 @@ import {
 
 export default function Obstacles() {
   const { user } = useAuth();
-  const { data, updateData, refreshData } = useData();
+  const { data, addBlocker, resolveBlocker } = useData();
   const [showAddModal, setShowAddModal] = useState(false);
   const [newObstacle, setNewObstacle] = useState({ title: '', description: '', stageId: '', priority: 'medium' });
 
-  const openObstacles = data.obstacles?.filter(o => o.status === 'open') || [];
-  const resolvedObstacles = data.obstacles?.filter(o => o.status === 'resolved') || [];
+  const openObstacles = data.blockers?.filter(o => o.status === 'open') || [];
+  const resolvedObstacles = data.blockers?.filter(o => o.status === 'resolved') || [];
 
-  const handleAddObstacle = () => {
+  const handleAddObstacle = async () => {
     if (!newObstacle.title.trim()) return;
     
-    const obstacle = {
-      id: 'obs-' + Date.now(),
+    const result = await addBlocker({
       title: newObstacle.title,
       description: newObstacle.description,
       stageId: newObstacle.stageId,
-      priority: newObstacle.priority,
-      status: 'open',
-      createdAt: new Date().toISOString(),
-      resolvedAt: null
-    };
-    
-    updateData({
-      ...data,
-      obstacles: [...(data.obstacles || []), obstacle]
+      priority: newObstacle.priority
     });
     
-    const notification = {
-      id: 'notif-' + Date.now(),
-      title: 'تم إضافة معوق جديد',
-      message: `تم تسجيل معوق: ${newObstacle.title}`,
-      userId: user.role === 'director' ? '2' : '1',
-      read: false,
-      createdAt: new Date().toISOString()
-    };
-    updateData({
-      ...data,
-      obstacles: [...(data.obstacles || []), obstacle],
-      notifications: [...(data.notifications || []), notification]
-    });
-    
-    setNewObstacle({ title: '', description: '', stageId: '', priority: 'medium' });
-    setShowAddModal(false);
+    if (result.success) {
+      setNewObstacle({ title: '', description: '', stageId: '', priority: 'medium' });
+      setShowAddModal(false);
+    }
   };
 
-  const handleResolveObstacle = (id) => {
-    const updatedObstacles = data.obstacles.map(o => {
-      if (o.id === id) {
-        return { ...o, status: 'resolved', resolvedAt: new Date().toISOString() };
-      }
-      return o;
-    });
-    
-    updateData({ ...data, obstacles: updatedObstacles });
-    
-    const obstacle = data.obstacles.find(o => o.id === id);
-    const notification = {
-      id: 'notif-' + Date.now(),
-      title: 'تم حل المعوق',
-      message: `تم إغلاق المعوق: ${obstacle?.title}`,
-      userId: user.role === 'director' ? '2' : '1',
-      read: false,
-      createdAt: new Date().toISOString()
-    };
-    updateData({
-      ...data,
-      obstacles: updatedObstacles,
-      notifications: [...(data.notifications || []), notification]
-    });
+  const handleResolveObstacle = async (id) => {
+    await resolveBlocker(id);
   };
 
   const getStageById = (id) => {
@@ -205,7 +161,7 @@ export default function Obstacles() {
         
         <div className="space-y-4">
           {openObstacles.map(obstacle => {
-            const stage = getStageById(obstacle.stageId);
+            const stage = getStageById(obstacle.stage_id);
             return (
               <div key={obstacle.id} className="p-4 bg-red-50 rounded-xl border border-red-100">
                 <div className="flex items-start justify-between gap-4">
@@ -225,10 +181,10 @@ export default function Obstacles() {
                     </div>
                     <h4 className="font-semibold text-gray-800 mb-1">{obstacle.title}</h4>
                     <p className="text-sm text-gray-600">{obstacle.description}</p>
-                    <p className="text-xs text-gray-400 mt-2">تاريخ التسجيل: {formatDate(obstacle.createdAt)}</p>
+                    <p className="text-xs text-gray-400 mt-2">تاريخ التسجيل: {formatDate(obstacle.created_at)}</p>
                   </div>
                   
-                  {user.role === 'director' && (
+                  {user?.role === 'director' && (
                     <button 
                       onClick={() => handleResolveObstacle(obstacle.id)}
                       className="btn-secondary text-green-600 border-green-200 hover:bg-green-50 flex items-center gap-2 text-sm"
@@ -261,7 +217,7 @@ export default function Obstacles() {
           
           <div className="space-y-3">
             {resolvedObstacles.map(obstacle => {
-              const stage = getStageById(obstacle.stageId);
+              const stage = getStageById(obstacle.stage_id);
               return (
                 <div key={obstacle.id} className="p-4 bg-green-50 rounded-xl border border-green-100 opacity-75">
                   <div className="flex items-center justify-between">
@@ -272,7 +228,7 @@ export default function Obstacles() {
                       )}
                     </div>
                     <span className="text-xs text-green-600">
-                      تم الحل: {formatDate(obstacle.resolvedAt)}
+                      تم الحل: {formatDate(obstacle.resolved_at)}
                     </span>
                   </div>
                 </div>

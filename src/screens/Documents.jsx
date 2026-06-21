@@ -1,20 +1,14 @@
-import { useState } from 'react';
-import { useAuth, useData } from '../context/AuthContext';
+import { useData } from '../context/DataContext';
 import { 
   FileText, 
   CheckCircle,
-  Clock,
-  AlertTriangle,
-  Upload,
-  X
+  Clock
 } from 'lucide-react';
 
 export default function Documents() {
-  const { user } = useAuth();
-  const { data, updateData } = useData();
-  const [showAddModal, setShowAddModal] = useState(false);
+  const { data } = useData();
 
-  const documentsList = [
+  const documentsList = data.documents || [
     { id: 'doc-1', name: 'السجل التجاري', status: 'pending', icon: '📄' },
     { id: 'doc-2', name: 'نشاط الشركة', status: 'completed', icon: '✓' },
     { id: 'doc-3', name: 'العنوان الوطني', status: 'in-progress', icon: '📍' },
@@ -39,16 +33,6 @@ export default function Documents() {
   const completedCount = documentsList.filter(d => d.status === 'completed').length;
   const totalCount = documentsList.length;
   const progress = Math.round((completedCount / totalCount) * 100);
-
-  const documentsWithTasks = documentsList.map(doc => {
-    const relatedTasks = data.tasks?.filter(t => 
-      t.title.toLowerCase().includes(doc.name.toLowerCase()) ||
-      doc.name.includes('شعار') && t.title.includes('شعار') ||
-      doc.name.includes('ختم') && t.title.includes('ختم')
-    ) || [];
-    
-    return { ...doc, tasks: relatedTasks };
-  });
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -80,7 +64,7 @@ export default function Documents() {
 
       {/* Documents Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {documentsWithTasks.map(doc => {
+        {documentsList.map(doc => {
           const statusInfo = getStatusInfo(doc.status);
           const StatusIcon = statusInfo.icon;
           
@@ -102,12 +86,6 @@ export default function Documents() {
                       {statusInfo.label}
                     </span>
                   </div>
-                  
-                  {doc.tasks.length > 0 && (
-                    <div className="text-sm text-gray-500">
-                      {doc.tasks.length} مهمة مرتبطة
-                    </div>
-                  )}
                   
                   {doc.status === 'in-progress' && (
                     <div className="mt-3">

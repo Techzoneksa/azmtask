@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { useAuth, useData } from '../context/AuthContext';
+import { useAuth } from '../context/AuthContext';
+import { useData } from '../context/DataContext';
 import { 
   Bot, 
   Calendar,
@@ -22,7 +22,7 @@ export default function Assistant() {
     today.setHours(0, 0, 0, 0);
     
     return data.tasks.filter(task => {
-      const due = new Date(task.dueDate);
+      const due = new Date(task.due_date);
       due.setHours(0, 0, 0, 0);
       return due.getTime() <= today.getTime() && task.status !== 'completed';
     });
@@ -33,7 +33,7 @@ export default function Assistant() {
     today.setHours(0, 0, 0, 0);
     
     return data.tasks.filter(task => {
-      const due = new Date(task.dueDate);
+      const due = new Date(task.due_date);
       due.setHours(0, 0, 0, 0);
       return due.getTime() < today.getTime() && task.status !== 'completed';
     });
@@ -44,26 +44,24 @@ export default function Assistant() {
   };
 
   const getOpenObstacles = () => {
-    return data.obstacles.filter(o => o.status === 'open');
+    return data.blockers?.filter(o => o.status === 'open') || [];
   };
 
   const getStageProgress = () => {
     return data.stages.map(stage => {
-      const stageTasks = data.tasks.filter(t => t.stageId === stage.id);
+      const stageTasks = data.tasks.filter(t => t.stage_id === stage.id);
       const completed = stageTasks.filter(t => t.status === 'completed').length;
-      const inProgress = stageTasks.filter(t => t.status === 'in-progress').length;
-      const blocked = stageTasks.filter(t => t.status === 'blocked').length;
       const progress = stageTasks.length > 0 
         ? Math.round(stageTasks.reduce((sum, t) => sum + t.progress, 0) / stageTasks.length)
         : 0;
-      return { ...stage, total: stageTasks.length, completed, inProgress, blocked, progress };
+      return { ...stage, total: stageTasks.length, completed, progress };
     });
   };
 
   const getTopPriorities = () => {
     return data.tasks
       .filter(task => task.status !== 'completed' && task.priority === 'high')
-      .sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate))
+      .sort((a, b) => new Date(a.due_date) - new Date(b.due_date))
       .slice(0, 3);
   };
 
@@ -80,7 +78,7 @@ export default function Assistant() {
     const openObstacles = getOpenObstacles().length;
     const delayedTasks = getDelayedTasks().length;
     
-    let score = ((completedTasks / totalTasks) * 100) - (openObstacles * 5) - (delayedTasks * 3);
+    let score = ((completedTasks / (totalTasks || 1)) * 100) - (openObstacles * 5) - (delayedTasks * 3);
     score = Math.max(0, Math.min(100, score));
     return Math.round(score);
   };
@@ -198,7 +196,7 @@ export default function Assistant() {
                 <div className="flex-1">
                   <p className="font-medium text-gray-800">{task.title}</p>
                   <p className="text-xs text-gray-500">
-                    المرحلة: {data.stages.find(s => s.id === task.stageId)?.name}
+                    المرحلة: {data.stages.find(s => s.id === task.stage_id)?.name}
                   </p>
                 </div>
               </Link>
@@ -227,7 +225,7 @@ export default function Assistant() {
                   </Link>
                 </div>
                 <p className="text-xs text-red-500 mt-1">
-                  متأخر منذ {Math.ceil((new Date() - new Date(task.dueDate)) / (1000 * 60 * 60 * 24))} يوم
+                  متأخر منذ {Math.ceil((new Date() - new Date(task.due_date)) / (1000 * 60 * 60 * 24))} يوم
                 </p>
               </div>
             ))}
@@ -237,32 +235,6 @@ export default function Assistant() {
             <CheckCircle className="w-8 h-8 text-green-500 mx-auto mb-2" />
             <p className="text-green-600">لا توجد مهام متأخرة</p>
           </div>
-        )}
-      </div>
-
-      {/* Pending Review */}
-      <div className="card border-purple-200">
-        <h3 className="section-title flex items-center gap-2 text-purple-600">
-          <Clock className="w-5 h-5" />
-          بانتظار اعتماد الأستاذ سلطان ({pendingReview.length})
-        </h3>
-        
-        {pendingReview.length > 0 ? (
-          <div className="space-y-3">
-            {pendingReview.slice(0, 5).map(task => (
-              <div key={task.id} className="p-3 bg-purple-50 rounded-xl">
-                <div className="flex items-center justify-between">
-                  <p className="font-medium text-gray-800">{task.title}</p>
-                  <Link to={`/task/${task.id}`} className="text-xs text-purple-600 hover:underline">
-                    عرض
-                  </Link>
-                </div>
-                <p className="text-xs text-gray-500 mt-1">{task.progress}% مكتمل</p>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <p className="text-center text-gray-400 py-4">لا توجد مهام بانتظار المراجعة</p>
         )}
       </div>
 
@@ -296,12 +268,6 @@ export default function Assistant() {
               </div>
               <span className="font-bold" style={{ color: slowestStage.color }}>{slowestStage.progress}%</span>
             </div>
-            
-            {slowestStage.blocked > 0 && (
-              <p className="text-sm text-red-500 mt-3">
-                يوجد {slowestStage.blocked} مهمة متعثرة في هذه المرحلة
-              </p>
-            )}
             
             <Link 
               to="/roadmap" 
@@ -339,13 +305,6 @@ export default function Assistant() {
             <div className="flex items-center gap-3 p-3 bg-white/10 rounded-xl">
               <Clock className="w-5 h-5" />
               <span>إنجاز {delayedTasks.length} مهمة متأخرة</span>
-            </div>
-          )}
-          
-          {pendingReview.length > 0 && (
-            <div className="flex items-center gap-3 p-3 bg-white/10 rounded-xl">
-              <CheckCircle className="w-5 h-5" />
-              <span>اعتماد {pendingReview.length} مهمة معلقة</span>
             </div>
           )}
           
