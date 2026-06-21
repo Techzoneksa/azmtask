@@ -1,0 +1,25 @@
+{
+  "name": "عزم - برنامج الإنجاز والتشغيل",
+  "short_name": "عزم",
+  "description": "برنامج إنجاز ومتابعة مهام وتشغيل داخلي لشركة عزم اللوجستية",
+  "theme_color": "#1a5f3c",
+  "background_color": "#ffffff",
+  "display": "standalone",
+  "orientation": "portrait",
+  "scope": "/",
+  "start_url": "/",
+  "dir": "rtl",
+  "lang": "ar",
+  "icons": [
+    {
+      "src": "/pwa-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/pwa-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

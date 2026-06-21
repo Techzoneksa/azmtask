@@ -1,0 +1,157 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    -webkit-tap-highlight-color: transparent;
+    box-sizing: border-box;
+  }
+  
+  html {
+    font-family: Tahoma, Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  
+  body {
+    @apply bg-gray-50 text-gray-800;
+    overscroll-behavior: none;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  input, textarea, select {
+    font-family: inherit;
+  }
+}
+
+@layer components {
+  .card {
+    @apply bg-white rounded-2xl shadow-sm border border-gray-100 p-4;
+  }
+  
+  .card-glass {
+    @apply bg-white/80 backdrop-blur-lg rounded-2xl shadow-sm border border-white/20 p-4;
+  }
+  
+  .btn-primary {
+    @apply bg-azm-green text-white px-6 py-3 rounded-xl font-medium transition-all duration-200 active:scale-95 disabled:opacity-50;
+  }
+  
+  .btn-secondary {
+    @apply bg-gray-100 text-gray-700 px-6 py-3 rounded-xl font-medium transition-all duration-200 active:scale-95;
+  }
+  
+  .btn-orange {
+    @apply bg-azm-orange text-white px-6 py-3 rounded-xl font-medium transition-all duration-200 active:scale-95;
+  }
+  
+  .input-field {
+    @apply w-full px-4 py-3 rounded-xl border border-gray-200 bg-white focus:outline-none focus:ring-2 focus:ring-azm-green/20 focus:border-azm-green transition-all;
+  }
+  
+  .badge {
+    @apply inline-flex items-center px-3 py-1 rounded-full text-sm font-medium;
+  }
+  
+  .badge-green {
+    @apply bg-green-100 text-green-700;
+  }
+  
+  .badge-orange {
+    @apply bg-orange-100 text-orange-700;
+  }
+  
+  .badge-gray {
+    @apply bg-gray-100 text-gray-600;
+  }
+  
+  .badge-red {
+    @apply bg-red-100 text-red-700;
+  }
+  
+  .bottom-nav {
+    @apply fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 px-2 py-2 z-50;
+    padding-bottom: env(safe-area-inset-bottom, 16px);
+  }
+  
+  .page-container {
+    @apply min-h-screen pb-24 pt-4 px-4;
+  }
+  
+  .progress-bar {
+    @apply h-2 bg-gray-200 rounded-full overflow-hidden;
+  }
+  
+  .progress-fill {
+    @apply h-full bg-azm-green rounded-full transition-all duration-500;
+  }
+  
+  .kanban-column {
+    @apply flex-shrink-0 w-[280px] md:w-72 bg-gray-50 rounded-2xl p-3;
+  }
+  
+  .task-card {
+    @apply bg-white rounded-xl shadow-sm border border-gray-100 p-3 mb-2 cursor-grab active:cursor-grabbing;
+  }
+  
+  .section-title {
+    @apply text-lg font-semibold text-gray-800 mb-4;
+  }
+  
+  .stat-card {
+    @apply bg-white rounded-2xl p-4 shadow-sm border border-gray-100;
+  }
+}
+
+@layer utilities {
+  .hide-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  
+  .hide-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  
+  .safe-area-bottom {
+    padding-bottom: env(safe-area-inset-bottom, 16px);
+  }
+  
+  .touch-pan-x {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  .no-tap-callout {
+    -webkit-touch-callout: none;
+  }
+}
+
+/* PWA specific */
+@supports (height: 100vh) {
+  body {
+    min-height: 100vh;
+    min-height: 100dvh;
+  }
+}
+
+/* Prevent pull-to-refresh on mobile */
+body {
+  overscroll-behavior: none;
+}
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Focus styles */
+*:focus {
+  outline: none;
+}
+
+*:focus-visible {
+  outline: 2px solid #1a5f3c;
+  outline-offset: 2px;
+}

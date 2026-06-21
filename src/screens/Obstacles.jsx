@@ -1,0 +1,286 @@
+import { useState } from 'react';
+import { Link } from 'react-router-dom';
+import { useAuth, useData } from '../context/AuthContext';
+import { 
+  AlertTriangle, 
+  ChevronLeft,
+  CheckCircle,
+  Plus,
+  X
+} from 'lucide-react';
+
+export default function Obstacles() {
+  const { user } = useAuth();
+  const { data, updateData, refreshData } = useData();
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [newObstacle, setNewObstacle] = useState({ title: '', description: '', stageId: '', priority: 'medium' });
+
+  const openObstacles = data.obstacles?.filter(o => o.status === 'open') || [];
+  const resolvedObstacles = data.obstacles?.filter(o => o.status === 'resolved') || [];
+
+  const handleAddObstacle = () => {
+    if (!newObstacle.title.trim()) return;
+    
+    const obstacle = {
+      id: 'obs-' + Date.now(),
+      title: newObstacle.title,
+      description: newObstacle.description,
+      stageId: newObstacle.stageId,
+      priority: newObstacle.priority,
+      status: 'open',
+      createdAt: new Date().toISOString(),
+      resolvedAt: null
+    };
+    
+    updateData({
+      ...data,
+      obstacles: [...(data.obstacles || []), obstacle]
+    });
+    
+    const notification = {
+      id: 'notif-' + Date.now(),
+      title: 'تم إضافة معوق جديد',
+      message: `تم تسجيل معوق: ${newObstacle.title}`,
+      userId: user.role === 'director' ? '2' : '1',
+      read: false,
+      createdAt: new Date().toISOString()
+    };
+    updateData({
+      ...data,
+      obstacles: [...(data.obstacles || []), obstacle],
+      notifications: [...(data.notifications || []), notification]
+    });
+    
+    setNewObstacle({ title: '', description: '', stageId: '', priority: 'medium' });
+    setShowAddModal(false);
+  };
+
+  const handleResolveObstacle = (id) => {
+    const updatedObstacles = data.obstacles.map(o => {
+      if (o.id === id) {
+        return { ...o, status: 'resolved', resolvedAt: new Date().toISOString() };
+      }
+      return o;
+    });
+    
+    updateData({ ...data, obstacles: updatedObstacles });
+    
+    const obstacle = data.obstacles.find(o => o.id === id);
+    const notification = {
+      id: 'notif-' + Date.now(),
+      title: 'تم حل المعوق',
+      message: `تم إغلاق المعوق: ${obstacle?.title}`,
+      userId: user.role === 'director' ? '2' : '1',
+      read: false,
+      createdAt: new Date().toISOString()
+    };
+    updateData({
+      ...data,
+      obstacles: updatedObstacles,
+      notifications: [...(data.notifications || []), notification]
+    });
+  };
+
+  const getStageById = (id) => {
+    return data.stages?.find(s => s.id === id);
+  };
+
+  const formatDate = (dateStr) => {
+    return new Date(dateStr).toLocaleDateString('ar-SA', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+  };
+
+  return (
+    <div className="space-y-6 animate-fade-in">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 bg-red-500 rounded-xl flex items-center justify-center">
+            <AlertTriangle className="w-6 h-6 text-white" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold text-gray-800">المعوقات</h1>
+            <p className="text-gray-500">الأشياء التي تمنع الانطلاق</p>
+          </div>
+        </div>
+        
+        <button 
+          onClick={() => setShowAddModal(true)}
+          className="btn-primary flex items-center gap-2 text-sm"
+        >
+          <Plus className="w-4 h-4" />
+          إضافة معوق
+        </button>
+      </div>
+
+      {/* Stats */}
+      <div className="grid grid-cols-2 gap-4">
+        <div className="card text-center">
+          <div className="text-3xl font-bold text-red-500">{openObstacles.length}</div>
+          <div className="text-sm text-gray-500">معوقات مفتوحة</div>
+        </div>
+        <div className="card text-center">
+          <div className="text-3xl font-bold text-green-500">{resolvedObstacles.length}</div>
+          <div className="text-sm text-gray-500">تم حلها</div>
+        </div>
+      </div>
+
+      {/* Add Modal */}
+      {showAddModal && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl w-full max-w-md p-6">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-lg font-semibold text-gray-800">إضافة معوق جديد</h3>
+              <button onClick={() => setShowAddModal(false)} className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">العنوان</label>
+                <input
+                  type="text"
+                  value={newObstacle.title}
+                  onChange={(e) => setNewObstacle({ ...newObstacle, title: e.target.value })}
+                  className="input-field"
+                  placeholder="مثال: ترخيص ناقص"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">الوصف</label>
+                <textarea
+                  value={newObstacle.description}
+                  onChange={(e) => setNewObstacle({ ...newObstacle, description: e.target.value })}
+                  className="input-field min-h-[100px]"
+                  placeholder="وصف تفصيلي للمشكلة..."
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">المرحلة</label>
+                <select
+                  value={newObstacle.stageId}
+                  onChange={(e) => setNewObstacle({ ...newObstacle, stageId: e.target.value })}
+                  className="input-field"
+                >
+                  <option value="">اختر المرحلة</option>
+                  {data.stages?.map(stage => (
+                    <option key={stage.id} value={stage.id}>{stage.name}</option>
+                  ))}
+                </select>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">الأولوية</label>
+                <select
+                  value={newObstacle.priority}
+                  onChange={(e) => setNewObstacle({ ...newObstacle, priority: e.target.value })}
+                  className="input-field"
+                >
+                  <option value="high">عالية</option>
+                  <option value="medium">متوسطة</option>
+                  <option value="low">منخفضة</option>
+                </select>
+              </div>
+              
+              <button onClick={handleAddObstacle} className="btn-primary w-full">
+                إضافة المعوق
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Open Obstacles */}
+      <div className="card">
+        <h3 className="section-title text-red-600 flex items-center gap-2">
+          <AlertTriangle className="w-5 h-5" />
+          المعوقات المفتوحة ({openObstacles.length})
+        </h3>
+        
+        <div className="space-y-4">
+          {openObstacles.map(obstacle => {
+            const stage = getStageById(obstacle.stageId);
+            return (
+              <div key={obstacle.id} className="p-4 bg-red-50 rounded-xl border border-red-100">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className={`badge ${
+                        obstacle.priority === 'high' ? 'badge-red' :
+                        obstacle.priority === 'medium' ? 'badge-orange' : 'badge-green'
+                      }`}>
+                        {obstacle.priority === 'high' ? 'عالية' : obstacle.priority === 'medium' ? 'متوسطة' : 'منخفضة'}
+                      </span>
+                      {stage && (
+                        <span className="text-xs px-2 py-0.5 rounded-full" style={{ backgroundColor: stage.color + '20', color: stage.color }}>
+                          {stage.name}
+                        </span>
+                      )}
+                    </div>
+                    <h4 className="font-semibold text-gray-800 mb-1">{obstacle.title}</h4>
+                    <p className="text-sm text-gray-600">{obstacle.description}</p>
+                    <p className="text-xs text-gray-400 mt-2">تاريخ التسجيل: {formatDate(obstacle.createdAt)}</p>
+                  </div>
+                  
+                  {user.role === 'director' && (
+                    <button 
+                      onClick={() => handleResolveObstacle(obstacle.id)}
+                      className="btn-secondary text-green-600 border-green-200 hover:bg-green-50 flex items-center gap-2 text-sm"
+                    >
+                      <CheckCircle className="w-4 h-4" />
+                      تم الحل
+                    </button>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+          
+          {openObstacles.length === 0 && (
+            <div className="text-center py-8">
+              <CheckCircle className="w-12 h-12 text-green-500 mx-auto mb-3" />
+              <p className="text-gray-500">لا توجد معوقات مفتوحة</p>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Resolved Obstacles */}
+      {resolvedObstacles.length > 0 && (
+        <div className="card">
+          <h3 className="section-title text-green-600 flex items-center gap-2">
+            <CheckCircle className="w-5 h-5" />
+            المعوقات المحلولة ({resolvedObstacles.length})
+          </h3>
+          
+          <div className="space-y-3">
+            {resolvedObstacles.map(obstacle => {
+              const stage = getStageById(obstacle.stageId);
+              return (
+                <div key={obstacle.id} className="p-4 bg-green-50 rounded-xl border border-green-100 opacity-75">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h4 className="font-medium text-gray-700 line-through">{obstacle.title}</h4>
+                      {stage && (
+                        <span className="text-xs text-gray-500">{stage.name}</span>
+                      )}
+                    </div>
+                    <span className="text-xs text-green-600">
+                      تم الحل: {formatDate(obstacle.resolvedAt)}
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
