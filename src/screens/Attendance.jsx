@@ -10,7 +10,7 @@ import {
 } from 'lucide-react';
 
 export default function Attendance() {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const { data, checkIn, checkOut } = useData();
   const [note, setNote] = useState('');
   const [loading, setLoading] = useState(false);
@@ -66,7 +66,7 @@ export default function Attendance() {
       .slice(0, 30);
   };
 
-  const isDirector = user?.role === 'director';
+  const isDirector = profile?.role === 'admin' || profile?.role === 'director' || (Array.isArray(profile?.roles) && profile.roles.includes('admin'));
 
   return (
     <div className="space-y-6 animate-fade-in">

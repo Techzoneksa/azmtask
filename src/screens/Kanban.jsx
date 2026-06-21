@@ -108,7 +108,7 @@ export default function Kanban() {
   const { user, profile } = useAuth();
   const { data, updateTask } = useData();
   
-  const isAdmin = profile?.role === 'admin' || profile?.role === 'director';
+  const isAdmin = profile?.role === 'admin' || profile?.role === 'director' || (Array.isArray(profile?.roles) && profile.roles.includes('admin'));
   const [draggedTask, setDraggedTask] = useState(null);
 
   const statuses = [

@@ -20,8 +20,10 @@ import {
 export default function TaskDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const { data, updateTask, addNote, addTaskLog } = useData();
+  
+  const canApprove = profile?.role === 'admin' || profile?.role === 'director' || (Array.isArray(profile?.roles) && profile.roles.includes('admin'));
   
   const task = data.tasks?.find(t => t.id === id);
   const stage = data.stages?.find(s => s.id === task?.stage_id);
@@ -221,7 +223,7 @@ export default function TaskDetail() {
               </>
             )}
             
-            {user?.role === 'director' && task.status === 'pending-review' && (
+            {canApprove && task.status === 'pending-review' && (
               <>
                 <button onClick={handleApprove} className="btn-primary flex items-center gap-2 bg-green-600 hover:bg-green-700">
                   <ThumbsUp className="w-4 h-4" />

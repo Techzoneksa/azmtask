@@ -9,8 +9,10 @@ import {
 } from 'lucide-react';
 
 export default function Obstacles() {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const { data, addBlocker, resolveBlocker } = useData();
+  
+  const canResolve = profile?.role === 'admin' || profile?.role === 'director' || (Array.isArray(profile?.roles) && profile.roles.includes('admin'));
   const [showAddModal, setShowAddModal] = useState(false);
   const [newObstacle, setNewObstacle] = useState({ title: '', description: '', stageId: '', priority: 'medium' });
 
@@ -184,7 +186,7 @@ export default function Obstacles() {
                     <p className="text-xs text-gray-400 mt-2">تاريخ التسجيل: {formatDate(obstacle.created_at)}</p>
                   </div>
                   
-                  {(user?.role === 'director' || user?.role === 'admin') && (
+                  {canResolve && (
                     <button 
                       onClick={() => handleResolveObstacle(obstacle.id)}
                       className="btn-secondary text-green-600 border-green-200 hover:bg-green-50 flex items-center gap-2 text-sm"

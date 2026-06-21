@@ -21,7 +21,7 @@ export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState('company');
   const [saved, setSaved] = useState(false);
 
-  const isAdmin = profile?.role === 'admin' || profile?.role === 'director';
+  const isAdmin = profile?.role === 'admin' || profile?.role === 'director' || (Array.isArray(profile?.roles) && profile.roles.includes('admin'));
 
   const tabs = [
     { id: 'company', label: 'بيانات الشركة', icon: Building },
@@ -187,7 +187,7 @@ export default function SettingsPage() {
                       </div>
                     </div>
                   </div>
-                  <p className="text-xs text-gray-400 mt-3">يمتلك صلاحيات كاملة في النظام</p>
+                  
                 </div>
                 
                 {/* Abdu */}
@@ -208,15 +208,7 @@ export default function SettingsPage() {
                       </div>
                     </div>
                   </div>
-                  <p className="text-xs text-gray-400 mt-3">يمتلك صلاحيات كاملة - نفس صلاحيات المدير العام</p>
                 </div>
-              </div>
-              
-              <div className="mt-6 p-4 bg-amber-50 rounded-xl border border-amber-200">
-                <p className="text-sm text-amber-700">
-                  <strong>ملاحظة:</strong> عبدالرحمن يمتلك صلاحيات كاملة كـ Admin ويستطيع:
-                  اعتماد المهام، نقلها للمكتمل، إدارة التحديات التشغيلية، الوصول لجميع البيانات.
-                </p>
               </div>
             </div>
           </div>
