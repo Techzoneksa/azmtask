@@ -138,6 +138,10 @@ export function DataProvider({ children }) {
 
   const addTask = async (taskData) => {
     try {
+      const dueDate = taskData.due_date 
+        ? new Date(taskData.due_date).toISOString()
+        : new Date().toISOString();
+      
       const newTask = {
         id: 'task-' + Date.now(),
         title: taskData.title,
@@ -146,18 +150,16 @@ export function DataProvider({ children }) {
         stage_id: taskData.stage_id || data.stages?.[0]?.id || null,
         assigned_to: taskData.assigned_to || user?.id,
         priority: taskData.priority || 'medium',
-        due_date: taskData.due_date || new Date().toISOString().split('T')[0],
-        progress: taskData.progress || 0,
-        needs_follow_up: taskData.needs_follow_up || false,
-        needs_approval: taskData.needs_approval || false,
-        notes: taskData.notes || '',
-        created_by: user?.id,
-        created_at: new Date().toISOString()
+        due_date: dueDate,
+        progress: typeof taskData.progress === 'number' ? taskData.progress : 0
       };
 
       const { error } = await supabase.from('tasks').insert(newTask);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Task save error:', error);
+        throw error;
+      }
 
       await fetchAllData();
       return { success: true };

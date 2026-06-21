@@ -130,10 +130,7 @@ export default function Kanban() {
     priority: 'medium',
     status: 'new',
     due_date: new Date().toISOString().split('T')[0],
-    progress: 0,
-    needs_follow_up: false,
-    needs_approval: false,
-    notes: ''
+    progress: 0
   });
   
   const getRoles = () => {
@@ -204,10 +201,7 @@ export default function Kanban() {
         priority: 'medium',
         status: 'new',
         due_date: new Date().toISOString().split('T')[0],
-        progress: 0,
-        needs_follow_up: false,
-        needs_approval: false,
-        notes: ''
+        progress: 0
       });
     } else {
       alert('تعذر إضافة المهمة، حاول مرة أخرى');
@@ -262,41 +256,41 @@ export default function Kanban() {
       {/* Add Task Modal */}
       {showAddModal && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
-            <div className="p-6 border-b border-slate-200 flex items-center justify-between">
-              <h2 className="text-xl font-bold text-slate-800">إضافة مهمة جديدة</h2>
-              <button onClick={() => setShowAddModal(false)} className="btn-ghost p-2">
+          <div className="bg-white dark:bg-slate-800 rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+            <div className="p-6 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between">
+              <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100">إضافة مهمة جديدة</h2>
+              <button onClick={() => setShowAddModal(false)} className="btn-ghost p-2 dark:text-slate-300">
                 <X className="w-5 h-5" />
               </button>
             </div>
             <form onSubmit={handleAddTask} className="p-6 space-y-4">
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">عنوان المهمة *</label>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">عنوان المهمة *</label>
                 <input
                   type="text"
                   value={newTask.title}
                   onChange={(e) => setNewTask({...newTask, title: e.target.value})}
-                  className="input-field"
+                  className="input-field dark:bg-slate-700 dark:text-slate-100 dark:border-slate-600 dark:placeholder-slate-400"
                   placeholder="أدخل عنوان المهمة"
                   required
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">الوصف</label>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">الوصف</label>
                 <textarea
                   value={newTask.description}
                   onChange={(e) => setNewTask({...newTask, description: e.target.value})}
-                  className="input-field min-h-[80px]"
+                  className="input-field min-h-[80px] dark:bg-slate-700 dark:text-slate-100 dark:border-slate-600 dark:placeholder-slate-400"
                   placeholder="أدخل وصف المهمة"
                 />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">المرحلة</label>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">المرحلة</label>
                   <select
                     value={newTask.stage_id}
                     onChange={(e) => setNewTask({...newTask, stage_id: e.target.value})}
-                    className="input-field"
+                    className="input-field dark:bg-slate-700 dark:text-slate-100 dark:border-slate-600"
                   >
                     <option value="">اختر المرحلة</option>
                     {data.stages.map(stage => (
@@ -305,11 +299,28 @@ export default function Kanban() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">المسؤول</label>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">الحالة</label>
+                  <select
+                    value={newTask.status}
+                    onChange={(e) => setNewTask({...newTask, status: e.target.value})}
+                    className="input-field dark:bg-slate-700 dark:text-slate-100 dark:border-slate-600"
+                  >
+                    <option value="new">جديد</option>
+                    <option value="in-progress">قيد التنفيذ</option>
+                    <option value="pending-review">بانتظار المراجعة</option>
+                    <option value="completed">مكتمل</option>
+                    <option value="delayed">مؤجل</option>
+                    <option value="blocked">متعثر</option>
+                  </select>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">المسؤول</label>
                   <select
                     value={newTask.assigned_to}
                     onChange={(e) => setNewTask({...newTask, assigned_to: e.target.value})}
-                    className="input-field"
+                    className="input-field dark:bg-slate-700 dark:text-slate-100 dark:border-slate-600"
                   >
                     <option value={user?.id}>أنا</option>
                     {data.users?.map(u => (
@@ -317,75 +328,49 @@ export default function Kanban() {
                     ))}
                   </select>
                 </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">الأولوية</label>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">الأولوية</label>
                   <select
                     value={newTask.priority}
                     onChange={(e) => setNewTask({...newTask, priority: e.target.value})}
-                    className="input-field"
+                    className="input-field dark:bg-slate-700 dark:text-slate-100 dark:border-slate-600"
                   >
                     <option value="low">منخفضة</option>
                     <option value="medium">متوسطة</option>
                     <option value="high">عالية</option>
                   </select>
                 </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">تاريخ الاستحقاق</label>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">تاريخ الاستحقاق</label>
                   <input
                     type="date"
                     value={newTask.due_date}
                     onChange={(e) => setNewTask({...newTask, due_date: e.target.value})}
-                    className="input-field"
+                    className="input-field dark:bg-slate-700 dark:text-slate-100 dark:border-slate-600"
                   />
                 </div>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">نسبة الإنجاز (%)</label>
-                <input
-                  type="number"
-                  min="0"
-                  max="100"
-                  value={newTask.progress}
-                  onChange={(e) => setNewTask({...newTask, progress: parseInt(e.target.value) || 0})}
-                  className="input-field"
-                />
-              </div>
-              <div className="flex items-center gap-4">
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={newTask.needs_follow_up}
-                    onChange={(e) => setNewTask({...newTask, needs_follow_up: e.target.checked})}
-                    className="w-4 h-4 text-emerald-600 rounded border-slate-300"
-                  />
-                  <span className="text-sm text-slate-700">تحتاج متابعة</span>
-                </label>
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={newTask.needs_approval}
-                    onChange={(e) => setNewTask({...newTask, needs_approval: e.target.checked})}
-                    className="w-4 h-4 text-emerald-600 rounded border-slate-300"
-                  />
-                  <span className="text-sm text-slate-700">تحتاج اعتماد</span>
-                </label>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">ملاحظات</label>
-                <textarea
-                  value={newTask.notes}
-                  onChange={(e) => setNewTask({...newTask, notes: e.target.value})}
-                  className="input-field min-h-[60px]"
-                  placeholder="أي ملاحظات إضافية"
-                />
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">نسبة الإنجاز</label>
+                  <select
+                    value={newTask.progress}
+                    onChange={(e) => setNewTask({...newTask, progress: parseInt(e.target.value)})}
+                    className="input-field dark:bg-slate-700 dark:text-slate-100 dark:border-slate-600"
+                  >
+                    <option value="0">0%</option>
+                    <option value="25">25%</option>
+                    <option value="50">50%</option>
+                    <option value="75">75%</option>
+                    <option value="100">100%</option>
+                  </select>
+                </div>
               </div>
               <div className="flex gap-3 pt-4">
                 <button type="submit" className="btn-primary flex-1">
                   حفظ المهمة
                 </button>
-                <button type="button" onClick={() => setShowAddModal(false)} className="btn-secondary">
+                <button type="button" onClick={() => setShowAddModal(false)} className="btn-secondary dark:bg-slate-700 dark:text-slate-100 dark:border-slate-600">
                   إلغاء
                 </button>
               </div>
