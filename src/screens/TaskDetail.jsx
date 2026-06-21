@@ -23,7 +23,16 @@ export default function TaskDetail() {
   const { user, profile } = useAuth();
   const { data, updateTask, addNote, addTaskLog } = useData();
   
-  const canApprove = profile?.role === 'admin' || profile?.role === 'director' || (Array.isArray(profile?.roles) && profile.roles.includes('admin'));
+  const getRoles = () => {
+    if (!profile) return [];
+    if (Array.isArray(profile.roles)) return profile.roles;
+    if (typeof profile.roles === 'string' && profile.roles.startsWith('[')) {
+      try { return JSON.parse(profile.roles); } catch { return []; }
+    }
+    return [];
+  };
+  
+  const canApprove = profile?.role === 'admin' || profile?.role === 'director' || getRoles().includes('admin');
   
   const task = data.tasks?.find(t => t.id === id);
   const stage = data.stages?.find(s => s.id === task?.stage_id);

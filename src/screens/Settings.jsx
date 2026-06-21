@@ -21,7 +21,16 @@ export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState('company');
   const [saved, setSaved] = useState(false);
 
-  const isAdmin = profile?.role === 'admin' || profile?.role === 'director' || (Array.isArray(profile?.roles) && profile.roles.includes('admin'));
+  const getRoles = () => {
+    if (!profile) return [];
+    if (Array.isArray(profile.roles)) return profile.roles;
+    if (typeof profile.roles === 'string' && profile.roles.startsWith('[')) {
+      try { return JSON.parse(profile.roles); } catch { return []; }
+    }
+    return [];
+  };
+
+  const isAdmin = profile?.role === 'admin' || profile?.role === 'director' || getRoles().includes('admin');
 
   const tabs = [
     { id: 'company', label: 'بيانات الشركة', icon: Building },

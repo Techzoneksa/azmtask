@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { DataProvider, useData } from './context/DataContext';
+import { ThemeProvider } from './context/ThemeContext';
 import Login from './screens/Login';
 import Dashboard from './screens/Dashboard';
 import TodayTasks from './screens/TodayTasks';
@@ -22,7 +23,7 @@ function ProtectedRoute({ children }) {
   
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-900">
         <div className="animate-pulse">
           <div className="w-12 h-12 bg-azm-green rounded-xl"></div>
         </div>
@@ -65,11 +66,13 @@ function AppRoutes() {
 export default function App() {
   return (
     <BrowserRouter>
-      <AuthProvider>
-        <DataProvider>
-          <AppRoutes />
-        </DataProvider>
-      </AuthProvider>
+      <ThemeProvider>
+        <AuthProvider>
+          <DataProvider>
+            <AppRoutes />
+          </DataProvider>
+        </AuthProvider>
+      </ThemeProvider>
     </BrowserRouter>
   );
 }

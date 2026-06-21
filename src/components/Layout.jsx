@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Outlet, NavLink, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useData } from '../context/DataContext';
+import { useTheme } from '../context/ThemeContext';
 import { 
   LayoutDashboard, 
   CalendarCheck, 
@@ -17,7 +18,9 @@ import {
   Bot,
   LogOut,
   Menu,
-  X
+  X,
+  Moon,
+  Sun
 } from 'lucide-react';
 
 const navItems = [
@@ -47,6 +50,7 @@ const mainNavItems = [
 export default function Layout() {
   const { user, logout } = useAuth();
   const { data } = useData();
+  const { isDark, toggleTheme } = useTheme();
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   
@@ -58,25 +62,33 @@ export default function Layout() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
       {/* Mobile Header */}
-      <header className="md:hidden fixed top-0 left-0 right-0 bg-white border-b border-gray-100 z-40 px-4 py-3">
+      <header className="md:hidden fixed top-0 left-0 right-0 bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 z-40 px-4 py-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-azm-green rounded-xl flex items-center justify-center">
               <span className="text-white font-bold text-lg">ع</span>
             </div>
             <div>
-              <h1 className="font-semibold text-gray-800">عزم</h1>
-              <p className="text-xs text-gray-500">{user?.position}</p>
+              <h1 className="font-semibold text-slate-800 dark:text-slate-100">عزم</h1>
+              <p className="text-xs text-slate-500 dark:text-slate-400">{user?.position}</p>
             </div>
           </div>
-          <button 
-            onClick={() => setSidebarOpen(true)}
-            className="w-10 h-10 rounded-xl bg-gray-50 flex items-center justify-center"
-          >
-            <Menu className="w-5 h-5 text-gray-600" />
-          </button>
+          <div className="flex items-center gap-2">
+            <button 
+              onClick={toggleTheme}
+              className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-700 flex items-center justify-center"
+            >
+              {isDark ? <Sun className="w-5 h-5 text-amber-500" /> : <Moon className="w-5 h-5 text-slate-600" />}
+            </button>
+            <button 
+              onClick={() => setSidebarOpen(true)}
+              className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-700 flex items-center justify-center"
+            >
+              <Menu className="w-5 h-5 text-slate-600 dark:text-slate-300" />
+            </button>
+          </div>
         </div>
       </header>
 

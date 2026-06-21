@@ -66,7 +66,16 @@ export default function Attendance() {
       .slice(0, 30);
   };
 
-  const isDirector = profile?.role === 'admin' || profile?.role === 'director' || (Array.isArray(profile?.roles) && profile.roles.includes('admin'));
+  const getRoles = () => {
+    if (!profile) return [];
+    if (Array.isArray(profile.roles)) return profile.roles;
+    if (typeof profile.roles === 'string' && profile.roles.startsWith('[')) {
+      try { return JSON.parse(profile.roles); } catch { return []; }
+    }
+    return [];
+  };
+
+  const isDirector = profile?.role === 'admin' || profile?.role === 'director' || getRoles().includes('admin');
 
   return (
     <div className="space-y-6 animate-fade-in">

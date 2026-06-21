@@ -12,7 +12,16 @@ export default function Obstacles() {
   const { user, profile } = useAuth();
   const { data, addBlocker, resolveBlocker } = useData();
   
-  const canResolve = profile?.role === 'admin' || profile?.role === 'director' || (Array.isArray(profile?.roles) && profile.roles.includes('admin'));
+  const getRoles = () => {
+    if (!profile) return [];
+    if (Array.isArray(profile.roles)) return profile.roles;
+    if (typeof profile.roles === 'string' && profile.roles.startsWith('[')) {
+      try { return JSON.parse(profile.roles); } catch { return []; }
+    }
+    return [];
+  };
+  
+  const canResolve = profile?.role === 'admin' || profile?.role === 'director' || getRoles().includes('admin');
   const [showAddModal, setShowAddModal] = useState(false);
   const [newObstacle, setNewObstacle] = useState({ title: '', description: '', stageId: '', priority: 'medium' });
 
