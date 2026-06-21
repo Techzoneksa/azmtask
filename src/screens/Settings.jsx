@@ -270,7 +270,7 @@ export default function SettingsPage() {
                           <Shield className="w-3 h-3 ml-1" />
                           مدير العمليات
                         </span>
-                        <span className="badge badge-purple">Admin + Ops</span>
+                        <span className="badge badge-blue">Admin</span>
                       </div>
                     </div>
                   </div>
