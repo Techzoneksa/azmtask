@@ -70,9 +70,9 @@ export default function Layout() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
-      {/* Mobile Header */}
-      <header className="md:hidden fixed top-0 left-0 right-0 bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 z-40 px-4 py-3">
+    <div className="flex flex-col h-screen bg-slate-50 dark:bg-slate-900 overflow-hidden">
+      {/* Mobile Header - fixed at top, doesn't scroll */}
+      <header className="md:hidden flex-shrink-0 fixed top-0 left-0 right-0 bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 z-40 px-4 py-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-azm-green rounded-xl flex items-center justify-center overflow-hidden">
@@ -226,15 +226,15 @@ export default function Layout() {
         </div>
       </aside>
 
-      {/* Main Content */}
-      <main className="md:mr-64 pt-16 md:pt-0">
+      {/* Main Content - scrollable */}
+      <main className="flex-1 md:mr-64 pt-16 md:pt-0 overflow-y-auto">
         <div className="page-container">
           <Outlet />
         </div>
       </main>
 
-      {/* Mobile Bottom Navigation */}
-      <nav className="md:hidden bottom-nav">
+      {/* Mobile Bottom Navigation - fixed at bottom, doesn't scroll */}
+      <nav className="md:hidden flex-shrink-0 bottom-nav">
         <div className="flex items-center justify-around">
           {mainNavItems.slice(0, 5).map((item) => (
             <NavLink

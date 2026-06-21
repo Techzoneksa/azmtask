@@ -14,20 +14,23 @@
     width: 100%;
     max-width: 100%;
     overflow-x: hidden;
-    overscroll-behavior-x: contain;
+    overflow-y: auto;
+    overscroll-behavior: contain;
   }
   
   html {
     font-family: 'IBM Plex Sans Arabic', 'Tajawal', 'Cairo', sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    height: 100%;
   }
   
   body {
     @apply bg-slate-50 text-slate-800;
-    overscroll-behavior: none;
+    overscroll-behavior: auto;
     -webkit-overflow-scrolling: touch;
     font-family: 'IBM Plex Sans Arabic', 'Tajawal', 'Cairo', sans-serif;
+    height: 100%;
   }
   
   input, textarea, select, button {
@@ -257,7 +260,8 @@
   }
   
   .page-container {
-    @apply min-h-screen pb-24 pt-4 px-4;
+    @apply min-h-full pb-24 pt-4 px-4;
+    min-height: calc(100vh - 64px);
   }
   
   .progress-bar {
