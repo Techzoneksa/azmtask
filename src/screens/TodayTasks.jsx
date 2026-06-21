@@ -176,9 +176,8 @@ export default function TodayTasks() {
         </div>
       </div>
 
-      {/* Tabs - Horizontal scroll on mobile */}
-      <div className="overflow-x-auto -mx-4 px-4 hide-scrollbar">
-        <div className="flex gap-2 min-w-max">
+      {/* Tabs */}
+      <div className="flex gap-2 flex-wrap">
           {tabs.map(tab => (
             <button
               key={tab.id}
@@ -197,7 +196,6 @@ export default function TodayTasks() {
               </span>
             </button>
           ))}
-        </div>
       </div>
 
       {/* Task List as Cards */}

@@ -152,6 +152,14 @@
     background: rgba(148, 163, 184, 0.55);
   }
   
+  .dark .kanban-scroll::-webkit-scrollbar-thumb {
+    background: rgba(100, 116, 139, 0.4);
+  }
+  
+  .dark .kanban-scroll::-webkit-scrollbar-thumb:hover {
+    background: rgba(100, 116, 139, 0.6);
+  }
+  
   /* Kanban column */
   .kanban-column {
     min-width: 300px;

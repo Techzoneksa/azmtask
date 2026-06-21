@@ -129,8 +129,7 @@ export default function SettingsPage() {
       </div>
 
       {/* Tabs */}
-      <div className="overflow-x-auto -mx-4 px-4 hide-scrollbar">
-        <div className="flex gap-2 min-w-max">
+      <div className="flex gap-2 flex-wrap">
           {tabs.map(tab => {
             const Icon = tab.icon;
             return (
@@ -154,7 +153,6 @@ export default function SettingsPage() {
               </button>
             );
           })}
-        </div>
       </div>
 
       {/* Tab Content */}

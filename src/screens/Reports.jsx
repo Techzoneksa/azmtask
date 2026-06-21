@@ -191,13 +191,12 @@ export default function Reports() {
         </div>
         <div>
           <h1 className="text-2xl font-bold text-gray-800">التقارير</h1>
-          <p className="text-gray-500">عرض和分析 البيانات</p>
+          <p className="text-gray-500">عرض وتحليل البيانات</p>
         </div>
       </div>
 
       {/* Report Types */}
-      <div className="overflow-x-auto -mx-4 px-4 hide-scrollbar">
-        <div className="flex gap-2 min-w-max">
+      <div className="flex gap-2 flex-wrap">
           {reportTypes.map(report => {
             const Icon = report.icon;
             return (
@@ -215,7 +214,6 @@ export default function Reports() {
               </button>
             );
           })}
-        </div>
       </div>
 
       {/* Report Content */}
