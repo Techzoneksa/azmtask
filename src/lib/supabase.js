@@ -3,15 +3,32 @@ import { createClient } from '@supabase/supabase-js'
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || ''
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || ''
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-  auth: {
-    autoRefreshToken: true,
-    persistSession: true,
-    detectSessionInUrl: true
+if (!supabaseUrl || !supabaseAnonKey) {
+  console.error('Missing Supabase environment variables. Please set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY')
+}
+
+export const supabase = createClient(
+  supabaseUrl || 'https://placeholder.supabase.co', 
+  supabaseAnonKey || 'placeholder-key',
+  {
+    auth: {
+      autoRefreshToken: true,
+      persistSession: true,
+      detectSessionInUrl: true
+    },
+    realtime: {
+      params: {
+        eventsPerSecond: 10
+      }
+    }
   }
-})
+)
 
 export async function signIn(email, password) {
+  if (!supabaseUrl || !supabaseAnonKey) {
+    throw new Error('Supabase not configured. Please set environment variables.')
+  }
+  
   const { data, error } = await supabase.auth.signInWithPassword({
     email,
     password
@@ -32,6 +49,10 @@ export async function getCurrentUser() {
 }
 
 export async function getProfile(userId) {
+  if (!supabaseUrl || !supabaseAnonKey) {
+    throw new Error('Supabase not configured')
+  }
+  
   const { data, error } = await supabase
     .from('profiles')
     .select('*')
