@@ -392,6 +392,23 @@ export function DataProvider({ children }) {
     }
   };
 
+  const updatePhase = async (phaseId, updates) => {
+    try {
+      const { error } = await supabase
+        .from('setup_phases')
+        .update({ ...updates, updated_at: new Date().toISOString() })
+        .eq('id', phaseId);
+
+      if (error) throw error;
+
+      await fetchAllData();
+      return { success: true };
+    } catch (error) {
+      console.error('Error updating phase:', error);
+      return { success: false, error: error.message };
+    }
+  };
+
   const refreshData = () => {
     fetchAllData();
   };
@@ -401,6 +418,7 @@ export function DataProvider({ children }) {
       data, 
       isLoading,
       updateTask,
+      updatePhase,
       addTask,
       addTaskLog,
       addNote,

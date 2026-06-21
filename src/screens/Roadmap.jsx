@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useData } from '../context/DataContext';
+import { useFeedback } from '../context/FeedbackContext';
+import PhaseEditModal from '../components/PhaseEditModal';
 import { 
   Map, 
   CheckCircle,
@@ -17,7 +19,8 @@ import {
   PlayCircle,
   Rocket,
   Stamp,
-  ChevronLeft
+  ChevronLeft,
+  Pencil
 } from 'lucide-react';
 
 const iconMap = {
@@ -36,7 +39,9 @@ const iconMap = {
 
 export default function Roadmap() {
   const { data } = useData();
+  const { success } = useFeedback();
   const [selectedStage, setSelectedStage] = useState(null);
+  const [editingPhase, setEditingPhase] = useState(null);
 
   const getStageStats = (stageId) => {
     const stageTasks = data.tasks.filter(t => t.stage_id === stageId);
@@ -181,49 +186,71 @@ export default function Roadmap() {
           const IconComponent = iconMap[stage.icon] || FileText;
           
           return (
-            <button
+            <div
               key={stage.id}
-              onClick={() => setSelectedStage(stage)}
-              className="card text-right hover:shadow-lg transition-shadow"
+              className="card text-right hover:shadow-lg transition-shadow relative"
               style={{ borderTopColor: stage.color, borderTopWidth: 4 }}
             >
-              <div className="flex items-start gap-4">
-                <div 
-                  className="w-12 h-12 rounded-xl flex items-center justify-center"
-                  style={{ backgroundColor: stage.color + '20' }}
-                >
-                  <IconComponent className="w-6 h-6" style={{ color: stage.color }} />
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setEditingPhase(stage);
+                }}
+                className="absolute top-3 left-3 w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-700 flex items-center justify-center hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors z-10"
+              >
+                <Pencil className="w-4 h-4 text-slate-500 dark:text-slate-400" />
+              </button>
+              <button
+                onClick={() => setSelectedStage(stage)}
+                className="w-full text-right"
+              >
+                <div className="flex items-start gap-4">
+                  <div 
+                    className="w-12 h-12 rounded-xl flex items-center justify-center"
+                    style={{ backgroundColor: stage.color + '20' }}
+                  >
+                    <IconComponent className="w-6 h-6" style={{ color: stage.color }} />
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center justify-between mb-2">
+                      <h3 className="font-semibold text-gray-800 dark:text-slate-100">{stage.name}</h3>
+                      <span className="text-xs text-gray-400 dark:text-slate-500">#{index + 1}</span>
+                    </div>
+                    
+                    <div className="flex items-center gap-2 mb-3">
+                      <span className="text-sm text-gray-500 dark:text-slate-400">{stats.total} مهمة</span>
+                      <span className="text-green-500 text-sm">• {stats.completed} مكتمل</span>
+                    </div>
+                    
+                    <div className="progress-bar h-2 mb-2">
+                      <div 
+                        className="progress-fill" 
+                        style={{ width: `${stats.progress}%`, backgroundColor: stage.color }} 
+                      />
+                    </div>
+                    
+                    <div className="flex items-center justify-between">
+                      <span className="text-lg font-bold" style={{ color: stage.color }}>{stats.progress}%</span>
+                      {stats.delayed > 0 && (
+                        <span className="badge badge-red text-xs">{stats.delayed} متعثر</span>
+                      )}
+                    </div>
+                  </div>
                 </div>
-                <div className="flex-1">
-                  <div className="flex items-center justify-between mb-2">
-                    <h3 className="font-semibold text-gray-800">{stage.name}</h3>
-                    <span className="text-xs text-gray-400">#{index + 1}</span>
-                  </div>
-                  
-                  <div className="flex items-center gap-2 mb-3">
-                    <span className="text-sm text-gray-500">{stats.total} مهمة</span>
-                    <span className="text-green-500 text-sm">• {stats.completed} مكتمل</span>
-                  </div>
-                  
-                  <div className="progress-bar h-2 mb-2">
-                    <div 
-                      className="progress-fill" 
-                      style={{ width: `${stats.progress}%`, backgroundColor: stage.color }} 
-                    />
-                  </div>
-                  
-                  <div className="flex items-center justify-between">
-                    <span className="text-lg font-bold" style={{ color: stage.color }}>{stats.progress}%</span>
-                    {stats.delayed > 0 && (
-                      <span className="badge badge-red text-xs">{stats.delayed} متعثر</span>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </button>
+              </button>
+            </div>
           );
         })}
       </div>
+
+      {/* Edit Phase Modal */}
+      {editingPhase && (
+        <PhaseEditModal
+          phase={editingPhase}
+          onClose={() => setEditingPhase(null)}
+          onSuccess={() => success('تم تحديث المرحلة بنجاح')}
+        />
+      )}
     </div>
   );
 }

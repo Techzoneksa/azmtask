@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useData } from '../context/DataContext';
 import { useFeedback } from '../context/FeedbackContext';
+import TaskEditModal from '../components/TaskEditModal';
 import { 
   LayoutGrid, 
   ChevronLeft,
@@ -13,10 +14,11 @@ import {
   XCircle,
   Plus,
   GripVertical,
-  X
+  X,
+  Pencil
 } from 'lucide-react';
 
-function TaskCard({ task, stages, onDragStart, isDragging = false }) {
+function TaskCard({ task, stages, onDragStart, isDragging = false, onEdit }) {
   const stage = stages.find(s => s.id === task.stage_id);
   
   const statusBadgeClass = {
@@ -44,12 +46,24 @@ function TaskCard({ task, stages, onDragStart, isDragging = false }) {
       <div className="flex items-start gap-2 mb-2">
         <GripVertical className="w-4 h-4 text-slate-400 flex-shrink-0 mt-1 cursor-move" />
         <div className="flex-1 min-w-0">
-          <h4 className="font-medium text-slate-800 text-sm line-clamp-2">{task.title}</h4>
+          <h4 className="font-medium text-slate-800 dark:text-slate-100 text-sm line-clamp-2">{task.title}</h4>
         </div>
+        {onEdit && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              e.preventDefault();
+              onEdit(task);
+            }}
+            className="w-7 h-7 rounded-lg bg-slate-100 dark:bg-slate-700 flex items-center justify-center hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors flex-shrink-0"
+          >
+            <Pencil className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" />
+          </button>
+        )}
       </div>
       
       {task.description && (
-        <p className="text-xs text-slate-500 mb-3 line-clamp-2 mr-6">{task.description}</p>
+        <p className="text-xs text-slate-500 dark:text-slate-400 mb-3 line-clamp-2 mr-6">{task.description}</p>
       )}
       
       <div className="flex items-center gap-2 mr-6 flex-wrap">
@@ -60,7 +74,7 @@ function TaskCard({ task, stages, onDragStart, isDragging = false }) {
           {stage?.name}
         </span>
         <span className={`badge text-xs ${priorityBadgeClass[task.priority] || 'badge-gray'}`}>
-          {task.priority === 'high' ? 'عالية' : task.priority === 'medium' ? 'متوسطة' : 'منخفضة'}
+          {task.priority === 'high' ? 'عالية' : task.priority === 'medium' ? 'متوسطة' : task.priority === 'low' ? 'منخفضة' : task.priority === 'urgent' ? 'عاجلة' : task.priority}
         </span>
       </div>
       
@@ -68,7 +82,7 @@ function TaskCard({ task, stages, onDragStart, isDragging = false }) {
         <div className="flex-1 progress-bar h-2">
           <div className="progress-fill" style={{ width: `${task.progress}%` }} />
         </div>
-        <span className="text-xs text-slate-500 font-medium">{task.progress}%</span>
+        <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">{task.progress}%</span>
       </div>
       
       {task.priority === 'high' && (
@@ -78,7 +92,7 @@ function TaskCard({ task, stages, onDragStart, isDragging = false }) {
   );
 }
 
-function KanbanColumn({ status, tasks, stages, title, color, bg, border, icon: Icon, onDrop, onDragStart, draggedTask }) {
+function KanbanColumn({ status, tasks, stages, title, color, bg, border, icon: Icon, onDrop, onDragStart, draggedTask, onEdit }) {
   return (
     <div 
       className="kanban-column"
@@ -91,7 +105,7 @@ function KanbanColumn({ status, tasks, stages, title, color, bg, border, icon: I
             <div className={`w-8 h-8 rounded-lg flex items-center justify-center`} style={{ backgroundColor: bg }}>
               <Icon className="w-4 h-4" style={{ color }} />
             </div>
-            <h3 className="font-semibold text-slate-700">{title}</h3>
+            <h3 className="font-semibold text-slate-700 dark:text-slate-200">{title}</h3>
           </div>
           <span className="task-counter">{tasks.length}</span>
         </div>
@@ -100,14 +114,14 @@ function KanbanColumn({ status, tasks, stages, title, color, bg, border, icon: I
       
       <div className="space-y-3 min-h-[200px]">
         {tasks.map(task => (
-          <Link key={task.id} to={`/task/${task.id}`}>
-            <TaskCard 
-              task={task} 
-              stages={stages}
-              onDragStart={onDragStart}
-              isDragging={draggedTask?.id === task.id}
-            />
-          </Link>
+          <TaskCard 
+            key={task.id}
+            task={task} 
+            stages={stages}
+            onDragStart={onDragStart}
+            isDragging={draggedTask?.id === task.id}
+            onEdit={onEdit}
+          />
         ))}
         {tasks.length === 0 && (
           <div className="text-center py-8 text-gray-400 text-sm">
@@ -124,6 +138,7 @@ export default function Kanban() {
   const { data, updateTask, addTask } = useData();
   const { success, error, warning } = useFeedback();
   const [showAddModal, setShowAddModal] = useState(false);
+  const [editingTask, setEditingTask] = useState(null);
   const [newTask, setNewTask] = useState({
     title: '',
     description: '',
@@ -146,6 +161,15 @@ export default function Kanban() {
   
   const isAdmin = profile?.role === 'admin' || profile?.role === 'director' || getRoles().includes('admin');
   const [draggedTask, setDraggedTask] = useState(null);
+
+  const handleEditTask = (task) => {
+    setEditingTask(task);
+  };
+
+  const handleEditSuccess = () => {
+    setEditingTask(null);
+    success('تم تحديث المهمة بنجاح');
+  };
 
   const statuses = [
     { id: 'new', name: 'جديد', color: '#0369A1', bg: '#E0F2FE', border: '#7DD3FC', icon: Clock },
@@ -256,6 +280,7 @@ export default function Kanban() {
             onDrop={handleDrop}
             onDragStart={handleDragStart}
             draggedTask={draggedTask}
+            onEdit={handleEditTask}
           />
         ))}
       </div>
@@ -384,6 +409,15 @@ export default function Kanban() {
             </form>
           </div>
         </div>
+      )}
+
+      {/* Edit Task Modal */}
+      {editingTask && (
+        <TaskEditModal
+          task={editingTask}
+          onClose={() => setEditingTask(null)}
+          onSuccess={handleEditSuccess}
+        />
       )}
     </div>
   );
