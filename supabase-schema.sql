@@ -220,9 +220,10 @@ create policy "Directors can manage settings" on public.settings for all using (
 -- =============================================
 
 -- Insert profiles (users)
+-- Password for both users: Sultan2030@%
 insert into public.profiles (id, name, email, password, role, position) values
-  ('11111111-1111-1111-1111-111111111111', 'الأستاذ سلطان', 'sultan@azm.sa', 'Azm2026Director!', 'director', 'المدير العام'),
-  ('22222222-2222-2222-2222-222222222222', 'عبدالرحمن', 'abdulrahman@azm.sa', 'Azm2026Operations!', 'operations', 'مدير العمليات')
+  ('11111111-1111-1111-1111-111111111111', 'الأستاذ سلطان', 'sultan@azm.sa', 'Sultan2030@%', 'director', 'المدير العام'),
+  ('22222222-2222-2222-2222-222222222222', 'عبدالرحمن', 'abdulrahman@azm.sa', 'Sultan2030@%', 'operations', 'مدير العمليات')
 on conflict (email) do nothing;
 
 -- Insert setup phases (11 stages)
