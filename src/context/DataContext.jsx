@@ -223,16 +223,33 @@ export function DataProvider({ children }) {
   const checkIn = async () => {
     try {
       const now = new Date();
+      const today = now.toISOString().split('T')[0];
+      
+      const { data: existing } = await supabase
+        .from('attendance')
+        .select('*')
+        .eq('user_id', user?.id)
+        .eq('work_date', today)
+        .single();
+      
+      if (existing) {
+        return { success: false, error: 'تم تسجيل الحضور مسبقًا' };
+      }
+      
       const newRecord = {
         id: 'att-' + Date.now(),
         user_id: user?.id,
         user_name: profile?.name,
-        date: now.toISOString(),
-        check_in: now.toISOString()
+        work_date: today,
+        check_in_time: now.toISOString(),
+        status: 'present'
       };
 
       const { error } = await supabase.from('attendance').insert(newRecord);
-      if (error) throw error;
+      if (error) {
+        console.error('Attendance check-in error:', error);
+        throw error;
+      }
 
       await supabase.from('notifications').insert({
         id: 'notif-' + Date.now(),
@@ -261,19 +278,27 @@ export function DataProvider({ children }) {
         .single();
 
       if (!record) return { success: false, error: 'Record not found' };
+      
+      if (record.check_out_time) {
+        return { success: false, error: 'تم تسجيل الخروج مسبقًا' };
+      }
 
-      const checkIn = new Date(record.check_in);
-      const hours = (now - checkIn) / (1000 * 60 * 60);
+      const checkInTime = new Date(record.check_in_time);
+      const hours = (now - checkInTime) / (1000 * 60 * 60);
 
       const { error } = await supabase
         .from('attendance')
         .update({
-          check_out: now.toISOString(),
-          total_hours: Math.round(hours * 10) / 10
+          check_out_time: now.toISOString(),
+          total_hours: Math.round(hours * 10) / 10,
+          updated_at: now.toISOString()
         })
         .eq('id', attendanceId);
-
-      if (error) throw error;
+        
+      if (error) {
+        console.error('Attendance check-out error:', error);
+        throw error;
+      }
 
       await supabase.from('notifications').insert({
         id: 'notif-' + Date.now(),

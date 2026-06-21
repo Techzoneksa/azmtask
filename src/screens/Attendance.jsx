@@ -16,9 +16,9 @@ export default function Attendance() {
   const [loading, setLoading] = useState(false);
 
   const getTodayRecord = () => {
-    const today = new Date().toDateString();
+    const today = new Date().toISOString().split('T')[0];
     return data.attendance?.find(a => 
-      new Date(a.date).toDateString() === today && a.user_id === user?.id
+      a.work_date === today && a.user_id === user?.id
     );
   };
 
@@ -52,9 +52,9 @@ export default function Attendance() {
   };
 
   const getTodayStats = () => {
-    const today = new Date().toDateString();
+    const today = new Date().toISOString().split('T')[0];
     const todayRecords = data.attendance?.filter(a => 
-      new Date(a.date).toDateString() === today
+      a.work_date === today
     ) || [];
     
     const totalHours = todayRecords.reduce((sum, r) => sum + (r.total_hours || 0), 0);
@@ -108,13 +108,13 @@ export default function Attendance() {
               <div className="bg-green-50 rounded-xl p-4 text-center">
                 <LogIn className="w-6 h-6 text-green-600 mx-auto mb-2" />
                 <div className="text-sm text-gray-500">وقت الحضور</div>
-                <div className="text-xl font-bold text-green-700">{formatTime(todayRecord.check_in)}</div>
+                <div className="text-xl font-bold text-green-700">{formatTime(todayRecord.check_in_time)}</div>
               </div>
-              <div className={`${todayRecord.check_out ? 'bg-blue-50' : 'bg-orange-50'} rounded-xl p-4 text-center`}>
-                <LogOut className={`w-6 h-6 mx-auto mb-2 ${todayRecord.check_out ? 'text-blue-600' : 'text-orange-600'}`} />
+              <div className={`${todayRecord.check_out_time ? 'bg-blue-50' : 'bg-orange-50'} rounded-xl p-4 text-center`}>
+                <LogOut className={`w-6 h-6 mx-auto mb-2 ${todayRecord.check_out_time ? 'text-blue-600' : 'text-orange-600'}`} />
                 <div className="text-sm text-gray-500">وقت الانصراف</div>
-                <div className={`text-xl font-bold ${todayRecord.check_out ? 'text-blue-700' : 'text-orange-700'}`}>
-                  {todayRecord.check_out ? formatTime(todayRecord.check_out) : 'لم يسجل'}
+                <div className={`text-xl font-bold ${todayRecord.check_out_time ? 'text-blue-700' : 'text-orange-700'}`}>
+                  {todayRecord.check_out_time ? formatTime(todayRecord.check_out_time) : 'لم يسجل'}
                 </div>
               </div>
             </div>
