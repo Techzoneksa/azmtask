@@ -29,7 +29,10 @@ export default function Obstacles() {
   const resolvedObstacles = data.blockers?.filter(o => o.status === 'resolved') || [];
 
   const handleAddObstacle = async () => {
-    if (!newObstacle.title.trim()) return;
+    if (!newObstacle.title.trim()) {
+      alert('يرجى إدخال عنوان التحدي');
+      return;
+    }
     
     const result = await addBlocker({
       title: newObstacle.title,
@@ -41,6 +44,10 @@ export default function Obstacles() {
     if (result.success) {
       setNewObstacle({ title: '', description: '', stageId: '', priority: 'medium' });
       setShowAddModal(false);
+      alert('تمت إضافة التحدي التشغيلي');
+    } else {
+      console.error('Blocker save error:', result.error);
+      alert('تعذر حفظ التحدي التشغيلي، تحقق من الحقول المطلوبة.');
     }
   };
 
@@ -98,42 +105,43 @@ export default function Obstacles() {
       {/* Add Modal */}
       {showAddModal && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl w-full max-w-md p-6">
+          <div className="bg-white dark:bg-slate-800 rounded-2xl w-full max-w-md p-6">
             <div className="flex items-center justify-between mb-6">
-              <h3 className="text-lg font-semibold text-gray-800">إضافة تحدٍ تشغيلي جديد</h3>
-              <button onClick={() => setShowAddModal(false)} className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center">
-                <X className="w-4 h-4" />
+              <h3 className="text-lg font-semibold text-gray-800 dark:text-slate-100">إضافة تحدٍ تشغيلي جديد</h3>
+              <button onClick={() => setShowAddModal(false)} className="w-8 h-8 rounded-lg bg-gray-100 dark:bg-slate-700 flex items-center justify-center">
+                <X className="w-4 h-4 dark:text-slate-300" />
               </button>
             </div>
             
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">العنوان</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">العنوان *</label>
                 <input
                   type="text"
                   value={newObstacle.title}
                   onChange={(e) => setNewObstacle({ ...newObstacle, title: e.target.value })}
-                  className="input-field"
+                  className="input-field dark:bg-slate-700 dark:text-slate-100 dark:border-slate-600 dark:placeholder-slate-400"
                   placeholder="مثال: ترخيص ناقص"
+                  required
                 />
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">الوصف</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">الوصف</label>
                 <textarea
                   value={newObstacle.description}
                   onChange={(e) => setNewObstacle({ ...newObstacle, description: e.target.value })}
-                  className="input-field min-h-[100px]"
+                  className="input-field min-h-[100px] dark:bg-slate-700 dark:text-slate-100 dark:border-slate-600 dark:placeholder-slate-400"
                   placeholder="وصف تفصيلي للمشكلة..."
                 />
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">المرحلة</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">المرحلة</label>
                 <select
                   value={newObstacle.stageId}
                   onChange={(e) => setNewObstacle({ ...newObstacle, stageId: e.target.value })}
-                  className="input-field"
+                  className="input-field dark:bg-slate-700 dark:text-slate-100 dark:border-slate-600"
                 >
                   <option value="">اختر المرحلة</option>
                   {data.stages?.map(stage => (
@@ -143,11 +151,11 @@ export default function Obstacles() {
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">الأولوية</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">الأولوية</label>
                 <select
                   value={newObstacle.priority}
                   onChange={(e) => setNewObstacle({ ...newObstacle, priority: e.target.value })}
-                  className="input-field"
+                  className="input-field dark:bg-slate-700 dark:text-slate-100 dark:border-slate-600"
                 >
                   <option value="high">عالية</option>
                   <option value="medium">متوسطة</option>
@@ -174,13 +182,13 @@ export default function Obstacles() {
           {openObstacles.map(obstacle => {
             const stage = getStageById(obstacle.stage_id);
             return (
-              <div key={obstacle.id} className="p-4 bg-red-50 rounded-xl border border-red-100">
+              <div key={obstacle.id} className="p-4 bg-red-50 dark:bg-red-900/20 rounded-xl border border-red-100 dark:border-red-900/30">
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-2">
                       <span className={`badge ${
-                        obstacle.priority === 'high' ? 'badge-red' :
-                        obstacle.priority === 'medium' ? 'badge-orange' : 'badge-green'
+                        obstacle.priority === 'high' ? 'badge-priority-high' :
+                        obstacle.priority === 'medium' ? 'badge-priority-medium' : 'badge-priority-low'
                       }`}>
                         {obstacle.priority === 'high' ? 'عالية' : obstacle.priority === 'medium' ? 'متوسطة' : 'منخفضة'}
                       </span>
@@ -190,15 +198,15 @@ export default function Obstacles() {
                         </span>
                       )}
                     </div>
-                    <h4 className="font-semibold text-gray-800 mb-1">{obstacle.title}</h4>
-                    <p className="text-sm text-gray-600">{obstacle.description}</p>
-                    <p className="text-xs text-gray-400 mt-2">تاريخ التسجيل: {formatDate(obstacle.created_at)}</p>
+                    <h4 className="font-semibold text-gray-800 dark:text-slate-100 mb-1">{obstacle.title}</h4>
+                    <p className="text-sm text-gray-600 dark:text-slate-300">{obstacle.description}</p>
+                    <p className="text-xs text-gray-400 dark:text-slate-500 mt-2">تاريخ التسجيل: {formatDate(obstacle.created_at)}</p>
                   </div>
                   
                   {canResolve && (
                     <button 
                       onClick={() => handleResolveObstacle(obstacle.id)}
-                      className="btn-secondary text-green-600 border-green-200 hover:bg-green-50 flex items-center gap-2 text-sm"
+                      className="btn-secondary text-green-600 dark:text-green-400 border-green-200 dark:border-green-900/30 hover:bg-green-50 dark:hover:bg-green-900/20 flex items-center gap-2 text-sm"
                     >
                       <CheckCircle className="w-4 h-4" />
                       تم الحل
