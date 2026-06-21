@@ -44,7 +44,7 @@ export default function Roadmap() {
   const [editingPhase, setEditingPhase] = useState(null);
 
   const getStageStats = (stageId) => {
-    const stageTasks = data.tasks.filter(t => t.stage_id === stageId);
+    const stageTasks = data.tasks.filter(t => t.phase_id === stageId);
     const completed = stageTasks.filter(t => t.status === 'completed').length;
     const delayed = stageTasks.filter(t => t.status === 'blocked' || t.status === 'delayed').length;
     const progress = stageTasks.length > 0 
@@ -55,7 +55,7 @@ export default function Roadmap() {
   };
 
   const getStageTasks = (stageId) => {
-    return data.tasks.filter(t => t.stage_id === stageId);
+    return data.tasks.filter(t => t.phase_id === stageId);
   };
 
   const sortedStages = [...data.stages].sort((a, b) => a.order - b.order);

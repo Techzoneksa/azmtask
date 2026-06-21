@@ -185,7 +185,7 @@ export default function Obstacles() {
         
         <div className="space-y-4">
           {openObstacles.map(obstacle => {
-            const stage = getStageById(obstacle.stage_id);
+            const stage = getStageById(obstacle.phase_id);
             return (
               <div key={obstacle.id} className="p-4 bg-red-50 dark:bg-red-900/20 rounded-xl border border-red-100 dark:border-red-900/30">
                 <div className="flex items-start justify-between gap-4">
@@ -241,7 +241,7 @@ export default function Obstacles() {
           
           <div className="space-y-3">
             {resolvedObstacles.map(obstacle => {
-              const stage = getStageById(obstacle.stage_id);
+              const stage = getStageById(obstacle.phase_id);
               return (
                 <div key={obstacle.id} className="p-4 bg-green-50 rounded-xl border border-green-100 opacity-75">
                   <div className="flex items-center justify-between">

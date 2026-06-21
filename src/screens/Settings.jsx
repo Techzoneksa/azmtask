@@ -49,7 +49,7 @@ export default function SettingsPage() {
   ];
 
   const getStageStats = (stageId) => {
-    const stageTasks = data.tasks?.filter(t => t.stage_id === stageId) || [];
+    const stageTasks = data.tasks?.filter(t => t.phase_id === stageId) || [];
     const completed = stageTasks.filter(t => t.status === 'completed').length;
     const total = stageTasks.length;
     const progress = total > 0 ? Math.round((completed / total) * 100) : 0;

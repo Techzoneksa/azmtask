@@ -34,11 +34,11 @@ export function DataProvider({ children }) {
         notesRes,
         notificationsRes
       ] = await Promise.all([
-        supabase.from('setup_phases').select('*').order('order'),
+        supabase.from('setup_phases').select('*').order('sort_order', { ascending: true }),
         supabase.from('tasks').select('*'),
         supabase.from('blockers').select('*'),
         supabase.from('documents').select('*'),
-        supabase.from('attendance').select('*').order('date', { ascending: false }),
+        supabase.from('attendance').select('*').order('work_date', { ascending: false }),
         supabase.from('notes').select('*').order('created_at', { ascending: false }),
         supabase.from('notifications').select('*').eq('user_id', user.id).order('created_at', { ascending: false })
       ]);
@@ -118,7 +118,6 @@ export function DataProvider({ children }) {
         const assignedUserId = data.tasks.find(t => t.id === taskId)?.assigned_to;
         if (assignedUserId) {
           await supabase.from('notifications').insert({
-            id: 'notif-' + Date.now(),
             title: 'تمت الموافقة على المهمة',
             message: `تم اعتماد "${updatedTask.title}"`,
             user_id: assignedUserId,
@@ -143,11 +142,10 @@ export function DataProvider({ children }) {
         : new Date().toISOString();
       
       const newTask = {
-        id: 'task-' + Date.now(),
         title: taskData.title,
         description: taskData.description || '',
         status: taskData.status || 'new',
-        stage_id: taskData.stage_id || data.stages?.[0]?.id || null,
+        phase_id: taskData.phase_id || data.stages?.[0]?.id || null,
         assigned_to: taskData.assigned_to || user?.id,
         priority: taskData.priority || 'medium',
         due_date: dueDate,
@@ -172,7 +170,6 @@ export function DataProvider({ children }) {
   const addTaskLog = async (taskId, logEntry) => {
     try {
       await supabase.from('task_updates').insert({
-        id: 'log-' + Date.now(),
         task_id: taskId,
         action: logEntry.action,
         details: logEntry.details || null,
@@ -188,7 +185,6 @@ export function DataProvider({ children }) {
   const addNote = async (noteData) => {
     try {
       const { data: newNote, error } = await supabase.from('notes').insert({
-        id: 'note-' + Date.now(),
         title: noteData.title || 'ملاحظة جديدة',
         content: noteData.content,
         task_id: noteData.taskId || null,
@@ -205,7 +201,6 @@ export function DataProvider({ children }) {
         : '11111111-1111-1111-1111-111111111111';
 
       await supabase.from('notifications').insert({
-        id: 'notif-' + Date.now(),
         title: 'ملاحظة جديدة',
         message: `${profile?.name}: ${noteData.content.substring(0, 50)}...`,
         user_id: targetUserId,
@@ -237,7 +232,6 @@ export function DataProvider({ children }) {
       }
       
       const newRecord = {
-        id: 'att-' + Date.now(),
         user_id: user?.id,
         user_name: profile?.name,
         work_date: today,
@@ -252,7 +246,6 @@ export function DataProvider({ children }) {
       }
 
       await supabase.from('notifications').insert({
-        id: 'notif-' + Date.now(),
         title: 'تسجيل حضور',
         message: `تم تسجيل حضور ${profile?.name}`,
         user_id: '11111111-1111-1111-1111-111111111111',
@@ -301,7 +294,6 @@ export function DataProvider({ children }) {
       }
 
       await supabase.from('notifications').insert({
-        id: 'notif-' + Date.now(),
         title: 'تسجيل انصراف',
         message: `تم تسجيل انصراف ${profile?.name} - ${Math.round(hours * 10) / 10} ساعات`,
         user_id: '11111111-1111-1111-1111-111111111111',
@@ -319,10 +311,9 @@ export function DataProvider({ children }) {
   const addBlocker = async (blockerData) => {
     try {
       const { error } = await supabase.from('blockers').insert({
-        id: 'obs-' + Date.now(),
         title: blockerData.title,
         description: blockerData.description,
-        stage_id: blockerData.stageId || null,
+        phase_id: blockerData.stageId || null,
         priority: blockerData.priority,
         status: 'open'
       });
@@ -334,7 +325,6 @@ export function DataProvider({ children }) {
         : '11111111-1111-1111-1111-111111111111';
 
       await supabase.from('notifications').insert({
-        id: 'notif-' + Date.now(),
         title: 'تم إضافة تحدٍ تشغيلي جديد',
         message: `تم تسجيل تحدٍ تشغيلي: ${blockerData.title}`,
         user_id: targetUserId,
@@ -362,7 +352,6 @@ export function DataProvider({ children }) {
       if (error) throw error;
 
       await supabase.from('notifications').insert({
-        id: 'notif-' + Date.now(),
         title: 'تم حل التحدي التشغيلي',
         message: `تم إغلاق التحدي التشغيلي`,
         user_id: profile?.role === 'director' ? '22222222-2222-2222-2222-222222222222' : '11111111-1111-1111-1111-111111111111',

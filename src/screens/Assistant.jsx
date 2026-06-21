@@ -172,7 +172,7 @@ export default function Assistant() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="font-medium text-slate-800 text-sm truncate">{task.title}</p>
-                      <p className="text-xs text-slate-500 truncate">{data.stages.find(s => s.id === task.stage_id)?.name}</p>
+                      <p className="text-xs text-slate-500 truncate">{data.stages.find(s => s.id === task.phase_id)?.name}</p>
                     </div>
                   </Link>
                 ))}

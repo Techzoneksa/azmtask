@@ -27,7 +27,7 @@ export default function Reports() {
 
   const getStageProgress = () => {
     return data.stages.map(stage => {
-      const stageTasks = data.tasks?.filter(t => t.stage_id === stage.id) || [];
+      const stageTasks = data.tasks?.filter(t => t.phase_id === stage.id) || [];
       const completed = stageTasks.filter(t => t.status === 'completed').length;
       const progress = stageTasks.length > 0 
         ? Math.round(stageTasks.reduce((sum, t) => sum + t.progress, 0) / stageTasks.length)

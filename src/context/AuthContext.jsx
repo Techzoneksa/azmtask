@@ -19,7 +19,7 @@ export function AuthProvider({ children }) {
           const { data: profileData } = await supabase
             .from('profiles')
             .select('*')
-            .eq('id', session.user.id)
+            .eq('user_id', session.user.id)
             .single();
           
           if (profileData) {
@@ -42,7 +42,7 @@ export function AuthProvider({ children }) {
         const { data: profileData } = await supabase
           .from('profiles')
           .select('*')
-          .eq('id', session.user.id)
+          .eq('user_id', session.user.id)
           .single();
         
         if (profileData) {

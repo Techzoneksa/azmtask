@@ -239,9 +239,9 @@ export default function TodayTasks() {
                 
                 <div className="flex items-center gap-4 mt-3 flex-wrap">
                   <span className={`text-xs px-2 py-1 rounded-full`}
-                  style={{ backgroundColor: getStageById(task.stage_id)?.color + '20', color: getStageById(task.stage_id)?.color }}
+                  style={{ backgroundColor: getStageById(task.phase_id)?.color + '20', color: getStageById(task.phase_id)?.color }}
                   >
-                    {getStageById(task.stage_id)?.name}
+                    {getStageById(task.phase_id)?.name}
                   </span>
                   
                   <span className={`text-xs font-medium ${

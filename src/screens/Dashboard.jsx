@@ -34,7 +34,7 @@ export default function Dashboard() {
     const openObstacles = data.blockers?.filter(o => o.status === 'open').length || 0;
     
     const completedStages = data.stages.filter(stage => {
-      const stageTasks = data.tasks.filter(t => t.stage_id === stage.id);
+      const stageTasks = data.tasks.filter(t => t.phase_id === stage.id);
       return stageTasks.length > 0 && stageTasks.every(t => t.status === 'completed');
     }).length;
     
@@ -235,7 +235,7 @@ export default function Dashboard() {
               <div className="flex-1 min-w-0">
                 <p className="font-medium text-gray-800 truncate">{task.title}</p>
                 <p className="text-xs text-gray-500">
-                  المرحلة: {data.stages.find(s => s.id === task.stage_id)?.name}
+                  المرحلة: {data.stages.find(s => s.id === task.phase_id)?.name}
                 </p>
               </div>
               <ChevronLeft className="w-5 h-5 text-gray-400" />

@@ -19,7 +19,7 @@ import {
 } from 'lucide-react';
 
 function TaskCard({ task, stages, onDragStart, isDragging = false, onEdit }) {
-  const stage = stages.find(s => s.id === task.stage_id);
+  const stage = stages.find(s => s.id === task.phase_id);
   
   const statusBadgeClass = {
     'new': 'badge-new',
@@ -142,7 +142,7 @@ export default function Kanban() {
   const [newTask, setNewTask] = useState({
     title: '',
     description: '',
-    stage_id: '',
+    phase_id: '',
     assigned_to: user?.id || '',
     priority: 'medium',
     status: 'new',
@@ -225,7 +225,7 @@ export default function Kanban() {
       setNewTask({
         title: '',
         description: '',
-        stage_id: '',
+        phase_id: '',
         assigned_to: user?.id || '',
         priority: 'medium',
         status: 'new',
@@ -320,8 +320,8 @@ export default function Kanban() {
                 <div>
                   <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">المرحلة</label>
                   <select
-                    value={newTask.stage_id}
-                    onChange={(e) => setNewTask({...newTask, stage_id: e.target.value})}
+                    value={newTask.phase_id}
+                    onChange={(e) => setNewTask({...newTask, phase_id: e.target.value})}
                     className="input-field dark:bg-slate-700 dark:text-slate-100 dark:border-slate-600"
                   >
                     <option value="">اختر المرحلة</option>

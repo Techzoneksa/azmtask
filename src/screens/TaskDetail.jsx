@@ -35,7 +35,7 @@ export default function TaskDetail() {
   const canApprove = profile?.role === 'admin' || profile?.role === 'director' || getRoles().includes('admin');
   
   const task = data.tasks?.find(t => t.id === id);
-  const stage = data.stages?.find(s => s.id === task?.stage_id);
+  const stage = data.stages?.find(s => s.id === task?.phase_id);
   
   const [newNote, setNewNote] = useState('');
   const [progress, setProgress] = useState(task?.progress || 0);

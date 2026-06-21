@@ -12,7 +12,7 @@ export default function TaskEditModal({ task, onClose, onSuccess }) {
   const [formData, setFormData] = useState({
     title: task.title || '',
     description: task.description || '',
-    stage_id: task.stage_id || '',
+    phase_id: task.phase_id || '',
     assigned_to: task.assigned_to || user?.id || '',
     priority: task.priority || 'medium',
     status: task.status || 'new',
@@ -37,7 +37,7 @@ export default function TaskEditModal({ task, onClose, onSuccess }) {
       const updates = {
         title: formData.title,
         description: formData.description,
-        stage_id: formData.stage_id || null,
+        phase_id: formData.phase_id || null,
         assigned_to: formData.assigned_to || null,
         priority: formData.priority,
         status: formData.status,
@@ -106,8 +106,8 @@ export default function TaskEditModal({ task, onClose, onSuccess }) {
             <div>
               <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">المرحلة</label>
               <select
-                value={formData.stage_id}
-                onChange={(e) => handleChange('stage_id', e.target.value)}
+                value={formData.phase_id}
+                onChange={(e) => handleChange('phase_id', e.target.value)}
                 className="input-field dark:bg-slate-700 dark:text-slate-100 dark:border-slate-600"
               >
                 <option value="">اختر المرحلة</option>
