@@ -105,21 +105,40 @@ export function DataProvider({ children }) {
 
   const updateTask = async (taskId, updates) => {
     try {
-      const { data: updatedTask, error } = await supabase
-        .from('tasks')
-        .update({ ...updates, updated_at: new Date().toISOString() })
-        .eq('id', taskId)
-        .select()
-        .single();
+      const validFields = {
+        title: updates.title,
+        description: updates.description || null,
+        phase_id: updates.phase_id || null,
+        assigned_to: updates.assigned_to || null,
+        priority: updates.priority,
+        status: updates.status,
+        progress: updates.progress,
+        due_date: updates.due_date || null,
+        start_date: updates.start_date || null,
+        category: updates.category || null,
+        notes: updates.notes || null,
+        updated_at: new Date().toISOString()
+      };
 
-      if (error) throw error;
+      const { error } = await supabase
+        .from('tasks')
+        .update(validFields)
+        .eq('id', taskId);
+
+      if (error) {
+        console.error('Task update error:', error);
+        console.error('Task id:', taskId);
+        console.error('Update payload:', validFields);
+        throw error;
+      }
 
       if (profile && profile.role === 'director' && updates.status === 'completed') {
         const assignedUserId = data.tasks.find(t => t.id === taskId)?.assigned_to;
         if (assignedUserId) {
+          const taskTitle = data.tasks.find(t => t.id === taskId)?.title || 'المهمة';
           await supabase.from('notifications').insert({
             title: 'تمت الموافقة على المهمة',
-            message: `تم اعتماد "${updatedTask.title}"`,
+            message: `تم اعتماد "${taskTitle}"`,
             user_id: assignedUserId,
             task_id: taskId,
             read: false
