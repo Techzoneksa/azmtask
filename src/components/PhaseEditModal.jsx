@@ -8,13 +8,10 @@ export default function PhaseEditModal({ phase, onClose, onSuccess }) {
   const { success, error } = useFeedback();
   
   const [formData, setFormData] = useState({
-    name: phase.name || '',
+    title: phase.title || phase.name || '',
     description: phase.description || '',
     status: phase.status || 'not-started',
     progress: phase.progress || 0,
-    responsible_user_id: phase.responsible_user_id || '',
-    start_date: phase.start_date ? new Date(phase.start_date).toISOString().split('T')[0] : '',
-    due_date: phase.due_date ? new Date(phase.due_date).toISOString().split('T')[0] : '',
     sort_order: phase.sort_order || phase.order || 0
   });
   
@@ -30,13 +27,10 @@ export default function PhaseEditModal({ phase, onClose, onSuccess }) {
     
     try {
       const updates = {
-        name: formData.name,
+        title: formData.title,
         description: formData.description || null,
         status: formData.status,
         progress: typeof formData.progress === 'string' ? parseInt(formData.progress) : formData.progress,
-        responsible_user_id: formData.responsible_user_id || null,
-        start_date: formData.start_date ? new Date(formData.start_date).toISOString() : null,
-        due_date: formData.due_date ? new Date(formData.due_date).toISOString() : null,
         sort_order: formData.sort_order
       };
 
@@ -76,8 +70,8 @@ export default function PhaseEditModal({ phase, onClose, onSuccess }) {
             <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">اسم المرحلة *</label>
             <input
               type="text"
-              value={formData.name}
-              onChange={(e) => handleChange('name', e.target.value)}
+              value={formData.title}
+              onChange={(e) => handleChange('title', e.target.value)}
               className="input-field dark:bg-slate-700 dark:text-slate-100 dark:border-slate-600 dark:placeholder-slate-400"
               placeholder="أدخل اسم المرحلة"
               required
@@ -122,27 +116,6 @@ export default function PhaseEditModal({ phase, onClose, onSuccess }) {
                 <option value="75">75%</option>
                 <option value="100">100%</option>
               </select>
-            </div>
-          </div>
-          
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">تاريخ البدء</label>
-              <input
-                type="date"
-                value={formData.start_date}
-                onChange={(e) => handleChange('start_date', e.target.value)}
-                className="input-field dark:bg-slate-700 dark:text-slate-100 dark:border-slate-600"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">تاريخ الاستحقاق</label>
-              <input
-                type="date"
-                value={formData.due_date}
-                onChange={(e) => handleChange('due_date', e.target.value)}
-                className="input-field dark:bg-slate-700 dark:text-slate-100 dark:border-slate-600"
-              />
             </div>
           </div>
           
