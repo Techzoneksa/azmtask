@@ -131,11 +131,11 @@ export default function Login() {
             <div className="space-y-2 text-sm text-gray-600">
               <div className="flex justify-between">
                 <span>الأستاذ سلطان (مدير عام):</span>
-                <code className="bg-gray-100 px-2 py-1 rounded">sultan@azm.sa</code>
+                <code className="bg-gray-100 px-2 py-1 rounded">sultan@azm.promksa.com</code>
               </div>
               <div className="flex justify-between">
                 <span>عبدالرحمن (مدير عمليات):</span>
-                <code className="bg-gray-100 px-2 py-1 rounded">abdulrahman@azm.sa</code>
+                <code className="bg-gray-100 px-2 py-1 rounded">abdu@azm.promksa.com</code>
               </div>
             </div>
           </div>
