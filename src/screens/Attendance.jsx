@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useData } from '../context/DataContext';
+import { useFeedback } from '../context/FeedbackContext';
 import { 
   Clock, 
   LogOut,
@@ -12,6 +13,7 @@ import {
 export default function Attendance() {
   const { user, profile } = useAuth();
   const { data, checkIn, checkOut } = useData();
+  const { success, error, warning } = useFeedback();
   const [note, setNote] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -28,6 +30,12 @@ export default function Attendance() {
     setLoading(true);
     const result = await checkIn();
     setLoading(false);
+    if (result.success) {
+      success('تم تسجيل الحضور بنجاح');
+    } else {
+      console.error('Check-in error:', result.error);
+      error(result.error || 'تعذر تسجيل الحضور، حاول مرة أخرى');
+    }
   };
 
   const handleCheckOut = async () => {
@@ -35,6 +43,12 @@ export default function Attendance() {
     setLoading(true);
     const result = await checkOut(todayRecord.id);
     setLoading(false);
+    if (result.success) {
+      success('تم تسجيل الخروج بنجاح');
+    } else {
+      console.error('Check-out error:', result.error);
+      warning(result.error || 'تعذر تسجيل الخروج، حاول مرة أخرى');
+    }
   };
 
   const formatTime = (dateStr) => {

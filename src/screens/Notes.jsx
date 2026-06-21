@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useData } from '../context/DataContext';
+import { useFeedback } from '../context/FeedbackContext';
 import { 
   MessageSquare, 
   Plus,
@@ -12,6 +13,7 @@ import {
 export default function Notes() {
   const { user } = useAuth();
   const { data, addNote } = useData();
+  const { success, error, warning } = useFeedback();
   const [showAddModal, setShowAddModal] = useState(false);
   const [newNote, setNewNote] = useState({ title: '', content: '', taskId: '' });
 
@@ -20,7 +22,7 @@ export default function Notes() {
 
   const handleAddNote = async () => {
     if (!newNote.content.trim()) {
-      alert('يرجى كتابة الملاحظة قبل الإضافة');
+      warning('يرجى كتابة الملاحظة قبل الإضافة');
       return;
     }
     
@@ -33,9 +35,10 @@ export default function Notes() {
     if (result.success) {
       setNewNote({ title: '', content: '', taskId: '' });
       setShowAddModal(false);
-      alert('تمت إضافة الملاحظة');
+      success('تمت إضافة الملاحظة بنجاح');
     } else {
-      alert('تعذر حفظ الملاحظة، حاول مرة أخرى');
+      console.error('Note add error:', result.error);
+      error('تعذر حفظ الملاحظة، حاول مرة أخرى');
     }
   };
 

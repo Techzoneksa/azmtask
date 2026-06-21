@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { DataProvider, useData } from './context/DataContext';
 import { ThemeProvider } from './context/ThemeContext';
+import { FeedbackProvider } from './context/FeedbackContext';
 import Login from './screens/Login';
 import Dashboard from './screens/Dashboard';
 import TodayTasks from './screens/TodayTasks';
@@ -69,7 +70,9 @@ export default function App() {
       <ThemeProvider>
         <AuthProvider>
           <DataProvider>
-            <AppRoutes />
+            <FeedbackProvider>
+              <AppRoutes />
+            </FeedbackProvider>
           </DataProvider>
         </AuthProvider>
       </ThemeProvider>

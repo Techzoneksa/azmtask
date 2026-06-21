@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useData } from '../context/DataContext';
+import { useFeedback } from '../context/FeedbackContext';
 import { 
   LayoutGrid, 
   ChevronLeft,
@@ -121,6 +122,7 @@ function KanbanColumn({ status, tasks, stages, title, color, bg, border, icon: I
 export default function Kanban() {
   const { user, profile } = useAuth();
   const { data, updateTask, addTask } = useData();
+  const { success, error, warning } = useFeedback();
   const [showAddModal, setShowAddModal] = useState(false);
   const [newTask, setNewTask] = useState({
     title: '',
@@ -168,7 +170,10 @@ export default function Kanban() {
       const result = await updateTask(draggedTask.id, { status: newStatus });
       
       if (!result.success) {
-        alert('حدث خطأ أثناء تحديث المهمة');
+        console.error('Task update error:', result.error);
+        error('تعذر تحديث حالة المهمة، حاول مرة أخرى');
+      } else {
+        success('تم تحديث حالة المهمة بنجاح');
       }
     }
     
@@ -186,7 +191,7 @@ export default function Kanban() {
   const handleAddTask = async (e) => {
     e.preventDefault();
     if (!newTask.title.trim()) {
-      alert('يرجى إدخال عنوان المهمة');
+      warning('يرجى إدخال عنوان المهمة');
       return;
     }
     
@@ -203,8 +208,10 @@ export default function Kanban() {
         due_date: new Date().toISOString().split('T')[0],
         progress: 0
       });
+      success('تمت إضافة المهمة بنجاح');
     } else {
-      alert('تعذر إضافة المهمة، حاول مرة أخرى');
+      console.error('Task add error:', result.error);
+      error('تعذر إضافة المهمة، حاول مرة أخرى');
     }
   };
 

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useData } from '../context/DataContext';
+import { useFeedback } from '../context/FeedbackContext';
 import { 
   AlertTriangle, 
   CheckCircle,
@@ -11,6 +12,7 @@ import {
 export default function Obstacles() {
   const { user, profile } = useAuth();
   const { data, addBlocker, resolveBlocker } = useData();
+  const { success, error, warning } = useFeedback();
   
   const getRoles = () => {
     if (!profile) return [];
@@ -30,7 +32,7 @@ export default function Obstacles() {
 
   const handleAddObstacle = async () => {
     if (!newObstacle.title.trim()) {
-      alert('يرجى إدخال عنوان التحدي');
+      warning('يرجى إدخال عنوان التحدي');
       return;
     }
     
@@ -44,15 +46,18 @@ export default function Obstacles() {
     if (result.success) {
       setNewObstacle({ title: '', description: '', stageId: '', priority: 'medium' });
       setShowAddModal(false);
-      alert('تمت إضافة التحدي التشغيلي');
+      success('تمت إضافة التحدي التشغيلي بنجاح');
     } else {
       console.error('Blocker save error:', result.error);
-      alert('تعذر حفظ التحدي التشغيلي، تحقق من الحقول المطلوبة.');
+      error('تعذر حفظ التحدي التشغيلي، تحقق من الحقول المطلوبة.');
     }
   };
 
   const handleResolveObstacle = async (id) => {
-    await resolveBlocker(id);
+    const result = await resolveBlocker(id);
+    if (result && result.success) {
+      success('تم إغلاق التحدي التشغيلي بنجاح');
+    }
   };
 
   const getStageById = (id) => {

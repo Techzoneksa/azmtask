@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useData } from '../context/DataContext';
+import { useFeedback } from '../context/FeedbackContext';
 import { supabase } from '../lib/supabase';
 import { 
   Settings, 
@@ -22,6 +23,7 @@ import {
 export default function SettingsPage() {
   const { user, profile } = useAuth();
   const { data } = useData();
+  const { success, error, warning, info } = useFeedback();
   const [activeTab, setActiveTab] = useState('company');
   const [saved, setSaved] = useState(false);
   const [logoPreview, setLogoPreview] = useState(localStorage.getItem('azm-logo') || '');
@@ -54,21 +56,17 @@ export default function SettingsPage() {
     return { completed, total, progress };
   };
 
-  const handleSave = () => {
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
-  };
-
   const handleLogoUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
     
     if (file.size > 500000) {
-      alert('حجم الملف كبير جدًا. الحد الأقصى 500KB');
+      warning('حجم الملف كبير جدًا. الحد الأقصى 500KB');
       return;
     }
     
     const fileName = `logo-${Date.now()}.${file.name.split('.').pop()}`;
+    info('جاري رفع الشعار...');
     
     try {
       const { data, error } = await supabase.storage
@@ -79,10 +77,11 @@ export default function SettingsPage() {
         });
       
       if (error) {
+        console.error('Logo upload error:', error);
         if (error.message.includes('not found') || error.message.includes('does not exist')) {
-          alert('Bucket تخزين الشعار غير موجود، يرجى إنشاء company-assets في Supabase Storage.');
+          error('Bucket تخزين الشعار غير موجود، يرجى إنشاء company-assets في Supabase Storage.');
         } else {
-          alert('تعذر رفع الشعار: ' + error.message);
+          error('تعذر رفع الشعار: ' + error.message);
         }
         return;
       }
@@ -94,17 +93,23 @@ export default function SettingsPage() {
       const logoUrl = urlData.publicUrl;
       setLogoPreview(logoUrl);
       localStorage.setItem('azm-logo', logoUrl);
-      setSaved(true);
-      setTimeout(() => setSaved(false), 2000);
+      success('تم رفع الشعار بنجاح');
     } catch (err) {
       console.error('Logo upload error:', err);
-      alert('تعذر رفع الشعار، حاول مرة أخرى');
+      error('تعذر رفع الشعار، حاول مرة أخرى');
     }
   };
 
   const handleRemoveLogo = () => {
     setLogoPreview('');
     localStorage.removeItem('azm-logo');
+    success('تم حذف الشعار');
+  };
+
+  const handleSave = () => {
+    success('تم حفظ التغييرات بنجاح');
+    setSaved(true);
+    setTimeout(() => setSaved(false), 2000);
   };
 
   return (
