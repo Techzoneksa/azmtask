@@ -54,6 +54,8 @@ export default function Layout() {
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   
+  const logoUrl = typeof window !== 'undefined' ? localStorage.getItem('azm-logo') : '';
+  
   const unreadNotifications = data.notifications?.filter(n => !n.read && n.userId === user?.id).length || 0;
   
   const isActive = (path) => {
@@ -67,8 +69,12 @@ export default function Layout() {
       <header className="md:hidden fixed top-0 left-0 right-0 bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 z-40 px-4 py-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-azm-green rounded-xl flex items-center justify-center">
-              <span className="text-white font-bold text-lg">ع</span>
+            <div className="w-10 h-10 bg-azm-green rounded-xl flex items-center justify-center overflow-hidden">
+              {logoUrl ? (
+                <img src={logoUrl} alt="شعار" className="w-full h-full object-contain" />
+              ) : (
+                <span className="text-white font-bold text-lg">ع</span>
+              )}
             </div>
             <div>
               <h1 className="font-semibold text-slate-800 dark:text-slate-100">عزم</h1>
@@ -105,21 +111,25 @@ export default function Layout() {
         md:hidden fixed top-0 right-0 h-full w-72 bg-white z-50 transform transition-transform duration-300
         ${sidebarOpen ? 'translate-x-0' : 'translate-x-full'}
       `}>
-        <div className="p-4 border-b border-gray-100 flex items-center justify-between">
+        <div className="p-4 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-azm-green rounded-xl flex items-center justify-center">
-              <span className="text-white font-bold text-lg">ع</span>
+            <div className="w-10 h-10 bg-azm-green rounded-xl flex items-center justify-center overflow-hidden">
+              {logoUrl ? (
+                <img src={logoUrl} alt="شعار" className="w-full h-full object-contain" />
+              ) : (
+                <span className="text-white font-bold text-lg">ع</span>
+              )}
             </div>
             <div>
-              <h1 className="font-semibold text-gray-800">عزم</h1>
-              <p className="text-xs text-gray-500">{user?.name}</p>
+              <h1 className="font-semibold text-slate-800 dark:text-slate-100">عزم</h1>
+              <p className="text-xs text-slate-500 dark:text-slate-400">{user?.name}</p>
             </div>
           </div>
           <button 
             onClick={() => setSidebarOpen(false)}
-            className="w-8 h-8 rounded-lg bg-gray-50 flex items-center justify-center"
+            className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-700 flex items-center justify-center"
           >
-            <X className="w-4 h-4 text-gray-600" />
+            <X className="w-4 h-4 text-slate-600 dark:text-slate-300" />
           </button>
         </div>
         
@@ -159,15 +169,19 @@ export default function Layout() {
       </aside>
 
       {/* Desktop Sidebar */}
-      <aside className="hidden md:block fixed right-0 top-0 h-full w-64 bg-white border-l border-gray-100 z-30">
-        <div className="p-4 border-b border-gray-100">
+      <aside className="hidden md:block fixed right-0 top-0 h-full w-64 bg-white dark:bg-slate-800 border-l border-slate-200 dark:border-slate-700 z-30">
+        <div className="p-4 border-b border-slate-200 dark:border-slate-700">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-azm-green rounded-xl flex items-center justify-center">
-              <span className="text-white font-bold text-xl">ع</span>
+            <div className="w-12 h-12 bg-azm-green rounded-xl flex items-center justify-center overflow-hidden">
+              {logoUrl ? (
+                <img src={logoUrl} alt="شعار" className="w-full h-full object-contain" />
+              ) : (
+                <span className="text-white font-bold text-xl">ع</span>
+              )}
             </div>
             <div>
-              <h1 className="font-bold text-gray-800 text-lg">عزم</h1>
-              <p className="text-sm text-gray-500">{user?.name}</p>
+              <h1 className="font-bold text-slate-800 dark:text-slate-100 text-lg">عزم</h1>
+              <p className="text-sm text-slate-500 dark:text-slate-400">{user?.name}</p>
             </div>
           </div>
         </div>

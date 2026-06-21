@@ -20,6 +20,7 @@ export default function SettingsPage() {
   const { data } = useData();
   const [activeTab, setActiveTab] = useState('company');
   const [saved, setSaved] = useState(false);
+  const [logoPreview, setLogoPreview] = useState(localStorage.getItem('azm-logo') || '');
 
   const getRoles = () => {
     if (!profile) return [];
@@ -52,6 +53,31 @@ export default function SettingsPage() {
   const handleSave = () => {
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
+  };
+
+  const handleLogoUpload = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    if (file.size > 500000) {
+      alert('حجم الملف كبير جدًا. الحد الأقصى 500KB');
+      return;
+    }
+    
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const dataUrl = event.target.result;
+      setLogoPreview(dataUrl);
+      localStorage.setItem('azm-logo', dataUrl);
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleRemoveLogo = () => {
+    setLogoPreview('');
+    localStorage.removeItem('azm-logo');
   };
 
   return (
@@ -151,11 +177,42 @@ export default function SettingsPage() {
               </div>
               
               {/* Logo Section */}
-              <div className="mt-6 p-6 bg-gray-50 rounded-xl text-center">
-                <div className="w-20 h-20 bg-white rounded-2xl mx-auto mb-4 flex items-center justify-center shadow-md border-2 border-dashed border-gray-300">
-                  <span className="text-azm-green font-bold text-3xl">ع</span>
+              <div className="mt-6 p-6 bg-slate-50 dark:bg-slate-800 rounded-xl text-center border-2 border-dashed border-slate-200 dark:border-slate-600">
+                <div className="w-24 h-24 bg-white rounded-2xl mx-auto mb-4 flex items-center justify-center shadow-md overflow-hidden">
+                  {logoPreview ? (
+                    <img src={logoPreview} alt="شعار الشركة" className="w-full h-full object-contain" />
+                  ) : (
+                    <span className="text-azm-green font-bold text-4xl">ع</span>
+                  )}
                 </div>
-                <p className="text-sm text-gray-500">شعار الشركة - سيتم تفعيل رفع الشعار قريبًا</p>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleLogoUpload}
+                  className="hidden"
+                  id="logo-upload"
+                />
+                <label 
+                  htmlFor="logo-upload"
+                  className="cursor-pointer inline-flex items-center gap-2 px-4 py-2 bg-emerald-100 text-emerald-700 rounded-lg hover:bg-emerald-200 transition-colors text-sm font-medium"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                  {logoPreview ? 'تغيير الشعار' : 'رفع الشعار'}
+                </label>
+                {logoPreview && (
+                  <button
+                    onClick={handleRemoveLogo}
+                    className="mr-3 inline-flex items-center gap-2 px-4 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors text-sm font-medium"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                    حذف
+                  </button>
+                )}
+                <p className="text-xs text-slate-500 mt-3">PNG, JPG أو SVG - حجم أقصى 500KB</p>
               </div>
               
               <div className="mt-6 flex justify-end">
