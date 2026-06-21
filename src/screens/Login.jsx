@@ -48,7 +48,7 @@ export default function Login() {
           <div className="w-20 h-20 bg-white rounded-2xl mx-auto mb-4 flex items-center justify-center shadow-lg">
             <span className="text-azm-green font-bold text-4xl">ع</span>
           </div>
-          <h1 className="text-3xl font-bold text-white mb-2">عزم</h1>
+          <h1 className="text-3xl font-bold text-white mb-2">شركة عزم للخدمات اللوجستية</h1>
           <p className="text-green-100">برنامج الإنجاز والتشغيل</p>
         </div>
 
@@ -124,21 +124,6 @@ export default function Login() {
               )}
             </button>
           </form>
-          
-          {/* Demo Accounts Info */}
-          <div className="mt-6 p-4 bg-gray-50 rounded-xl">
-            <p className="text-sm font-medium text-gray-700 mb-3">بيانات الدخول:</p>
-            <div className="space-y-2 text-sm text-gray-600">
-              <div className="flex justify-between">
-                <span>الأستاذ سلطان (مدير عام):</span>
-                <code className="bg-gray-100 px-2 py-1 rounded">sultan@azm.promksa.com</code>
-              </div>
-              <div className="flex justify-between">
-                <span>عبدالرحمن (مدير عمليات):</span>
-                <code className="bg-gray-100 px-2 py-1 rounded">abdu@azm.promksa.com</code>
-              </div>
-            </div>
-          </div>
         </div>
       </div>
     </div>

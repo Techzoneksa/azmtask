@@ -6,12 +6,10 @@ import { supabase } from '../lib/supabase';
 import { 
   Settings, 
   Building,
-  Users,
   Layers,
   Mail,
   MessageSquare,
   Save,
-  Shield,
   Globe,
   Clock,
   Smartphone,
@@ -41,7 +39,6 @@ export default function SettingsPage() {
 
   const tabs = [
     { id: 'company', label: 'بيانات الشركة', icon: Building },
-    { id: 'users', label: 'المستخدمون', icon: Users },
     { id: 'stages', label: 'المراحل', icon: Layers },
     { id: 'email', label: 'البريد', icon: Mail, disabled: true },
     { id: 'whatsapp', label: 'الواتساب', icon: MessageSquare, disabled: true },
@@ -252,61 +249,6 @@ export default function SettingsPage() {
                   <Save className="w-4 h-4" />
                   حفظ التغييرات
                 </button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Users */}
-        {activeTab === 'users' && (
-          <div className="space-y-4">
-            <div className="card">
-              <h3 className="text-lg font-semibold text-gray-800 mb-6 flex items-center gap-2">
-                <Users className="w-5 h-5 text-azm-green" />
-                المستخدمون والصلاحيات
-              </h3>
-              
-              <div className="space-y-4">
-                {/* Sultan */}
-                <div className="p-4 bg-gradient-to-r from-green-50 to-white rounded-xl border border-green-100">
-                  <div className="flex items-center gap-4">
-                    <div className="w-14 h-14 rounded-full bg-gradient-to-br from-azm-green to-azm-green-light text-white flex items-center justify-center text-xl font-bold">
-                      س
-                    </div>
-                    <div className="flex-1">
-                      <h4 className="font-semibold text-gray-800">الأستاذ سلطان</h4>
-                      <p className="text-sm text-gray-500">sultan@azm.promksa.com</p>
-                      <div className="flex gap-2 mt-2">
-                        <span className="badge badge-green">
-                          <Shield className="w-3 h-3 ml-1" />
-                          المدير العام
-                        </span>
-                        <span className="badge badge-blue">Admin</span>
-                      </div>
-                    </div>
-                  </div>
-                  
-                </div>
-                
-                {/* Abdu */}
-                <div className="p-4 bg-gradient-to-r from-blue-50 to-white rounded-xl border border-blue-100">
-                  <div className="flex items-center gap-4">
-                    <div className="w-14 h-14 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 text-white flex items-center justify-center text-xl font-bold">
-                      ع
-                    </div>
-                    <div className="flex-1">
-                      <h4 className="font-semibold text-gray-800">عبدالرحمن</h4>
-                      <p className="text-sm text-gray-500">abdu@azm.promksa.com</p>
-                      <div className="flex gap-2 mt-2">
-                        <span className="badge badge-blue">
-                          <Shield className="w-3 h-3 ml-1" />
-                          مدير العمليات
-                        </span>
-                        <span className="badge badge-blue">Admin</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
               </div>
             </div>
           </div>

@@ -1,7 +1,7 @@
 {
   "app": "azmtask",
   "version": "1.0.0",
-  "buildCommit": "0b6d41d",
+  "buildCommit": "r8e2f4d",
   "buildDate": "2026-06-21",
   "description": "Azm Task Management System"
 }
