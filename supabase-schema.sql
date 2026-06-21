@@ -178,11 +178,11 @@ create policy "Only directors can modify setup phases" on public.setup_phases fo
   exists (select 1 from public.profiles where id = auth.uid() and role = 'director')
 );
 
--- Tasks: All authenticated users can read, director can modify all, operations can modify assigned tasks
+-- Tasks: All authenticated users can read, director/admin can modify all, operations can modify assigned tasks
 create policy "Tasks are viewable by authenticated users" on public.tasks for select using (auth.role() = 'authenticated');
 create policy "Operations can update assigned tasks" on public.tasks for update using (
   assigned_to = auth.uid() OR 
-  exists (select 1 from public.profiles where id = auth.uid() and role = 'director')
+  exists (select 1 from public.profiles where id = auth.uid() and role in ('director', 'admin'))
 );
 create policy "Operations can insert tasks" on public.tasks for insert with check (auth.role() = 'authenticated');
 
@@ -197,22 +197,22 @@ create policy "Users can manage own notes" on public.notes for all using (create
 -- Notifications: Users can read/update own
 create policy "Users can manage own notifications" on public.notifications for all using (user_id = auth.uid());
 
--- Blockers: All authenticated can read, director can modify
+-- Blockers: All authenticated can read, director/admin can modify
 create policy "Blockers viewable by authenticated users" on public.blockers for select using (auth.role() = 'authenticated');
-create policy "Directors can manage blockers" on public.blockers for all using (
-  exists (select 1 from public.profiles where id = auth.uid() and role = 'director')
+create policy "Directors and Admins can manage blockers" on public.blockers for all using (
+  exists (select 1 from public.profiles where id = auth.uid() and role in ('director', 'admin'))
 );
 
--- Documents: All authenticated can read, director can modify
+-- Documents: All authenticated can read, director/admin can modify
 create policy "Documents viewable by authenticated users" on public.documents for select using (auth.role() = 'authenticated');
-create policy "Directors can manage documents" on public.documents for all using (
-  exists (select 1 from public.profiles where id = auth.uid() and role = 'director')
+create policy "Directors and Admins can manage documents" on public.documents for all using (
+  exists (select 1 from public.profiles where id = auth.uid() and role in ('director', 'admin'))
 );
 
--- Settings: Director only
+-- Settings: Director/Admin only
 create policy "Settings readable by authenticated users" on public.settings for select using (auth.role() = 'authenticated');
-create policy "Directors can manage settings" on public.settings for all using (
-  exists (select 1 from public.profiles where id = auth.uid() and role = 'director')
+create policy "Directors and Admins can manage settings" on public.settings for all using (
+  exists (select 1 from public.profiles where id = auth.uid() and role in ('director', 'admin'))
 );
 
 -- =============================================
