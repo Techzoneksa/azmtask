@@ -43,23 +43,59 @@
   }
   
   .btn-primary {
-    @apply bg-gradient-to-r from-emerald-600 to-emerald-500 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-200 active:scale-95 disabled:opacity-50 shadow-md;
+    @apply bg-emerald-600 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-200 active:scale-95 disabled:opacity-50 shadow-sm;
   }
   
   .btn-primary:hover {
-    @apply from-emerald-700 to-emerald-600;
+    @apply bg-emerald-700;
   }
   
   .btn-secondary {
-    @apply bg-slate-100 text-slate-700 px-6 py-3 rounded-xl font-medium transition-all duration-200 active:scale-95;
+    @apply bg-white text-slate-700 px-6 py-3 rounded-xl font-medium transition-all duration-200 active:scale-95 border border-slate-300;
   }
   
   .btn-secondary:hover {
-    @apply bg-slate-200;
+    @apply bg-slate-50;
+  }
+  
+  .btn-secondary:is(.dark *) {
+    @apply bg-slate-700 text-slate-100 border-slate-600;
+  }
+  
+  .btn-secondary:is(.dark *):hover {
+    @apply bg-slate-600;
   }
   
   .btn-orange {
-    @apply bg-gradient-to-r from-amber-500 to-amber-400 text-white px-6 py-3 rounded-xl font-medium transition-all duration-200 active:scale-95 shadow-md;
+    @apply bg-amber-500 text-slate-900 px-6 py-3 rounded-xl font-semibold transition-all duration-200 active:scale-95 shadow-sm;
+  }
+  
+  .btn-orange:hover {
+    @apply bg-amber-600;
+  }
+  
+  .btn-danger {
+    @apply bg-red-600 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-200 active:scale-95 shadow-sm;
+  }
+  
+  .btn-danger:hover {
+    @apply bg-red-700;
+  }
+  
+  .btn-ghost {
+    @apply bg-transparent text-slate-600 px-4 py-2 rounded-lg font-medium transition-all duration-200;
+  }
+  
+  .btn-ghost:hover {
+    @apply bg-slate-100;
+  }
+  
+  .btn-ghost:is(.dark *) {
+    @apply text-slate-300;
+  }
+  
+  .btn-ghost:is(.dark *):hover {
+    @apply bg-slate-700;
   }
   
   .input-field {
@@ -467,4 +503,32 @@ html {
   background: #14532d;
   color: #86efac;
   border-color: #166534;
+}
+
+/* Dark mode button overrides */
+.dark .btn-secondary {
+  background-color: #1e293b;
+  color: #f1f5f9;
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+.dark .btn-secondary:hover {
+  background-color: #334155;
+}
+
+.dark .btn-ghost {
+  color: #cbd5e1;
+}
+
+.dark .btn-ghost:hover {
+  background-color: #334155;
+}
+
+.dark .btn-orange {
+  background-color: #d97706;
+  color: #ffffff;
+}
+
+.dark .btn-orange:hover {
+  background-color: #b45309;
 }
