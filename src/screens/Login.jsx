@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { Lock, Mail, AlertCircle } from 'lucide-react';
+import { isConfigured } from '../lib/supabase';
+import { Lock, Mail, AlertCircle, Database } from 'lucide-react';
 
 export default function Login() {
   const { login } = useAuth();
@@ -9,18 +10,34 @@ export default function Login() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
+  useEffect(() => {
+    if (!isConfigured) {
+      setError('إعدادات الاتصال بقاعدة البيانات غير مكتملة. يرجى ضبط متغيرات Supabase في Hostinger.');
+    }
+  }, []);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
-    setLoading(true);
     
-    const result = login(email, password);
-    
-    if (!result.success) {
-      setError(result.error);
+    if (!isConfigured) {
+      setError('إعدادات الاتصال بقاعدة البيانات غير مكتملة. يرجى ضبط متغيرات Supabase في Hostinger.');
+      return;
     }
     
-    setLoading(false);
+    setLoading(true);
+    
+    try {
+      const result = await login(email, password);
+      
+      if (!result.success) {
+        setError(result.error);
+      }
+    } catch (err) {
+      setError('حدث خطأ في الاتصال. تأكد من إعدادات Supabase.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -37,7 +54,21 @@ export default function Login() {
 
         {/* Login Form */}
         <div className="bg-white rounded-3xl p-6 shadow-2xl">
-          <h2 className="text-xl font-semibold text-gray-800 mb-6 text-center">تسجيل الدخول</h2>
+          {!isConfigured && (
+            <div className="bg-red-50 border border-red-200 rounded-xl p-4 mb-4 flex items-start gap-3">
+              <Database className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
+              <div>
+                <p className="text-red-600 text-sm font-medium">خطأ في الاتصال بقاعدة البيانات</p>
+                <p className="text-red-500 text-xs mt-1">
+                  إعدادات Supabase غير موجودة. يرجى إضافة:
+                </p>
+                <ul className="text-red-400 text-xs mt-1 list-disc list-inside">
+                  <li>VITE_SUPABASE_URL</li>
+                  <li>VITE_SUPABASE_ANON_KEY</li>
+                </ul>
+              </div>
+            </div>
+          )}
           
           {error && (
             <div className="bg-red-50 border border-red-200 rounded-xl p-4 mb-4 flex items-center gap-3">
@@ -59,6 +90,7 @@ export default function Login() {
                   placeholder="أدخل بريدك الإلكتروني"
                   required
                   dir="rtl"
+                  disabled={!isConfigured}
                 />
               </div>
             </div>
@@ -75,14 +107,15 @@ export default function Login() {
                   placeholder="أدخل كلمة المرور"
                   required
                   dir="rtl"
+                  disabled={!isConfigured}
                 />
               </div>
             </div>
             
             <button
               type="submit"
-              disabled={loading}
-              className="btn-primary w-full flex items-center justify-center gap-2"
+              disabled={loading || !isConfigured}
+              className="btn-primary w-full flex items-center justify-center gap-2 disabled:opacity-50"
             >
               {loading ? (
                 <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -94,7 +127,7 @@ export default function Login() {
           
           {/* Demo Accounts Info */}
           <div className="mt-6 p-4 bg-gray-50 rounded-xl">
-            <p className="text-sm font-medium text-gray-700 mb-3">بيانات الدخول التجريبية:</p>
+            <p className="text-sm font-medium text-gray-700 mb-3">بيانات الدخول:</p>
             <div className="space-y-2 text-sm text-gray-600">
               <div className="flex justify-between">
                 <span>الأستاذ سلطان (مدير عام):</span>
@@ -104,7 +137,6 @@ export default function Login() {
                 <span>عبدالرحمن (مدير عمليات):</span>
                 <code className="bg-gray-100 px-2 py-1 rounded">abdulrahman@azm.sa</code>
               </div>
-              <p className="text-xs text-gray-400 mt-2">كلمة المرور: azm2026</p>
             </div>
           </div>
         </div>
