@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Outlet, NavLink, useLocation } from 'react-router-dom';
+import { Outlet, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useData } from '../context/DataContext';
 import { useTheme } from '../context/ThemeContext';
@@ -52,6 +52,7 @@ export default function Layout() {
   const { data } = useData();
   const { isDark, toggleTheme } = useTheme();
   const location = useLocation();
+  const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   
   const logoUrl = typeof window !== 'undefined' ? localStorage.getItem('azm-logo') : '';
@@ -61,6 +62,11 @@ export default function Layout() {
   const isActive = (path) => {
     if (path === '/') return location.pathname === '/';
     return location.pathname.startsWith(path);
+  };
+  
+  const handleLogout = async () => {
+    await logout();
+    navigate('/login');
   };
 
   return (
@@ -159,7 +165,7 @@ export default function Layout() {
         
         <div className="p-4 border-t border-gray-100">
           <button
-            onClick={logout}
+            onClick={handleLogout}
             className="flex items-center gap-3 px-4 py-3 rounded-xl text-red-600 hover:bg-red-50 w-full"
           >
             <LogOut className="w-5 h-5" />
@@ -211,7 +217,7 @@ export default function Layout() {
         
         <div className="p-3 border-t border-gray-100">
           <button
-            onClick={logout}
+            onClick={handleLogout}
             className="flex items-center gap-3 px-4 py-3 rounded-xl text-red-600 hover:bg-red-50 w-full"
           >
             <LogOut className="w-5 h-5" />

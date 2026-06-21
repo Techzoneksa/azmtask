@@ -19,7 +19,10 @@ export default function Notes() {
   const sortedNotes = [...notes].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 
   const handleAddNote = async () => {
-    if (!newNote.content.trim()) return;
+    if (!newNote.content.trim()) {
+      alert('يرجى كتابة الملاحظة قبل الإضافة');
+      return;
+    }
     
     const result = await addNote({
       title: newNote.title,
@@ -30,6 +33,9 @@ export default function Notes() {
     if (result.success) {
       setNewNote({ title: '', content: '', taskId: '' });
       setShowAddModal(false);
+      alert('تمت إضافة الملاحظة');
+    } else {
+      alert('تعذر حفظ الملاحظة، حاول مرة أخرى');
     }
   };
 
