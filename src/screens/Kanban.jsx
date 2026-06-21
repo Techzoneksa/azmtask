@@ -17,73 +17,86 @@ import {
 function TaskCard({ task, stages, onDragStart, isDragging = false }) {
   const stage = stages.find(s => s.id === task.stage_id);
   
-  const statusColors = {
-    'new': 'bg-blue-50 border-blue-200',
-    'in-progress': 'bg-orange-50 border-orange-200',
-    'pending-review': 'bg-purple-50 border-purple-200',
-    'completed': 'bg-green-50 border-green-200',
-    'blocked': 'bg-red-50 border-red-200',
-    'delayed': 'bg-gray-50 border-gray-200'
+  const statusBadgeClass = {
+    'new': 'badge-new',
+    'in-progress': 'badge-in-progress',
+    'pending-review': 'badge-pending-review',
+    'completed': 'badge-completed',
+    'blocked': 'badge-blocked',
+    'delayed': 'badge-delayed'
+  };
+  
+  const priorityBadgeClass = {
+    'high': 'badge-priority-high',
+    'medium': 'badge-priority-medium',
+    'low': 'badge-priority-low'
   };
 
   return (
     <div
       draggable
       onDragStart={(e) => onDragStart(e, task)}
-      className={`task-card border ${statusColors[task.status] || ''} ${isDragging ? 'shadow-xl opacity-50' : ''}`}
+      data-status={task.status}
+      className={`task-card ${isDragging ? 'shadow-xl opacity-50' : ''}`}
     >
       <div className="flex items-start gap-2 mb-2">
-        <GripVertical className="w-4 h-4 text-gray-400 flex-shrink-0 mt-1 cursor-move" />
+        <GripVertical className="w-4 h-4 text-slate-400 flex-shrink-0 mt-1 cursor-move" />
         <div className="flex-1 min-w-0">
-          <h4 className="font-medium text-gray-800 text-sm line-clamp-2">{task.title}</h4>
+          <h4 className="font-medium text-slate-800 text-sm line-clamp-2">{task.title}</h4>
         </div>
       </div>
       
       {task.description && (
-        <p className="text-xs text-gray-500 mb-3 line-clamp-2 mr-6">{task.description}</p>
+        <p className="text-xs text-slate-500 mb-3 line-clamp-2 mr-6">{task.description}</p>
       )}
       
       <div className="flex items-center gap-2 mr-6 flex-wrap">
         <span 
-          className="text-xs px-2 py-0.5 rounded-full"
+          className="text-xs px-2 py-0.5 rounded-full font-medium"
           style={{ backgroundColor: stage?.color + '20', color: stage?.color }}
         >
           {stage?.name}
         </span>
+        <span className={`badge text-xs ${priorityBadgeClass[task.priority] || 'badge-gray'}`}>
+          {task.priority === 'high' ? 'عالية' : task.priority === 'medium' ? 'متوسطة' : 'منخفضة'}
+        </span>
       </div>
       
       <div className="flex items-center gap-2 mt-3 mr-6">
-        <div className="flex-1 progress-bar h-1.5">
+        <div className="flex-1 progress-bar h-2">
           <div className="progress-fill" style={{ width: `${task.progress}%` }} />
         </div>
-        <span className="text-xs text-gray-500">{task.progress}%</span>
+        <span className="text-xs text-slate-500 font-medium">{task.progress}%</span>
       </div>
       
       {task.priority === 'high' && (
-        <div className="absolute top-2 left-2 w-2 h-2 bg-red-500 rounded-full" />
+        <div className="absolute top-2 left-2 w-2 h-2 bg-red-500 rounded-full animate-pulse" />
       )}
     </div>
   );
 }
 
-function KanbanColumn({ status, tasks, stages, title, color, icon: Icon, onDrop, onDragStart, draggedTask }) {
+function KanbanColumn({ status, tasks, stages, title, color, bg, border, icon: Icon, onDrop, onDragStart, draggedTask }) {
   return (
     <div 
       className="kanban-column"
       onDragOver={(e) => e.preventDefault()}
       onDrop={(e) => onDrop(e, status)}
     >
-      <div className="flex items-center justify-between mb-4 px-1">
-        <div className="flex items-center gap-2">
-          <div className={`w-8 h-8 rounded-lg flex items-center justify-center`} style={{ backgroundColor: color + '20' }}>
-            <Icon className="w-4 h-4" style={{ color }} />
+      <div className="mb-4">
+        <div className="flex items-center justify-between mb-3 px-1">
+          <div className="flex items-center gap-2">
+            <div className={`w-8 h-8 rounded-lg flex items-center justify-center`} style={{ backgroundColor: bg }}>
+              <Icon className="w-4 h-4" style={{ color }} />
+            </div>
+            <h3 className="font-semibold text-slate-700">{title}</h3>
           </div>
-          <h3 className="font-semibold text-gray-800">{title}</h3>
+          <span className="task-counter">{tasks.length}</span>
         </div>
-        <span className="bg-gray-100 text-gray-600 text-sm px-2 py-0.5 rounded-full">{tasks.length}</span>
+        <div className="h-1 rounded-full" style={{ backgroundColor: border }} />
       </div>
       
-      <div className="space-y-2 min-h-[200px]">
+      <div className="space-y-3 min-h-[200px]">
         {tasks.map(task => (
           <Link key={task.id} to={`/task/${task.id}`}>
             <TaskCard 
@@ -112,12 +125,12 @@ export default function Kanban() {
   const [draggedTask, setDraggedTask] = useState(null);
 
   const statuses = [
-    { id: 'new', name: 'جديد', color: '#3b82f6', icon: Clock },
-    { id: 'in-progress', name: 'قيد التنفيذ', color: '#f59e0b', icon: Clock },
-    { id: 'pending-review', name: 'بانتظار المراجعة', color: '#8b5cf6', icon: AlertTriangle },
-    { id: 'completed', name: 'مكتمل', color: '#22c55e', icon: CheckCircle },
-    { id: 'delayed', name: 'مؤجل', color: '#6b7280', icon: PauseCircle },
-    { id: 'blocked', name: 'متعثر', color: '#ef4444', icon: XCircle }
+    { id: 'new', name: 'جديد', color: '#0369A1', bg: '#E0F2FE', border: '#7DD3FC', icon: Clock },
+    { id: 'in-progress', name: 'قيد التنفيذ', color: '#4338CA', bg: '#EEF2FF', border: '#A5B4FC', icon: Clock },
+    { id: 'pending-review', name: 'بانتظار المراجعة', color: '#B45309', bg: '#FEF3C7', border: '#FCD34D', icon: AlertTriangle },
+    { id: 'completed', name: 'مكتمل', color: '#15803D', bg: '#DCFCE7', border: '#86EFAC', icon: CheckCircle },
+    { id: 'delayed', name: 'مؤجل', color: '#475569', bg: '#F1F5F9', border: '#CBD5E1', icon: PauseCircle },
+    { id: 'blocked', name: 'متعثر', color: '#BE123C', bg: '#FFE4E6', border: '#FDA4AF', icon: XCircle }
   ];
 
   const handleDragStart = (e, task) => {
@@ -183,6 +196,8 @@ export default function Kanban() {
             stages={data.stages}
             title={status.name}
             color={status.color}
+            bg={status.bg}
+            border={status.border}
             icon={status.icon}
             onDrop={handleDrop}
             onDragStart={handleDragStart}

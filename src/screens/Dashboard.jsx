@@ -260,13 +260,17 @@ export default function Dashboard() {
                   <p className="font-medium text-gray-800 text-sm truncate">{task.title}</p>
                 </div>
                 <span className={`badge ${
-                  task.status === 'in-progress' ? 'badge-orange' :
-                  task.status === 'blocked' ? 'badge-red' : 'badge-gray'
+                  task.status === 'new' ? 'badge-new' :
+                  task.status === 'in-progress' ? 'badge-in-progress' :
+                  task.status === 'pending-review' ? 'badge-pending-review' :
+                  task.status === 'completed' ? 'badge-completed' :
+                  task.status === 'blocked' ? 'badge-blocked' : 'badge-delayed'
                 } text-xs`}>
-                  {task.status === 'in-progress' ? 'قيد التنفيذ' : 
+                  {task.status === 'new' ? 'جديد' :
+                   task.status === 'in-progress' ? 'قيد التنفيذ' : 
                    task.status === 'blocked' ? 'متعثر' : 
                    task.status === 'pending-review' ? 'بانتظار المراجعة' :
-                   task.status === 'completed' ? 'مكتمل' : 'جديد'}
+                   task.status === 'completed' ? 'مكتمل' : 'مؤجل'}
                 </span>
               </Link>
             ))}

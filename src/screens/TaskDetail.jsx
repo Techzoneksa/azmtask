@@ -100,12 +100,12 @@ export default function TaskDetail() {
 
   const getStatusInfo = () => {
     const statusMap = {
-      'new': { label: 'جديد', color: 'bg-blue-100 text-blue-700', icon: Clock },
-      'in-progress': { label: 'قيد التنفيذ', color: 'bg-orange-100 text-orange-700', icon: Clock },
-      'pending-review': { label: 'بانتظار المراجعة', color: 'bg-purple-100 text-purple-700', icon: AlertTriangle },
-      'completed': { label: 'مكتمل', color: 'bg-green-100 text-green-700', icon: CheckCircle },
-      'blocked': { label: 'متعثر', color: 'bg-red-100 text-red-700', icon: XCircle },
-      'delayed': { label: 'مؤجل', color: 'bg-gray-100 text-gray-700', icon: Clock }
+      'new': { label: 'جديد', badgeClass: 'badge-new', icon: Clock },
+      'in-progress': { label: 'قيد التنفيذ', badgeClass: 'badge-in-progress', icon: Clock },
+      'pending-review': { label: 'بانتظار المراجعة', badgeClass: 'badge-pending-review', icon: AlertTriangle },
+      'completed': { label: 'مكتمل', badgeClass: 'badge-completed', icon: CheckCircle },
+      'blocked': { label: 'متعثر', badgeClass: 'badge-blocked', icon: XCircle },
+      'delayed': { label: 'مؤجل', badgeClass: 'badge-delayed', icon: Clock }
     };
     return statusMap[task.status] || statusMap['new'];
   };
@@ -114,9 +114,9 @@ export default function TaskDetail() {
   const StatusIcon = statusInfo.icon;
 
   const priorityLabels = {
-    'high': { label: 'عالية', color: 'bg-red-100 text-red-700' },
-    'medium': { label: 'متوسطة', color: 'bg-orange-100 text-orange-700' },
-    'low': { label: 'منخفضة', color: 'bg-green-100 text-green-700' }
+    'high': { label: 'عالية', badgeClass: 'badge-priority-high' },
+    'medium': { label: 'متوسطة', badgeClass: 'badge-priority-medium' },
+    'low': { label: 'منخفضة', badgeClass: 'badge-priority-low' }
   };
 
   const formatDate = (dateStr) => {
@@ -136,11 +136,11 @@ export default function TaskDetail() {
         </Link>
         <div className="flex-1">
           <div className="flex items-start gap-3 mb-2">
-            <span className={`badge ${statusInfo.color}`}>
+            <span className={`badge ${statusInfo.badgeClass}`}>
               <StatusIcon className="w-4 h-4 ml-1" />
               {statusInfo.label}
             </span>
-            <span className={`badge ${priorityLabels[task.priority]?.color}`}>
+            <span className={`badge ${priorityLabels[task.priority]?.badgeClass}`}>
               {priorityLabels[task.priority]?.label}
             </span>
           </div>

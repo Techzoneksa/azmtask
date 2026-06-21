@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -9,45 +11,115 @@
   }
   
   html {
-    font-family: Tahoma, Arial, sans-serif;
+    font-family: 'IBM Plex Sans Arabic', 'Tajawal', 'Cairo', sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
   
   body {
-    @apply bg-gray-50 text-gray-800;
+    @apply bg-slate-50 text-slate-800;
     overscroll-behavior: none;
     -webkit-overflow-scrolling: touch;
+    font-family: 'IBM Plex Sans Arabic', 'Tajawal', 'Cairo', sans-serif;
   }
   
-  input, textarea, select {
-    font-family: inherit;
+  input, textarea, select, button {
+    font-family: 'IBM Plex Sans Arabic', 'Tajawal', 'Cairo', sans-serif;
   }
 }
 
 @layer components {
   .card {
-    @apply bg-white rounded-2xl shadow-sm border border-gray-100 p-4;
+    @apply bg-white rounded-2xl shadow-md border border-slate-200/50 p-4;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05), 0 4px 12px rgba(0,0,0,0.04);
+  }
+  
+  .card:hover {
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08), 0 8px 24px rgba(0,0,0,0.06);
   }
   
   .card-glass {
-    @apply bg-white/80 backdrop-blur-lg rounded-2xl shadow-sm border border-white/20 p-4;
+    @apply bg-white/85 backdrop-blur-xl rounded-2xl shadow-lg border border-white/30 p-5;
   }
   
   .btn-primary {
-    @apply bg-azm-green text-white px-6 py-3 rounded-xl font-medium transition-all duration-200 active:scale-95 disabled:opacity-50;
+    @apply bg-gradient-to-r from-emerald-600 to-emerald-500 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-200 active:scale-95 disabled:opacity-50 shadow-md;
+  }
+  
+  .btn-primary:hover {
+    @apply from-emerald-700 to-emerald-600;
   }
   
   .btn-secondary {
-    @apply bg-gray-100 text-gray-700 px-6 py-3 rounded-xl font-medium transition-all duration-200 active:scale-95;
+    @apply bg-slate-100 text-slate-700 px-6 py-3 rounded-xl font-medium transition-all duration-200 active:scale-95;
+  }
+  
+  .btn-secondary:hover {
+    @apply bg-slate-200;
   }
   
   .btn-orange {
-    @apply bg-azm-orange text-white px-6 py-3 rounded-xl font-medium transition-all duration-200 active:scale-95;
+    @apply bg-gradient-to-r from-amber-500 to-amber-400 text-white px-6 py-3 rounded-xl font-medium transition-all duration-200 active:scale-95 shadow-md;
   }
   
   .input-field {
-    @apply w-full px-4 py-3 rounded-xl border border-gray-200 bg-white focus:outline-none focus:ring-2 focus:ring-azm-green/20 focus:border-azm-green transition-all;
+    @apply w-full px-4 py-3 rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-400 transition-all text-base;
+  }
+  
+  /* Status badges */
+  .badge-new {
+    background: #E0F2FE;
+    color: #0369A1;
+    border: 1px solid #7DD3FC;
+  }
+  
+  .badge-in-progress {
+    background: #EEF2FF;
+    color: #4338CA;
+    border: 1px solid #A5B4FC;
+  }
+  
+  .badge-pending-review {
+    background: #FEF3C7;
+    color: #B45309;
+    border: 1px solid #FCD34D;
+  }
+  
+  .badge-completed {
+    background: #DCFCE7;
+    color: #15803D;
+    border: 1px solid #86EFAC;
+  }
+  
+  .badge-delayed {
+    background: #F1F5F9;
+    color: #475569;
+    border: 1px solid #CBD5E1;
+  }
+  
+  .badge-blocked {
+    background: #FFE4E6;
+    color: #BE123C;
+    border: 1px solid #FDA4AF;
+  }
+  
+  /* Priority badges */
+  .badge-priority-high {
+    background: #FEE2E2;
+    color: #DC2626;
+    border: 1px solid #FECACA;
+  }
+  
+  .badge-priority-medium {
+    background: #FEF3C7;
+    color: #D97706;
+    border: 1px solid #FDE68A;
+  }
+  
+  .badge-priority-low {
+    background: #DCFCE7;
+    color: #16A34A;
+    border: 1px solid #BBF7D0;
   }
   
   .badge {
@@ -55,15 +127,23 @@
   }
   
   .badge-green {
-    @apply bg-green-100 text-green-700;
+    @apply bg-emerald-100 text-emerald-700;
+  }
+  
+  .badge-blue {
+    @apply bg-blue-100 text-blue-700;
+  }
+  
+  .badge-purple {
+    @apply bg-violet-100 text-violet-700;
   }
   
   .badge-orange {
-    @apply bg-orange-100 text-orange-700;
+    @apply bg-amber-100 text-amber-700;
   }
   
   .badge-gray {
-    @apply bg-gray-100 text-gray-600;
+    @apply bg-slate-100 text-slate-600;
   }
   
   .badge-red {
@@ -71,7 +151,7 @@
   }
   
   .bottom-nav {
-    @apply fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 px-2 py-2 z-50;
+    @apply fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-lg border-t border-slate-200/50 px-2 py-2 z-50;
     padding-bottom: env(safe-area-inset-bottom, 16px);
   }
   
@@ -80,29 +160,77 @@
   }
   
   .progress-bar {
-    @apply h-2 bg-gray-200 rounded-full overflow-hidden;
+    @apply h-2 bg-slate-100 rounded-full overflow-hidden;
   }
   
   .progress-fill {
-    @apply h-full bg-azm-green rounded-full transition-all duration-500;
+    @apply h-full bg-gradient-to-r from-emerald-500 to-emerald-400 rounded-full transition-all duration-500;
   }
   
   .kanban-column {
-    @apply flex-shrink-0 w-[280px] md:w-72 bg-gray-50 rounded-2xl p-3;
+    @apply flex-shrink-0 w-[290px] md:w-72 bg-slate-100/80 rounded-2xl p-4 backdrop-blur-sm;
+    border: 1px solid rgba(148, 163, 184, 0.1);
   }
   
   .task-card {
-    @apply bg-white rounded-xl shadow-sm border border-gray-100 p-3 mb-2 cursor-grab active:cursor-grabbing;
+    @apply bg-white rounded-xl p-4 mb-3 cursor-grab active:cursor-grabbing relative overflow-hidden;
+    border: 1px solid rgba(148, 163, 184, 0.2);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.03);
   }
   
+  .task-card:hover {
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08), 0 8px 24px rgba(0,0,0,0.06);
+    transform: translateY(-1px);
+  }
+  
+  /* Status indicator bar on top of task card */
+  .task-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    left: 0;
+    height: 3px;
+  }
+  
+  .task-card.status-new::before { background: linear-gradient(90deg, #0EA5E9, #38BDF8); }
+  .task-card.status-in-progress::before { background: linear-gradient(90deg, #6366F1, #818CF8); }
+  .task-card.status-pending-review::before { background: linear-gradient(90deg, #F59E0B, #FBBF24); }
+  .task-card.status-completed::before { background: linear-gradient(90deg, #22C55E, #4ADE80); }
+  .task-card.status-delayed::before { background: linear-gradient(90deg, #64748B, #94A3B8); }
+  .task-card.status-blocked::before { background: linear-gradient(90deg, #EF4444, #F87171); }
+  
   .section-title {
-    @apply text-lg font-semibold text-gray-800 mb-4;
+    @apply text-lg font-semibold text-slate-800 mb-4;
   }
   
   .stat-card {
-    @apply bg-white rounded-2xl p-4 shadow-sm border border-gray-100;
+    @apply bg-white rounded-2xl p-4 shadow-md border border-slate-200/50;
+  }
+  
+  /* Improved header gradient */
+  .header-gradient {
+    @apply bg-gradient-to-br from-emerald-700 via-emerald-600 to-emerald-500;
+  }
+  
+  /* Kanban column header */
+  .kanban-header {
+    @apply flex items-center gap-3 mb-4 pb-3 border-b border-slate-200/30;
+  }
+  
+  /* Task counter badge */
+  .task-counter {
+    @apply bg-slate-200/50 text-slate-600 text-sm px-3 py-1 rounded-full font-medium;
   }
 }
+
+/* Status-based card borders */
+.task-card[data-status="new"] { border-right: 3px solid #0EA5E9; }
+.task-card[data-status="in-progress"] { border-right: 3px solid #6366F1; }
+.task-card[data-status="pending-review"] { border-right: 3px solid #F59E0B; }
+.task-card[data-status="completed"] { border-right: 3px solid #22C55E; }
+.task-card[data-status="delayed"] { border-right: 3px solid #64748B; }
+.task-card[data-status="blocked"] { border-right: 3px solid #EF4444; }
 
 @layer utilities {
   .hide-scrollbar::-webkit-scrollbar {
@@ -152,6 +280,27 @@ html {
 }
 
 *:focus-visible {
-  outline: 2px solid #1a5f3c;
+  outline: 2px solid #059669;
   outline-offset: 2px;
+}
+
+/* Custom scrollbar for desktop */
+@media (min-width: 768px) {
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  
+  ::-webkit-scrollbar-thumb {
+    background: #CBD5E1;
+    border-radius: 3px;
+  }
+  
+  ::-webkit-scrollbar-thumb:hover {
+    background: #94A3B8;
+  }
 }

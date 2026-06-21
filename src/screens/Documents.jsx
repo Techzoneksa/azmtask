@@ -23,9 +23,9 @@ export default function Documents() {
 
   const getStatusInfo = (status) => {
     const statusMap = {
-      'completed': { label: 'تم', color: 'bg-green-100 text-green-700', icon: CheckCircle },
-      'in-progress': { label: 'قيد التجهيز', color: 'bg-orange-100 text-orange-700', icon: Clock },
-      'pending': { label: 'معلق', color: 'bg-gray-100 text-gray-600', icon: Clock }
+      'completed': { label: 'تم', badgeClass: 'badge-completed', icon: CheckCircle },
+      'in-progress': { label: 'قيد التجهيز', badgeClass: 'badge-in-progress', icon: Clock },
+      'pending': { label: 'معلق', badgeClass: 'badge-delayed', icon: Clock }
     };
     return statusMap[status] || statusMap['pending'];
   };
@@ -81,7 +81,7 @@ export default function Documents() {
                 <div className="flex-1">
                   <div className="flex items-center justify-between mb-2">
                     <h3 className="font-semibold text-gray-800">{doc.name}</h3>
-                    <span className={`badge ${statusInfo.color}`}>
+                    <span className={`badge ${statusInfo.badgeClass}`}>
                       <StatusIcon className="w-3 h-3 ml-1" />
                       {statusInfo.label}
                     </span>

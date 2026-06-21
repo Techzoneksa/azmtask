@@ -222,10 +222,10 @@ export default function TodayTasks() {
               <div className="flex-1 min-w-0">
                 <div className="flex items-start justify-between gap-2">
                   <h3 className="font-semibold text-gray-800">{task.title}</h3>
-                  <span className={`badge ${
-                    task.priority === 'high' ? 'badge-red' :
-                    task.priority === 'medium' ? 'badge-orange' : 'badge-green'
-                  } text-xs flex-shrink-0`}>
+                  <span className={`badge text-xs flex-shrink-0 ${
+                    task.priority === 'high' ? 'badge-priority-high' :
+                    task.priority === 'medium' ? 'badge-priority-medium' : 'badge-priority-low'
+                  }`}>
                     {task.priority === 'high' ? 'عالية' : task.priority === 'medium' ? 'متوسطة' : 'منخفضة'}
                   </span>
                 </div>
