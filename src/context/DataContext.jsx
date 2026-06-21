@@ -277,8 +277,8 @@ export function DataProvider({ children }) {
 
       await supabase.from('notifications').insert({
         id: 'notif-' + Date.now(),
-        title: 'تم إضافة معوق جديد',
-        message: `تم تسجيل معوق: ${blockerData.title}`,
+        title: 'تم إضافة تحدٍ تشغيلي جديد',
+        message: `تم تسجيل تحدٍ تشغيلي: ${blockerData.title}`,
         user_id: targetUserId,
         read: false
       });
@@ -305,8 +305,8 @@ export function DataProvider({ children }) {
 
       await supabase.from('notifications').insert({
         id: 'notif-' + Date.now(),
-        title: 'تم حل المعوق',
-        message: `تم إغلاق المعوق`,
+        title: 'تم حل التحدي التشغيلي',
+        message: `تم إغلاق التحدي التشغيلي`,
         user_id: profile?.role === 'director' ? '22222222-2222-2222-2222-222222222222' : '11111111-1111-1111-1111-111111111111',
         read: false
       });

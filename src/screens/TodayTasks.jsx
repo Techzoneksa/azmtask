@@ -20,11 +20,26 @@ export default function TodayTasks() {
   const getTodaysTasks = () => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
     
     return data.tasks.filter(task => {
       const due = new Date(task.due_date);
       due.setHours(0, 0, 0, 0);
-      return due.getTime() <= today.getTime() && task.status !== 'completed';
+      return due.getTime() >= today.getTime() && due.getTime() < tomorrow.getTime() && task.status !== 'completed';
+    });
+  };
+
+  const getTodaysTasksIncludingOverdue = () => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    
+    return data.tasks.filter(task => {
+      const due = new Date(task.due_date);
+      due.setHours(0, 0, 0, 0);
+      return due.getTime() < tomorrow.getTime() && task.status !== 'completed';
     });
   };
 
@@ -67,10 +82,10 @@ export default function TodayTasks() {
   };
 
   const tabs = [
-    { id: 'all', label: 'الكل', count: getTodaysTasks().length, color: 'bg-blue-500' },
-    { id: 'urgent', label: 'عالية الأولوية', count: getTodaysTasks().filter(t => t.priority === 'high').length, color: 'bg-red-500' },
+    { id: 'all', label: 'الكل', count: getTodaysTasksIncludingOverdue().length, color: 'bg-blue-500' },
+    { id: 'urgent', label: 'عالية الأولوية', count: getTodaysTasksIncludingOverdue().filter(t => t.priority === 'high').length, color: 'bg-red-500' },
     { id: 'delayed', label: 'متأخرة', count: getDelayedTasks().length, color: 'bg-orange-500' },
-    { id: 'review', label: 'بان等待 المراجعة', count: getPendingReviewTasks().length, color: 'bg-purple-500' },
+    { id: 'review', label: 'بانتظار المراجعة', count: getPendingReviewTasks().length, color: 'bg-purple-500' },
     { id: 'blocked', label: 'متعثرة', count: getBlockedTasks().length, color: 'bg-red-600' },
     { id: 'tomorrow', label: 'خطة الغد', count: getTomorrowTasks().length, color: 'bg-green-500' }
   ];
@@ -78,7 +93,7 @@ export default function TodayTasks() {
   const getFilteredTasks = () => {
     switch (activeTab) {
       case 'urgent':
-        return getTodaysTasks().filter(t => t.priority === 'high');
+        return getTodaysTasksIncludingOverdue().filter(t => t.priority === 'high');
       case 'delayed':
         return getDelayedTasks();
       case 'review':
@@ -88,7 +103,7 @@ export default function TodayTasks() {
       case 'tomorrow':
         return getTomorrowTasks();
       default:
-        return getTodaysTasks();
+        return getTodaysTasksIncludingOverdue();
     }
   };
 
@@ -113,7 +128,7 @@ export default function TodayTasks() {
     const labels = {
       'new': 'جديد',
       'in-progress': 'قيد التنفيذ',
-      'pending-review': 'بان等待 المراجعة',
+      'pending-review': 'بانتظار المراجعة',
       'completed': 'مكتمل',
       'blocked': 'متعثر',
       'delayed': 'مؤجل'
@@ -137,7 +152,7 @@ export default function TodayTasks() {
       {/* Summary Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div className="card text-center">
-          <div className="text-3xl font-bold text-blue-500">{getTodaysTasks().length}</div>
+          <div className="text-3xl font-bold text-blue-500">{getTodaysTasksIncludingOverdue().length}</div>
           <div className="text-sm text-gray-500">مهام اليوم</div>
         </div>
         <div className="card text-center">
@@ -146,7 +161,7 @@ export default function TodayTasks() {
         </div>
         <div className="card text-center">
           <div className="text-3xl font-bold text-purple-500">{getPendingReviewTasks().length}</div>
-          <div className="text-sm text-gray-500">بان等待 المراجعة</div>
+          <div className="text-sm text-gray-500">بانتظار المراجعة</div>
         </div>
         <div className="card text-center">
           <div className="text-3xl font-bold text-orange-500">{getBlockedTasks().length}</div>

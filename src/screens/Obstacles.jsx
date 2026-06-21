@@ -58,8 +58,8 @@ export default function Obstacles() {
             <AlertTriangle className="w-6 h-6 text-white" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-gray-800">المعوقات</h1>
-            <p className="text-gray-500">الأشياء التي تمنع الانطلاق</p>
+            <h1 className="text-2xl font-bold text-gray-800">التحديات التشغيلية</h1>
+            <p className="text-gray-500">التحديات التي تواجهنا وتعيق الانطلاق</p>
           </div>
         </div>
         
@@ -68,7 +68,7 @@ export default function Obstacles() {
           className="btn-primary flex items-center gap-2 text-sm"
         >
           <Plus className="w-4 h-4" />
-          إضافة معوق
+إضافة تحدي تشغيلي
         </button>
       </div>
 
@@ -76,7 +76,7 @@ export default function Obstacles() {
       <div className="grid grid-cols-2 gap-4">
         <div className="card text-center">
           <div className="text-3xl font-bold text-red-500">{openObstacles.length}</div>
-          <div className="text-sm text-gray-500">معوقات مفتوحة</div>
+          <div className="text-sm text-gray-500">تحديات تشغيلية مفتوحة</div>
         </div>
         <div className="card text-center">
           <div className="text-3xl font-bold text-green-500">{resolvedObstacles.length}</div>
@@ -89,7 +89,7 @@ export default function Obstacles() {
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl w-full max-w-md p-6">
             <div className="flex items-center justify-between mb-6">
-              <h3 className="text-lg font-semibold text-gray-800">إضافة معوق جديد</h3>
+              <h3 className="text-lg font-semibold text-gray-800">إضافة تحدٍ تشغيلي جديد</h3>
               <button onClick={() => setShowAddModal(false)} className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center">
                 <X className="w-4 h-4" />
               </button>
@@ -145,7 +145,7 @@ export default function Obstacles() {
               </div>
               
               <button onClick={handleAddObstacle} className="btn-primary w-full">
-                إضافة المعوق
+                إضافة التحدي
               </button>
             </div>
           </div>
@@ -156,7 +156,7 @@ export default function Obstacles() {
       <div className="card">
         <h3 className="section-title text-red-600 flex items-center gap-2">
           <AlertTriangle className="w-5 h-5" />
-          المعوقات المفتوحة ({openObstacles.length})
+          التحديات التشغيلية المفتوحة ({openObstacles.length})
         </h3>
         
         <div className="space-y-4">
@@ -184,7 +184,7 @@ export default function Obstacles() {
                     <p className="text-xs text-gray-400 mt-2">تاريخ التسجيل: {formatDate(obstacle.created_at)}</p>
                   </div>
                   
-                  {user?.role === 'director' && (
+                  {(user?.role === 'director' || user?.role === 'admin') && (
                     <button 
                       onClick={() => handleResolveObstacle(obstacle.id)}
                       className="btn-secondary text-green-600 border-green-200 hover:bg-green-50 flex items-center gap-2 text-sm"
@@ -201,7 +201,7 @@ export default function Obstacles() {
           {openObstacles.length === 0 && (
             <div className="text-center py-8">
               <CheckCircle className="w-12 h-12 text-green-500 mx-auto mb-3" />
-              <p className="text-gray-500">لا توجد معوقات مفتوحة</p>
+              <p className="text-gray-500">لا توجد تحديات تشغيلية مفتوحة</p>
             </div>
           )}
         </div>
@@ -212,7 +212,7 @@ export default function Obstacles() {
         <div className="card">
           <h3 className="section-title text-green-600 flex items-center gap-2">
             <CheckCircle className="w-5 h-5" />
-            المعوقات المحلولة ({resolvedObstacles.length})
+            التحديات التشغيلية المحلولة ({resolvedObstacles.length})
           </h3>
           
           <div className="space-y-3">

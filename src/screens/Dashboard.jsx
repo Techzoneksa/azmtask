@@ -201,7 +201,7 @@ export default function Dashboard() {
           </div>
           <div className="bg-gray-50 rounded-xl p-3 text-center">
             <div className="text-2xl font-bold text-red-500">{readiness?.openObstacles || 0}</div>
-            <div className="text-xs text-gray-500">معوقات مفتوحة</div>
+            <div className="text-xs text-gray-500">تحديات تشغيلية مفتوحة</div>
           </div>
         </div>
       </div>
@@ -265,7 +265,7 @@ export default function Dashboard() {
                 } text-xs`}>
                   {task.status === 'in-progress' ? 'قيد التنفيذ' : 
                    task.status === 'blocked' ? 'متعثر' : 
-                   task.status === 'pending-review' ? 'بان等待 المراجعة' :
+                   task.status === 'pending-review' ? 'بانتظار المراجعة' :
                    task.status === 'completed' ? 'مكتمل' : 'جديد'}
                 </span>
               </Link>
@@ -352,7 +352,7 @@ export default function Dashboard() {
         <div className="card">
           <h3 className="section-title flex items-center gap-2">
             <AlertCircle className="w-5 h-5 text-red-500" />
-            المعوقات المفتوحة
+            التحديات التشغيلية المفتوحة
           </h3>
           <div className="space-y-2">
             {getOpenObstacles().slice(0, 4).map(obstacle => (
@@ -375,7 +375,7 @@ export default function Dashboard() {
               </Link>
             )}
             {getOpenObstacles().length === 0 && (
-              <p className="text-center text-green-500 py-4">لا توجد معوقات مفتوحة</p>
+              <p className="text-center text-green-500 py-4">لا توجد تحديات تشغيلية مفتوحة</p>
             )}
           </div>
         </div>

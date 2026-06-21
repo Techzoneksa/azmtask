@@ -105,14 +105,16 @@ function KanbanColumn({ status, tasks, stages, title, color, icon: Icon, onDrop,
 }
 
 export default function Kanban() {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const { data, updateTask } = useData();
+  
+  const isAdmin = profile?.role === 'admin' || profile?.role === 'director';
   const [draggedTask, setDraggedTask] = useState(null);
 
   const statuses = [
     { id: 'new', name: 'جديد', color: '#3b82f6', icon: Clock },
     { id: 'in-progress', name: 'قيد التنفيذ', color: '#f59e0b', icon: Clock },
-    { id: 'pending-review', name: 'بان等待 المراجعة', color: '#8b5cf6', icon: AlertTriangle },
+    { id: 'pending-review', name: 'بانتظار المراجعة', color: '#8b5cf6', icon: AlertTriangle },
     { id: 'completed', name: 'مكتمل', color: '#22c55e', icon: CheckCircle },
     { id: 'delayed', name: 'مؤجل', color: '#6b7280', icon: PauseCircle },
     { id: 'blocked', name: 'متعثر', color: '#ef4444', icon: XCircle }
@@ -128,7 +130,7 @@ export default function Kanban() {
     
     if (!draggedTask) return;
 
-    if (user?.role !== 'director' && newStatus === 'completed') {
+    if (!isAdmin && newStatus === 'completed') {
       alert('لا يمكن نقل المهمة إلى مكتمل. يجب اعتمادها من المدير العام.');
       setDraggedTask(null);
       return;
@@ -190,12 +192,14 @@ export default function Kanban() {
       </div>
 
       {/* Legend */}
-      <div className="card">
-        <h3 className="text-sm font-medium text-gray-700 mb-3">ملاحظة للمدير التشغيلي</h3>
-        <p className="text-sm text-gray-500">
-          لا يمكن نقل المهام إلى "مكتمل" مباشرة. يجب إرسالها للمراجعة واعتماد المدير العام.
-        </p>
-      </div>
+      {profile?.role === 'ops' && (
+        <div className="card">
+          <h3 className="text-sm font-medium text-gray-700 mb-3">ملاحظة للمدير التشغيلي</h3>
+          <p className="text-sm text-gray-500">
+            لا يمكن نقل المهام إلى "مكتمل" مباشرة. يجب إرسالها للمراجعة واعتماد المدير العام.
+          </p>
+        </div>
+      )}
     </div>
   );
 }

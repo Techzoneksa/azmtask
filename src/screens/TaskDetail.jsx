@@ -100,7 +100,7 @@ export default function TaskDetail() {
     const statusMap = {
       'new': { label: 'جديد', color: 'bg-blue-100 text-blue-700', icon: Clock },
       'in-progress': { label: 'قيد التنفيذ', color: 'bg-orange-100 text-orange-700', icon: Clock },
-      'pending-review': { label: 'بان等待 المراجعة', color: 'bg-purple-100 text-purple-700', icon: AlertTriangle },
+      'pending-review': { label: 'بانتظار المراجعة', color: 'bg-purple-100 text-purple-700', icon: AlertTriangle },
       'completed': { label: 'مكتمل', color: 'bg-green-100 text-green-700', icon: CheckCircle },
       'blocked': { label: 'متعثر', color: 'bg-red-100 text-red-700', icon: XCircle },
       'delayed': { label: 'مؤجل', color: 'bg-gray-100 text-gray-700', icon: Clock }

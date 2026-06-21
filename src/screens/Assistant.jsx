@@ -115,7 +115,7 @@ export default function Assistant() {
         <Link to="/obstacles" className="card hover:shadow-md transition-shadow text-center">
           <AlertTriangle className="w-8 h-8 text-red-500 mx-auto mb-2" />
           <div className="text-2xl font-bold text-gray-800">{openObstacles.length}</div>
-          <div className="text-sm text-gray-500">معوقات مفتوحة</div>
+          <div className="text-sm text-gray-500">تحديات تشغيلية مفتوحة</div>
         </Link>
         
         <Link to="/kanban" className="card hover:shadow-md transition-shadow text-center">

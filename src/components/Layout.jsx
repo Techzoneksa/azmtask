@@ -26,7 +26,7 @@ const navItems = [
   { path: '/roadmap', icon: Map, label: 'المراحل' },
   { path: '/kanban', icon: Kanban, label: 'المهام' },
   { path: '/attendance', icon: Clock, label: 'الحضور' },
-  { path: '/obstacles', icon: AlertTriangle, label: 'المعوقات' },
+  { path: '/obstacles', icon: AlertTriangle, label: 'التحديات' },
   { path: '/documents', icon: FileText, label: 'المستندات' },
   { path: '/reports', icon: BarChart3, label: 'التقارير' },
   { path: '/notes', icon: MessageSquare, label: 'الملاحظات' },
@@ -41,7 +41,7 @@ const mainNavItems = [
   { path: '/roadmap', icon: Map, label: 'المراحل' },
   { path: '/kanban', icon: Kanban, label: 'المهام' },
   { path: '/attendance', icon: Clock, label: 'الحضور' },
-  { path: '/obstacles', icon: AlertTriangle, label: 'المعوقات' }
+  { path: '/obstacles', icon: AlertTriangle, label: 'التحديات' }
 ];
 
 export default function Layout() {

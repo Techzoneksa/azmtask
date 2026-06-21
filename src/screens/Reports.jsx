@@ -58,7 +58,7 @@ export default function Reports() {
     { id: 'today', label: 'تقرير اليوم', icon: Calendar },
     { id: 'stages', label: 'تقرير المراحل', icon: BarChart3 },
     { id: 'delayed', label: 'تقرير المتأخرات', icon: AlertTriangle },
-    { id: 'obstacles', label: 'تقرير المعوقات', icon: AlertCircle }
+    { id: 'obstacles', label: 'تقرير التحديات التشغيلية', icon: AlertCircle }
   ];
 
   const renderReport = () => {
@@ -162,12 +162,12 @@ export default function Reports() {
         
         return (
           <div className="space-y-6">
-            <h3 className="text-lg font-semibold text-gray-800">تقرير المعوقات</h3>
+            <h3 className="text-lg font-semibold text-gray-800">تقرير التحديات التشغيلية</h3>
             
             <div className="grid grid-cols-2 gap-4">
               <div className="card text-center">
                 <div className="text-3xl font-bold text-red-600">{openObstacles.length}</div>
-                <div className="text-sm text-gray-500">معوقات مفتوحة</div>
+                <div className="text-sm text-gray-500">تحديات تشغيلية مفتوحة</div>
               </div>
               <div className="card text-center">
                 <div className="text-3xl font-bold text-green-600">{resolvedObstacles.length}</div>
