@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useData } from '../context/DataContext';
+import { supabase } from '../lib/supabase';
 import { 
   Settings, 
   Building,
@@ -12,7 +13,10 @@ import {
   Shield,
   Globe,
   Clock,
-  Smartphone
+  Smartphone,
+  Upload,
+  X,
+  CheckCircle
 } from 'lucide-react';
 
 export default function SettingsPage() {
@@ -55,7 +59,7 @@ export default function SettingsPage() {
     setTimeout(() => setSaved(false), 2000);
   };
 
-  const handleLogoUpload = (e) => {
+  const handleLogoUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
     
@@ -64,15 +68,38 @@ export default function SettingsPage() {
       return;
     }
     
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const dataUrl = event.target.result;
-      setLogoPreview(dataUrl);
-      localStorage.setItem('azm-logo', dataUrl);
+    const fileName = `logo-${Date.now()}.${file.name.split('.').pop()}`;
+    
+    try {
+      const { data, error } = await supabase.storage
+        .from('company-assets')
+        .upload(fileName, file, {
+          cacheControl: '3600',
+          upsert: true
+        });
+      
+      if (error) {
+        if (error.message.includes('not found') || error.message.includes('does not exist')) {
+          alert('Bucket تخزين الشعار غير موجود، يرجى إنشاء company-assets في Supabase Storage.');
+        } else {
+          alert('تعذر رفع الشعار: ' + error.message);
+        }
+        return;
+      }
+      
+      const { data: urlData } = supabase.storage
+        .from('company-assets')
+        .getPublicUrl(fileName);
+      
+      const logoUrl = urlData.publicUrl;
+      setLogoPreview(logoUrl);
+      localStorage.setItem('azm-logo', logoUrl);
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
-    };
-    reader.readAsDataURL(file);
+    } catch (err) {
+      console.error('Logo upload error:', err);
+      alert('تعذر رفع الشعار، حاول مرة أخرى');
+    }
   };
 
   const handleRemoveLogo = () => {
@@ -196,9 +223,7 @@ export default function SettingsPage() {
                   htmlFor="logo-upload"
                   className="cursor-pointer inline-flex items-center gap-2 px-4 py-2 bg-emerald-100 text-emerald-700 rounded-lg hover:bg-emerald-200 transition-colors text-sm font-medium"
                 >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                  </svg>
+                  <Upload className="w-4 h-4" />
                   {logoPreview ? 'تغيير الشعار' : 'رفع الشعار'}
                 </label>
                 {logoPreview && (
@@ -206,13 +231,17 @@ export default function SettingsPage() {
                     onClick={handleRemoveLogo}
                     className="mr-3 inline-flex items-center gap-2 px-4 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors text-sm font-medium"
                   >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                    </svg>
+                    <X className="w-4 h-4" />
                     حذف
                   </button>
                 )}
-                <p className="text-xs text-slate-500 mt-3">PNG, JPG أو SVG - حجم أقصى 500KB</p>
+                <p className="text-xs text-slate-500 mt-3">PNG, JPG، WEBP أو SVG - حجم أقصى 500KB</p>
+                {logoPreview && logoPreview.includes('supabase') && (
+                  <p className="text-xs text-emerald-600 mt-2 flex items-center justify-center gap-1">
+                    <CheckCircle className="w-3 h-3" />
+                    محفوظ في Supabase Storage
+                  </p>
+                )}
               </div>
               
               <div className="mt-6 flex justify-end">

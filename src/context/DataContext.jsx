@@ -136,6 +136,37 @@ export function DataProvider({ children }) {
     }
   };
 
+  const addTask = async (taskData) => {
+    try {
+      const newTask = {
+        id: 'task-' + Date.now(),
+        title: taskData.title,
+        description: taskData.description || '',
+        status: taskData.status || 'new',
+        stage_id: taskData.stage_id || data.stages?.[0]?.id || null,
+        assigned_to: taskData.assigned_to || user?.id,
+        priority: taskData.priority || 'medium',
+        due_date: taskData.due_date || new Date().toISOString().split('T')[0],
+        progress: taskData.progress || 0,
+        needs_follow_up: taskData.needs_follow_up || false,
+        needs_approval: taskData.needs_approval || false,
+        notes: taskData.notes || '',
+        created_by: user?.id,
+        created_at: new Date().toISOString()
+      };
+
+      const { error } = await supabase.from('tasks').insert(newTask);
+
+      if (error) throw error;
+
+      await fetchAllData();
+      return { success: true };
+    } catch (error) {
+      console.error('Error adding task:', error);
+      return { success: false, error: error.message };
+    }
+  };
+
   const addTaskLog = async (taskId, logEntry) => {
     try {
       await supabase.from('task_updates').insert({
@@ -343,6 +374,7 @@ export function DataProvider({ children }) {
       data, 
       isLoading,
       updateTask,
+      addTask,
       addTaskLog,
       addNote,
       checkIn,

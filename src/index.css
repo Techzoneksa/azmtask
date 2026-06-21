@@ -10,6 +10,13 @@
     box-sizing: border-box;
   }
   
+  html, body {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
+    overscroll-behavior-x: contain;
+  }
+  
   html {
     font-family: 'IBM Plex Sans Arabic', 'Tajawal', 'Cairo', sans-serif;
     -webkit-font-smoothing: antialiased;
@@ -100,6 +107,56 @@
   
   .input-field {
     @apply w-full px-4 py-3 rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-400 transition-all text-base;
+  }
+  
+  .dark .input-field {
+    background-color: #1e293b;
+    border-color: #334155;
+    color: #f1f5f9;
+  }
+  
+  .dark .input-field:focus {
+    border-color: #10b981;
+    box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
+  }
+  
+  .dark .input-field option {
+    background-color: #1e293b;
+    color: #f1f5f9;
+  }
+  
+  /* Kanban scroll styles */
+  .kanban-scroll {
+    overflow-x: auto;
+    overflow-y: hidden;
+    overscroll-behavior-x: contain;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(148, 163, 184, 0.35) transparent;
+    padding-bottom: 8px;
+  }
+  
+  .kanban-scroll::-webkit-scrollbar {
+    height: 6px;
+  }
+  
+  .kanban-scroll::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  
+  .kanban-scroll::-webkit-scrollbar-thumb {
+    background: rgba(148, 163, 184, 0.35);
+    border-radius: 999px;
+  }
+  
+  .kanban-scroll::-webkit-scrollbar-thumb:hover {
+    background: rgba(148, 163, 184, 0.55);
+  }
+  
+  /* Kanban column */
+  .kanban-column {
+    min-width: 300px;
+    flex-shrink: 0;
+    width: 300px;
   }
   
   /* Status badges */
@@ -410,16 +467,6 @@ html {
 
 .dark .border-slate-100\/50 {
   border-color: rgba(51, 65, 85, 0.5);
-}
-
-.dark .input-field {
-  background-color: #1e293b;
-  border-color: #334155;
-  color: #e2e8f0;
-}
-
-.dark .input-field:focus {
-  border-color: #10b981;
 }
 
 .dark .section-title {

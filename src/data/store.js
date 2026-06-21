@@ -204,7 +204,7 @@ export const priorities = [
 export const statuses = [
   { id: 'new', name: 'جديد', color: '#3b82f6', order: 1 },
   { id: 'in-progress', name: 'قيد التنفيذ', color: '#f59e0b', order: 2 },
-  { id: 'pending-review', name: 'بان等待 مراجعة المدير', color: '#8b5cf6', order: 3 },
+  { id: 'pending-review', name: 'بانتظار المراجعة', color: '#8b5cf6', order: 3 },
   { id: 'completed', name: 'مكتمل', color: '#22c55e', order: 4 },
   { id: 'blocked', name: 'متعثر', color: '#ef4444', order: 5 },
   { id: 'delayed', name: 'مؤجل', color: '#6b7280', order: 6 }
