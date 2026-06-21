@@ -12,7 +12,8 @@ import {
   AlertTriangle,
   Zap,
   Target,
-  ChevronLeft
+  ChevronLeft,
+  Plus
 } from 'lucide-react';
 
 export default function Dashboard() {
@@ -145,13 +146,22 @@ export default function Dashboard() {
           <h1 className="text-2xl font-bold text-gray-800">مرحباً، {user?.name || 'المستخدم'}</h1>
           <p className="text-gray-500">{user?.position || 'مستخدم'}</p>
         </div>
-        <Link 
-          to="/today" 
-          className="btn-primary flex items-center gap-2 text-sm"
-        >
-          <Calendar className="w-4 h-4" />
-          مهام اليوم
-        </Link>
+        <div className="flex items-center gap-3">
+          <Link 
+            to="/kanban" 
+            className="btn-primary flex items-center gap-2 text-sm"
+          >
+            <Plus className="w-4 h-4" />
+            إضافة مهمة
+          </Link>
+          <Link 
+            to="/today" 
+            className="btn-secondary flex items-center gap-2 text-sm"
+          >
+            <Calendar className="w-4 h-4" />
+            مهام اليوم
+          </Link>
+        </div>
       </div>
 
       {/* Readiness Card */}

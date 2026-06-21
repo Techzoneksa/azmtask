@@ -9,7 +9,8 @@ import {
   CheckCircle,
   ChevronLeft,
   Zap,
-  CalendarCheck
+  CalendarCheck,
+  Plus
 } from 'lucide-react';
 
 export default function TodayTasks() {
@@ -139,14 +140,20 @@ export default function TodayTasks() {
   return (
     <div className="space-y-6 animate-fade-in">
       {/* Header */}
-      <div className="flex items-center gap-4">
-        <div className="w-12 h-12 bg-azm-green rounded-xl flex items-center justify-center">
-          <CalendarCheck className="w-6 h-6 text-white" />
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 bg-azm-green rounded-xl flex items-center justify-center">
+            <CalendarCheck className="w-6 h-6 text-white" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold text-gray-800">مهام اليوم</h1>
+            <p className="text-gray-500">مهام يجب إنجازها اليوم</p>
+          </div>
         </div>
-        <div>
-          <h1 className="text-2xl font-bold text-gray-800">مهام اليوم</h1>
-          <p className="text-gray-500">مهام يجب إنجازها اليوم</p>
-        </div>
+        <Link to="/kanban" className="btn-primary flex items-center gap-2 text-sm">
+          <Plus className="w-4 h-4" />
+          إضافة مهمة
+        </Link>
       </div>
 
       {/* Summary Cards */}
