@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { useData } from '../context/DataContext';
 import { useFeedback } from '../context/FeedbackContext';
 import TaskEditModal from '../components/TaskEditModal';
+import EmptyState from '../components/EmptyState';
 import { 
   LayoutGrid, 
   ChevronLeft,
@@ -15,25 +16,28 @@ import {
   Plus,
   GripVertical,
   X,
-  Pencil
+  Pencil,
+  Calendar,
+  User,
+  ArrowRight
 } from 'lucide-react';
 
-function TaskCard({ task, stages, onDragStart, isDragging = false, onEdit }) {
-  const stage = stages.find(s => s.id === task.phase_id);
+const STATUS_CONFIG = {
+  'new': { label: 'جديد', color: '#0369A1', bg: '#E0F2FE', border: '#7DD3FC', icon: Clock },
+  'in-progress': { label: 'قيد التنفيذ', color: '#4338CA', bg: '#EEF2FF', border: '#A5B4FC', icon: Clock },
+  'pending-review': { label: 'بانتظار المراجعة', color: '#B45309', bg: '#FEF3C7', border: '#FCD34D', icon: AlertTriangle },
+  'completed': { label: 'مكتمل', color: '#15803D', bg: '#DCFCE7', border: '#86EFAC', icon: CheckCircle },
+  'delayed': { label: 'مؤجل', color: '#475569', bg: '#F1F5F9', border: '#CBD5E1', icon: PauseCircle },
+  'blocked': { label: 'متعثر', color: '#BE123C', bg: '#FFE4E6', border: '#FDA4AF', icon: XCircle }
+};
+
+function TaskCard({ task, stage, onDragStart, isDragging = false, onEdit }) {
+  const config = STATUS_CONFIG[task.status] || STATUS_CONFIG['new'];
   
-  const statusBadgeClass = {
-    'new': 'badge-new',
-    'in-progress': 'badge-in-progress',
-    'pending-review': 'badge-pending-review',
-    'completed': 'badge-completed',
-    'blocked': 'badge-blocked',
-    'delayed': 'badge-delayed'
-  };
-  
-  const priorityBadgeClass = {
-    'high': 'badge-priority-high',
-    'medium': 'badge-priority-medium',
-    'low': 'badge-priority-low'
+  const getPriorityColor = () => {
+    if (task.priority === 'high') return '#EF4444';
+    if (task.priority === 'medium') return '#F59E0B';
+    return '#22C55E';
   };
 
   return (
@@ -41,91 +45,133 @@ function TaskCard({ task, stages, onDragStart, isDragging = false, onEdit }) {
       draggable
       onDragStart={(e) => onDragStart(e, task)}
       data-status={task.status}
-      className={`task-card ${isDragging ? 'shadow-xl opacity-50' : ''}`}
+      className={`task-card ${isDragging ? 'shadow-2xl opacity-50 scale-95' : ''} relative overflow-hidden`}
+      style={{ borderRight: `4px solid ${config.color}` }}
     >
-      <div className="flex items-start gap-2 mb-2">
-        <GripVertical className="w-4 h-4 text-slate-400 flex-shrink-0 mt-1 cursor-move" />
-        <div className="flex-1 min-w-0">
-          <h4 className="font-medium text-slate-800 dark:text-slate-100 text-sm line-clamp-2">{task.title}</h4>
-        </div>
-        {onEdit && (
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              e.preventDefault();
-              onEdit(task);
-            }}
-            className="w-7 h-7 rounded-lg bg-slate-100 dark:bg-slate-700 flex items-center justify-center hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors flex-shrink-0"
-          >
-            <Pencil className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" />
-          </button>
-        )}
-      </div>
-      
-      {task.description && (
-        <p className="text-xs text-slate-500 dark:text-slate-400 mb-3 line-clamp-2 mr-6">{task.description}</p>
-      )}
-      
-      <div className="flex items-center gap-2 mr-6 flex-wrap">
-        <span 
-          className="text-xs px-2 py-0.5 rounded-full font-medium"
-          style={{ backgroundColor: stage?.color + '20', color: stage?.color }}
-        >
-          {stage?.name}
-        </span>
-        <span className={`badge text-xs ${priorityBadgeClass[task.priority] || 'badge-gray'}`}>
-          {task.priority === 'high' ? 'عالية' : task.priority === 'medium' ? 'متوسطة' : task.priority === 'low' ? 'منخفضة' : task.priority === 'urgent' ? 'عاجلة' : task.priority}
-        </span>
-      </div>
-      
-      <div className="flex items-center gap-2 mt-3 mr-6">
-        <div className="flex-1 progress-bar h-2">
-          <div className="progress-fill" style={{ width: `${task.progress}%` }} />
-        </div>
-        <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">{task.progress}%</span>
-      </div>
-      
+      {/* High Priority Indicator */}
       {task.priority === 'high' && (
-        <div className="absolute top-2 left-2 w-2 h-2 bg-red-500 rounded-full animate-pulse" />
+        <div className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full animate-pulse" />
       )}
+      
+      <div className="p-4">
+        {/* Header */}
+        <div className="flex items-start gap-2 mb-3">
+          <GripVertical className="w-4 h-4 text-slate-300 flex-shrink-0 mt-0.5 cursor-grab active:cursor-grabbing" />
+          <div className="flex-1 min-w-0">
+            <Link to={`/task/${task.id}`} className="block">
+              <h4 className="font-semibold text-slate-800 dark:text-slate-100 text-sm line-clamp-2 hover:text-azm-green transition-colors">
+                {task.title}
+              </h4>
+            </Link>
+          </div>
+          {onEdit && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                onEdit(task);
+              }}
+              className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-700 flex items-center justify-center hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors flex-shrink-0"
+            >
+              <Pencil className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" />
+            </button>
+          )}
+        </div>
+        
+        {/* Description */}
+        {task.description && (
+          <p className="text-xs text-slate-500 dark:text-slate-400 mb-3 mr-6 line-clamp-2">{task.description}</p>
+        )}
+        
+        {/* Tags */}
+        <div className="flex items-center gap-2 mr-6 flex-wrap mb-3">
+          {stage && (
+            <span 
+              className="text-xs px-2.5 py-1 rounded-full font-medium"
+              style={{ backgroundColor: stage.color + '20', color: stage.color }}
+            >
+              {stage.name}
+            </span>
+          )}
+          <span className="text-xs px-2 py-0.5 rounded-full font-medium flex items-center gap-1"
+            style={{ backgroundColor: getPriorityColor() + '20', color: getPriorityColor() }}>
+            {task.priority === 'high' ? 'عالية' : task.priority === 'medium' ? 'متوسطة' : 'منخفضة'}
+          </span>
+        </div>
+        
+        {/* Progress */}
+        <div className="flex items-center gap-2 mr-6 mb-3">
+          <div className="flex-1 h-1.5 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
+            <div 
+              className="h-full rounded-full transition-all duration-300"
+              style={{ width: `${task.progress}%`, backgroundColor: config.color }}
+            />
+          </div>
+          <span className="text-xs font-bold text-slate-500">{task.progress}%</span>
+        </div>
+        
+        {/* Footer */}
+        <div className="flex items-center justify-between mr-6">
+          {task.due_date && (
+            <span className="text-xs text-slate-400 flex items-center gap-1">
+              <Calendar className="w-3 h-3" />
+              {new Date(task.due_date).toLocaleDateString('ar-SA', { month: 'short', day: 'numeric' })}
+            </span>
+          )}
+          <span className="text-xs px-2 py-0.5 rounded-full font-medium"
+            style={{ backgroundColor: config.bg, color: config.color }}>
+            {config.label}
+          </span>
+        </div>
+      </div>
     </div>
   );
 }
 
-function KanbanColumn({ status, tasks, stages, title, color, bg, border, icon: Icon, onDrop, onDragStart, draggedTask, onEdit }) {
+function KanbanColumn({ status, tasks, stage, title, color, bg, border, icon: Icon, onDrop, onDragStart, draggedTask, onEdit }) {
+  const config = STATUS_CONFIG[status];
+  const taskCount = tasks.length;
+  
   return (
     <div 
-      className="kanban-column"
+      className="kanban-column flex flex-col"
       onDragOver={(e) => e.preventDefault()}
       onDrop={(e) => onDrop(e, status)}
     >
+      {/* Column Header */}
       <div className="mb-4">
         <div className="flex items-center justify-between mb-3 px-1">
-          <div className="flex items-center gap-2">
-            <div className={`w-8 h-8 rounded-lg flex items-center justify-center`} style={{ backgroundColor: bg }}>
-              <Icon className="w-4 h-4" style={{ color }} />
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ backgroundColor: bg }}>
+              <Icon className="w-5 h-5" style={{ color }} />
             </div>
-            <h3 className="font-semibold text-slate-700 dark:text-slate-200">{title}</h3>
+            <div>
+              <h3 className="font-bold text-slate-800 dark:text-slate-100">{title}</h3>
+            </div>
           </div>
-          <span className="task-counter">{tasks.length}</span>
+          <span className="task-counter font-bold" style={{ backgroundColor: bg, color }}>{taskCount}</span>
         </div>
-        <div className="h-1 rounded-full" style={{ backgroundColor: border }} />
+        <div className="h-1.5 rounded-full" style={{ backgroundColor: border }} />
       </div>
       
-      <div className="space-y-3 min-h-[200px]">
+      {/* Tasks */}
+      <div className="flex-1 space-y-3 min-h-[200px]">
         {tasks.map(task => (
           <TaskCard 
             key={task.id}
             task={task} 
-            stages={stages}
+            stage={stage}
             onDragStart={onDragStart}
             isDragging={draggedTask?.id === task.id}
             onEdit={onEdit}
           />
         ))}
         {tasks.length === 0 && (
-          <div className="text-center py-8 text-gray-400 text-sm">
-            لا توجد مهام
+          <div className="flex flex-col items-center justify-center py-8 text-center">
+            <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-3" style={{ backgroundColor: bg }}>
+              <Icon className="w-6 h-6" style={{ color: color }}/>
+            </div>
+            <p className="text-sm text-slate-400">لا توجد مهام</p>
           </div>
         )}
       </div>
@@ -172,12 +218,12 @@ export default function Kanban() {
   };
 
   const statuses = [
-    { id: 'new', name: 'جديد', color: '#0369A1', bg: '#E0F2FE', border: '#7DD3FC', icon: Clock },
-    { id: 'in-progress', name: 'قيد التنفيذ', color: '#4338CA', bg: '#EEF2FF', border: '#A5B4FC', icon: Clock },
-    { id: 'pending-review', name: 'بانتظار المراجعة', color: '#B45309', bg: '#FEF3C7', border: '#FCD34D', icon: AlertTriangle },
-    { id: 'completed', name: 'مكتمل', color: '#15803D', bg: '#DCFCE7', border: '#86EFAC', icon: CheckCircle },
-    { id: 'delayed', name: 'مؤجل', color: '#475569', bg: '#F1F5F9', border: '#CBD5E1', icon: PauseCircle },
-    { id: 'blocked', name: 'متعثر', color: '#BE123C', bg: '#FFE4E6', border: '#FDA4AF', icon: XCircle }
+    { id: 'new', ...STATUS_CONFIG['new'] },
+    { id: 'in-progress', ...STATUS_CONFIG['in-progress'] },
+    { id: 'pending-review', ...STATUS_CONFIG['pending-review'] },
+    { id: 'completed', ...STATUS_CONFIG['completed'] },
+    { id: 'delayed', ...STATUS_CONFIG['delayed'] },
+    { id: 'blocked', ...STATUS_CONFIG['blocked'] }
   ];
 
   const handleDragStart = (e, task) => {
@@ -242,19 +288,19 @@ export default function Kanban() {
   return (
     <div className="space-y-6 animate-fade-in">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-4">
         <div className="flex items-center gap-4">
-          <div className="w-12 h-12 bg-azm-green rounded-xl flex items-center justify-center">
-            <LayoutGrid className="w-6 h-6 text-white" />
+          <div className="w-14 h-14 bg-gradient-to-br from-emerald-600 to-emerald-500 rounded-2xl flex items-center justify-center shadow-lg shadow-emerald-500/20">
+            <LayoutGrid className="w-7 h-7 text-white" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-gray-800">لوحة المهام</h1>
-            <p className="text-gray-500">اسحب وأفلت المهام لتغيير حالتها</p>
+            <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-100">لوحة المهام</h1>
+            <p className="text-slate-500 dark:text-slate-400">{data.tasks.length} مهمة</p>
           </div>
         </div>
         <button
           onClick={() => setShowAddModal(true)}
-          className="btn-primary flex items-center gap-2"
+          className="btn-primary flex items-center gap-2 shadow-lg shadow-emerald-500/20"
         >
           <Plus className="w-5 h-5" />
           إضافة مهمة
@@ -263,7 +309,7 @@ export default function Kanban() {
 
       {/* Kanban Board */}
       <div 
-        className="kanban-scroll flex gap-4 -mx-4 px-4"
+        className="kanban-scroll flex gap-4 -mx-4 px-4 pb-4"
         onDragOver={handleDragOver}
       >
         {statuses.map(status => (
@@ -271,8 +317,9 @@ export default function Kanban() {
             key={status.id}
             status={status.id}
             tasks={getTasksByStatus(status.id)}
+            stage={data.stages.find(s => s.id === getTasksByStatus(status.id)[0]?.phase_id)}
             stages={data.stages}
-            title={status.name}
+            title={status.label}
             color={status.color}
             bg={status.bg}
             border={status.border}
@@ -288,41 +335,41 @@ export default function Kanban() {
       {/* Add Task Modal */}
       {showAddModal && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-slate-800 rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+          <div className="bg-white dark:bg-slate-800 rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-2xl">
             <div className="p-6 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between">
               <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100">إضافة مهمة جديدة</h2>
-              <button onClick={() => setShowAddModal(false)} className="btn-ghost p-2 dark:text-slate-300">
-                <X className="w-5 h-5" />
+              <button onClick={() => setShowAddModal(false)} className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-700 flex items-center justify-center hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors">
+                <X className="w-5 h-5 text-slate-500" />
               </button>
             </div>
             <form onSubmit={handleAddTask} className="p-6 space-y-4">
               <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">عنوان المهمة *</label>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">عنوان المهمة *</label>
                 <input
                   type="text"
                   value={newTask.title}
                   onChange={(e) => setNewTask({...newTask, title: e.target.value})}
-                  className="input-field dark:bg-slate-700 dark:text-slate-100 dark:border-slate-600 dark:placeholder-slate-400"
+                  className="input-field"
                   placeholder="أدخل عنوان المهمة"
                   required
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">الوصف</label>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">الوصف</label>
                 <textarea
                   value={newTask.description}
                   onChange={(e) => setNewTask({...newTask, description: e.target.value})}
-                  className="input-field min-h-[80px] dark:bg-slate-700 dark:text-slate-100 dark:border-slate-600 dark:placeholder-slate-400"
+                  className="input-field min-h-[80px]"
                   placeholder="أدخل وصف المهمة"
                 />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">المرحلة</label>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">المرحلة</label>
                   <select
                     value={newTask.phase_id}
                     onChange={(e) => setNewTask({...newTask, phase_id: e.target.value})}
-                    className="input-field dark:bg-slate-700 dark:text-slate-100 dark:border-slate-600"
+                    className="input-field"
                   >
                     <option value="">اختر المرحلة</option>
                     {data.stages.map(stage => (
@@ -331,28 +378,25 @@ export default function Kanban() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">الحالة</label>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">الحالة</label>
                   <select
                     value={newTask.status}
                     onChange={(e) => setNewTask({...newTask, status: e.target.value})}
-                    className="input-field dark:bg-slate-700 dark:text-slate-100 dark:border-slate-600"
+                    className="input-field"
                   >
-                    <option value="new">جديد</option>
-                    <option value="in-progress">قيد التنفيذ</option>
-                    <option value="pending-review">بانتظار المراجعة</option>
-                    <option value="completed">مكتمل</option>
-                    <option value="delayed">مؤجل</option>
-                    <option value="blocked">متعثر</option>
+                    {statuses.map(s => (
+                      <option key={s.id} value={s.id}>{s.label}</option>
+                    ))}
                   </select>
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">المسؤول</label>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">المسؤول</label>
                   <select
                     value={newTask.assigned_to}
                     onChange={(e) => setNewTask({...newTask, assigned_to: e.target.value})}
-                    className="input-field dark:bg-slate-700 dark:text-slate-100 dark:border-slate-600"
+                    className="input-field"
                   >
                     <option value={user?.id}>أنا</option>
                     {data.users?.map(u => (
@@ -361,11 +405,11 @@ export default function Kanban() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">الأولوية</label>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">الأولوية</label>
                   <select
                     value={newTask.priority}
                     onChange={(e) => setNewTask({...newTask, priority: e.target.value})}
-                    className="input-field dark:bg-slate-700 dark:text-slate-100 dark:border-slate-600"
+                    className="input-field"
                   >
                     <option value="low">منخفضة</option>
                     <option value="medium">متوسطة</option>
@@ -375,20 +419,20 @@ export default function Kanban() {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">تاريخ الاستحقاق</label>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">تاريخ الاستحقاق</label>
                   <input
                     type="date"
                     value={newTask.due_date}
                     onChange={(e) => setNewTask({...newTask, due_date: e.target.value})}
-                    className="input-field dark:bg-slate-700 dark:text-slate-100 dark:border-slate-600"
+                    className="input-field"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">نسبة الإنجاز</label>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">نسبة الإنجاز</label>
                   <select
                     value={newTask.progress}
                     onChange={(e) => setNewTask({...newTask, progress: parseInt(e.target.value)})}
-                    className="input-field dark:bg-slate-700 dark:text-slate-100 dark:border-slate-600"
+                    className="input-field"
                   >
                     <option value="0">0%</option>
                     <option value="25">25%</option>
@@ -402,7 +446,7 @@ export default function Kanban() {
                 <button type="submit" className="btn-primary flex-1">
                   حفظ المهمة
                 </button>
-                <button type="button" onClick={() => setShowAddModal(false)} className="btn-secondary dark:bg-slate-700 dark:text-slate-100 dark:border-slate-600">
+                <button type="button" onClick={() => setShowAddModal(false)} className="btn-secondary">
                   إلغاء
                 </button>
               </div>
@@ -422,5 +466,3 @@ export default function Kanban() {
     </div>
   );
 }
-
-      
