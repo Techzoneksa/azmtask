@@ -11,6 +11,7 @@ export default function UserFormModal({ isOpen, onClose, onSubmit, user = null, 
     position: ''
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [passwordError, setPasswordError] = useState('');
 
   useEffect(() => {
     if (user) {
@@ -24,15 +25,17 @@ export default function UserFormModal({ isOpen, onClose, onSubmit, user = null, 
     } else {
       setFormData({ name: '', email: '', password: '', role: ROLES.EMPLOYEE, position: '' });
     }
+    setPasswordError('');
   }, [user, isOpen]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     
     if (!user && formData.password.length < 8) {
-      alert('كلمة المرور يجب أن تكون 8 أحرف على الأقل');
+      setPasswordError('كلمة المرور يجب أن تكون 8 أحرف على الأقل');
       return;
     }
+    setPasswordError('');
     
     setIsSubmitting(true);
     try {
@@ -125,13 +128,16 @@ export default function UserFormModal({ isOpen, onClose, onSubmit, user = null, 
                 type="password"
                 name="password"
                 value={formData.password}
-                onChange={handleChange}
+                onChange={(e) => { handleChange(e); setPasswordError(''); }}
                 required
                 minLength={8}
-                className="input-field"
+                className={`input-field ${passwordError ? 'border-red-500' : ''}`}
                 placeholder="8 أحرف على الأقل"
                 dir="ltr"
               />
+              {passwordError && (
+                <p className="text-red-500 text-sm mt-1">{passwordError}</p>
+              )}
             </div>
           )}
 

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useData } from '../context/DataContext';
+import { useFeedback } from '../context/FeedbackContext';
 import { 
   ArrowRight,
   Calendar,
@@ -22,6 +23,7 @@ export default function TaskDetail() {
   const navigate = useNavigate();
   const { user, profile } = useAuth();
   const { data, updateTask, addNote, addTaskLog } = useData();
+  const { success, error: showError } = useFeedback();
   
   const getRoles = () => {
     if (!profile) return [];
@@ -94,7 +96,7 @@ export default function TaskDetail() {
 
   const handleReject = async () => {
     if (!rejectReason.trim()) {
-      alert('يرجى إدخال سبب الرفض');
+      showError('يرجى إدخال سبب الرفض');
       return;
     }
     

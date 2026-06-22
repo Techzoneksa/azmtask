@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useFeedback } from '../context/FeedbackContext';
 import { supabase } from '../lib/supabase';
-import { hasPermission, canManageUser, ROLES } from '../lib/permissions';
+import { hasPermission, ROLES } from '../lib/permissions';
 import PermissionGate from '../components/PermissionGate';
 import UserTable from '../components/UserTable';
 import UserFormModal from '../components/UserFormModal';
@@ -10,25 +10,26 @@ import { Users, UserPlus, Shield, UserCheck, TrendingUp } from 'lucide-react';
 
 export default function UsersPage() {
   const { profile } = useAuth();
-  const { success, error } = useFeedback();
+  const { success, error: showError } = useFeedback();
   const [users, setUsers] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
+  const [deleteTarget, setDeleteTarget] = useState(null);
 
   const fetchUsers = async () => {
     setIsLoading(true);
     try {
-      const { data, error } = await supabase
+      const { data, error: fetchError } = await supabase
         .from('profiles')
         .select('*')
         .order('created_at', { ascending: true });
       
-      if (error) throw error;
+      if (fetchError) throw fetchError;
       setUsers(data || []);
     } catch (err) {
       console.error('Error fetching users:', err);
-      error('تعذر تحميل قائمة المستخدمين');
+      showError('تعذر تحميل قائمة المستخدمين');
     } finally {
       setIsLoading(false);
     }
@@ -40,7 +41,7 @@ export default function UsersPage() {
 
   const handleAddUser = async (formData) => {
     try {
-      const { data, error } = await supabase.rpc('admin_create_user', {
+      const { data, error: rpcError } = await supabase.rpc('admin_create_user', {
         p_email: formData.email,
         p_password: formData.password,
         p_name: formData.name,
@@ -48,15 +49,15 @@ export default function UsersPage() {
         p_role: formData.role
       });
 
-      if (error) {
-        console.error('Create user RPC error:', error);
-        error('تعذر إضافة المستخدم: ' + (error.message || 'خطأ غير معروف'));
+      if (rpcError) {
+        console.error('Create user RPC error:', rpcError);
+        showError(rpcError.message || 'تعذر إضافة المستخدم');
         return;
       }
 
       if (!data?.success) {
         console.error('Create user RPC failed:', data);
-        error(data?.message || 'تعذر إضافة المستخدم');
+        showError(data?.message || 'تعذر إضافة المستخدم');
         return;
       }
 
@@ -65,7 +66,7 @@ export default function UsersPage() {
       fetchUsers();
     } catch (err) {
       console.error('Error creating user:', err);
-      error('تعذر إضافة المستخدم: ' + err.message);
+      showError('تعذر إضافة المستخدم: ' + err.message);
     }
   };
 
@@ -90,46 +91,47 @@ export default function UsersPage() {
       fetchUsers();
     } catch (err) {
       console.error('Error updating user:', err);
-      error('تعذر تحديث المستخدم: ' + err.message);
+      showError('تعذر تحديث المستخدم: ' + err.message);
     }
   };
 
-  const handleDeleteUser = async (user) => {
-    if (!confirm(`هل أنت متأكد من حذف المستخدم "${user.name}"؟`)) return;
+  const handleDeleteUser = async () => {
+    if (!deleteTarget) return;
 
     try {
       const { error: deleteProfileError } = await supabase
         .from('profiles')
         .delete()
-        .eq('id', user.id);
+        .eq('id', deleteTarget.id);
 
       if (deleteProfileError) throw deleteProfileError;
 
-      const { error: deleteAuthError } = await supabase.auth.admin.deleteUser(user.id);
+      const { error: deleteAuthError } = await supabase.auth.admin.deleteUser(deleteTarget.id);
       if (deleteAuthError) console.error('Auth delete error:', deleteAuthError);
 
       success('تم حذف المستخدم بنجاح');
+      setDeleteTarget(null);
       fetchUsers();
     } catch (err) {
       console.error('Error deleting user:', err);
-      error('تعذر حذف المستخدم: ' + err.message);
+      showError('تعذر حذف المستخدم: ' + err.message);
     }
   };
 
   const handleToggleActive = async (user) => {
     try {
-      const { error } = await supabase
+      const { error: toggleError } = await supabase
         .from('profiles')
         .update({ is_active: !user.is_active })
         .eq('id', user.id);
 
-      if (error) throw error;
+      if (toggleError) throw toggleError;
 
       success(user.is_active ? 'تم إيقاف حساب المستخدم' : 'تم تفعيل حساب المستخدم');
       fetchUsers();
     } catch (err) {
       console.error('Error toggling user active:', err);
-      error('تعذر تعديل حالة المستخدم');
+      showError('تعذر تعديل حالة المستخدم');
     }
   };
 
@@ -145,7 +147,7 @@ export default function UsersPage() {
       <div className="flex flex-col items-center justify-center h-64 text-center">
         <Shield className="w-16 h-16 text-gray-300 mb-4" />
         <h2 className="text-xl font-semibold text-gray-600">غير مصرح بالوصول</h2>
-        <p className="text-gray-500 mt-2">لا تملك صلاحيةعرض قائمة المستخدمين</p>
+        <p className="text-gray-500 mt-2">لا تملك صلاحية عرض قائمة المستخدمين</p>
       </div>
     }>
       <div className="space-y-6 animate-fade-in">
@@ -234,7 +236,7 @@ export default function UsersPage() {
             <UserTable
               users={users}
               onEdit={(user) => { setEditingUser(user); setModalOpen(true); }}
-              onDelete={handleDeleteUser}
+              onDelete={(user) => setDeleteTarget(user)}
               onToggleActive={handleToggleActive}
               currentUserId={profile?.id}
             />
@@ -248,6 +250,29 @@ export default function UsersPage() {
           user={editingUser}
           currentUserRole={profile?.role}
         />
+
+        {deleteTarget && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fade-in">
+            <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl w-full max-w-sm animate-scale-in p-6">
+              <h3 className="text-lg font-semibold text-gray-800 mb-2">تأكيد الحذف</h3>
+              <p className="text-gray-600 mb-6">هل أنت متأكد من حذف المستخدم "{deleteTarget.name}"؟</p>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setDeleteTarget(null)}
+                  className="flex-1 px-4 py-3 rounded-xl border border-gray-200 dark:border-slate-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors font-medium"
+                >
+                  إلغاء
+                </button>
+                <button
+                  onClick={handleDeleteUser}
+                  className="flex-1 px-4 py-3 rounded-xl bg-red-600 text-white hover:bg-red-700 transition-colors font-medium"
+                >
+                  حذف
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </PermissionGate>
   );
