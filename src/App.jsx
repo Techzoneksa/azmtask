@@ -17,6 +17,7 @@ import Notes from './screens/Notes';
 import Notifications from './screens/Notifications';
 import Settings from './screens/Settings';
 import Assistant from './screens/Assistant';
+import Users from './screens/Users';
 import Layout from './components/Layout';
 
 function ProtectedRoute({ children }) {
@@ -58,6 +59,7 @@ function AppRoutes() {
         <Route path="notes" element={<Notes />} />
         <Route path="notifications" element={<Notifications />} />
         <Route path="settings" element={<Settings />} />
+        <Route path="users" element={<Users />} />
         <Route path="assistant" element={<Assistant />} />
       </Route>
     </Routes>

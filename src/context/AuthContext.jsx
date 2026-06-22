@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { supabase, signIn as supabaseSignIn, signOut as supabaseSignOut } from '../lib/supabase';
+import { hasPermission } from '../lib/permissions';
 
 const AuthContext = createContext(null);
 
@@ -7,6 +8,10 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [profile, setProfile] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+
+  const can = useCallback((permission) => {
+    return hasPermission(profile?.role, permission);
+  }, [profile?.role]);
 
   useEffect(() => {
     const initAuth = async () => {
@@ -87,7 +92,8 @@ export function AuthProvider({ children }) {
       profile,
       login, 
       logout, 
-      isLoading 
+      isLoading,
+      can
     }}>
       {children}
     </AuthContext.Provider>
