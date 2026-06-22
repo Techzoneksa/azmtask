@@ -1,212 +1,394 @@
+import { useState } from 'react';
+import { useAuth } from '../context/AuthContext';
 import { useData } from '../context/DataContext';
-import StatCard from '../components/StatCard';
+import { useFeedback } from '../context/FeedbackContext';
+import DocumentStatsCards from '../components/DocumentStatsCards';
+import DocumentTable from '../components/DocumentTable';
+import DocumentFormModal from '../components/DocumentFormModal';
+import DocumentDetailsModal from '../components/DocumentDetailsModal';
 import EmptyState from '../components/EmptyState';
 import { 
   FileText, 
-  CheckCircle,
-  Clock,
-  Calendar,
-  AlertCircle,
-  Mail,
-  MessageSquare
+  Plus, 
+  Upload,
+  Download,
+  Printer,
+  Filter,
+  X
 } from 'lucide-react';
 
 export default function Documents() {
-  const { data } = useData();
+  const { user, profile } = useAuth();
+  const { data, deleteCompanyDocument } = useData();
+  const { success, error } = useFeedback();
+  
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [editingDoc, setEditingDoc] = useState(null);
+  const [viewingDoc, setViewingDoc] = useState(null);
+  const [activeFilter, setActiveFilter] = useState('all');
+  const [showFilters, setShowFilters] = useState(false);
 
-  const documentsList = data.documents || [
-    { id: 'doc-1', name: 'السجل التجاري', status: 'pending', icon: '📄' },
-    { id: 'doc-2', name: 'نشاط الشركة', status: 'completed', icon: '✓' },
-    { id: 'doc-3', name: 'العنوان الوطني', status: 'in-progress', icon: '📍' },
-    { id: 'doc-4', name: 'الرقم الضريبي', status: 'pending', icon: '🔢' },
-    { id: 'doc-5', name: 'بيانات المالك أو المفوض', status: 'completed', icon: '👤' },
-    { id: 'doc-6', name: 'البريد الرسمي', status: 'pending', icon: '📧' },
-    { id: 'doc-7', name: 'رقم الجوال الرسمي', status: 'completed', icon: '📱' },
-    { id: 'doc-8', name: 'شعار الشركة', status: 'in-progress', icon: '🎨' },
-    { id: 'doc-9', name: 'ختم الشركة', status: 'pending', icon: '🔏' },
-    { id: 'doc-10', name: 'ملف تعريفي', status: 'pending', icon: '📋' }
-  ];
+  const documents = data.companyDocuments || [];
 
-  const getStatusInfo = (status) => {
-    const statusMap = {
-      'completed': { label: 'تم', badgeClass: 'badge-completed', icon: CheckCircle, color: '#15803D', bg: '#DCFCE7' },
-      'in-progress': { label: 'قيد التجهيز', badgeClass: 'badge-in-progress', icon: Clock, color: '#B45309', bg: '#FEF3C7' },
-      'pending': { label: 'معلق', badgeClass: 'badge-delayed', icon: Clock, color: '#475569', bg: '#F1F5F9' }
-    };
-    return statusMap[status] || statusMap['pending'];
+  const getRoles = () => {
+    if (!profile) return [];
+    if (Array.isArray(profile.roles)) return profile.roles;
+    if (typeof profile.roles === 'string' && profile.roles.startsWith('[')) {
+      try { return JSON.parse(profile.roles); } catch { return []; }
+    }
+    return [];
   };
 
-  const completedCount = documentsList.filter(d => d.status === 'completed').length;
-  const inProgressCount = documentsList.filter(d => d.status === 'in-progress').length;
-  const pendingCount = documentsList.filter(d => d.status === 'pending').length;
-  const totalCount = documentsList.length;
-  const progress = Math.round((completedCount / totalCount) * 100);
+  const isAdmin = profile?.role === 'admin' || profile?.role === 'director' || getRoles().includes('admin');
+
+  const getFilteredDocuments = () => {
+    if (activeFilter === 'all') return documents;
+    
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    switch (activeFilter) {
+      case 'active':
+        return documents.filter(doc => {
+          if (!doc.expiry_date || doc.status === 'missing_data') return false;
+          const expiry = new Date(doc.expiry_date);
+          return expiry >= today;
+        });
+      case 'expired':
+        return documents.filter(doc => {
+          if (!doc.expiry_date) return false;
+          const expiry = new Date(doc.expiry_date);
+          return expiry < today;
+        });
+      case 'expiring_soon':
+        return documents.filter(doc => {
+          if (!doc.expiry_date || doc.status === 'expired') return false;
+          const expiry = new Date(doc.expiry_date);
+          const daysUntil = Math.ceil((expiry - today) / (1000 * 60 * 60 * 24));
+          return daysUntil > 0 && daysUntil <= 30;
+        });
+      case 'missing_data':
+        return documents.filter(doc => !doc.expiry_date || doc.status === 'missing_data');
+      case 'pending_review':
+        return documents.filter(doc => doc.status === 'pending_review');
+      default:
+        return documents;
+    }
+  };
+
+  const handleDelete = async (doc) => {
+    if (!isAdmin) {
+      error('ليس لديك صلاحية حذف المستندات');
+      return;
+    }
+    
+    const result = await deleteCompanyDocument(doc.id);
+    if (result.success) {
+      success('تم حذف المستند بنجاح');
+    } else {
+      error('تعذر حذف المستند');
+    }
+  };
+
+  const handleExportExcel = () => {
+    const filteredDocs = getFilteredDocuments();
+    if (filteredDocs.length === 0) {
+      error('لا توجد بيانات للتصدير');
+      return;
+    }
+
+    const headers = ['نوع المستند', 'الاسم', 'رقم الوثيقة', 'المنشأة', 'الجهة المصدرة', 'تاريخ الإصدار', 'تاريخ الانتهاء', 'الحالة'];
+    const csvContent = [
+      headers.join(','),
+      ...filteredDocs.map(doc => [
+        getDocumentTypeLabel(doc.document_type),
+        doc.document_name || '',
+        doc.document_number || '',
+        doc.company_name || '',
+        doc.issuer || '',
+        doc.issue_date || '',
+        doc.expiry_date || '',
+        getStatusLabel(doc.status)
+      ].join(','))
+    ].join('\n');
+
+    const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `company_documents_${new Date().toISOString().split('T')[0]}.csv`;
+    link.click();
+    success('تم تصدير البيانات بنجاح');
+  };
+
+  const handlePrint = () => {
+    const filteredDocs = getFilteredDocuments();
+    if (filteredDocs.length === 0) {
+      error('لا توجد بيانات للطباعة');
+      return;
+    }
+
+    const printContent = `
+      <!DOCTYPE html>
+      <html dir="rtl">
+      <head>
+        <title>المستندات والوثائق الرسمية</title>
+        <style>
+          body { font-family: 'Tajawal', sans-serif; padding: 30px; }
+          h1 { color: #059669; text-align: center; margin-bottom: 30px; }
+          table { width: 100%; border-collapse: collapse; font-size: 12px; }
+          th { background: #059669; color: white; padding: 10px; text-align: right; }
+          td { padding: 8px; border: 1px solid #e2e8f0; }
+          tr:nth-child(even) { background: #f8fafc; }
+          .footer { margin-top: 30px; text-align: center; font-size: 10px; color: #64748b; }
+        </style>
+      </head>
+      <body>
+        <h1>المستندات والوثائق الرسمية - شركة عزم للخدمات اللوجستية</h1>
+        <table>
+          <thead>
+            <tr>
+              <th>نوع المستند</th>
+              <th>الاسم</th>
+              <th>رقم الوثيقة</th>
+              <th>المنشأة</th>
+              <th>تاريخ الإصدار</th>
+              <th>تاريخ الانتهاء</th>
+              <th>الحالة</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${filteredDocs.map(doc => `
+              <tr>
+                <td>${getDocumentTypeLabel(doc.document_type)}</td>
+                <td>${doc.document_name || '-'}</td>
+                <td>${doc.document_number || '-'}</td>
+                <td>${doc.company_name || '-'}</td>
+                <td>${doc.issue_date ? new Date(doc.issue_date).toLocaleDateString('ar-SA') : '-'}</td>
+                <td>${doc.expiry_date ? new Date(doc.expiry_date).toLocaleDateString('ar-SA') : '-'}</td>
+                <td>${getStatusLabel(doc.status)}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+        <div class="footer">
+          <p>تاريخ الطباعة: ${new Date().toLocaleDateString('ar-SA')}</p>
+          <p>برنامج عزم للإنجاز والتشغيل</p>
+        </div>
+      </body>
+      </html>
+    `;
+
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write(printContent);
+    printWindow.document.close();
+    setTimeout(() => printWindow.print(), 250);
+  };
+
+  const filters = [
+    { id: 'all', label: 'الكل', count: documents.length },
+    { id: 'active', label: 'ساري', count: documents.filter(d => {
+      const today = new Date(); today.setHours(0,0,0,0);
+      return d.expiry_date && new Date(d.expiry_date) >= today && d.status !== 'missing_data';
+    }).length },
+    { id: 'expiring_soon', label: 'قريب الانتهاء', count: documents.filter(d => {
+      if (!d.expiry_date || d.status === 'expired') return false;
+      const today = new Date(); today.setHours(0,0,0,0);
+      const expiry = new Date(d.expiry_date);
+      const days = Math.ceil((expiry - today) / (1000 * 60 * 60 * 24));
+      return days > 0 && days <= 30;
+    }).length },
+    { id: 'expired', label: 'منتهي', count: documents.filter(d => {
+      if (!d.expiry_date) return false;
+      const today = new Date(); today.setHours(0,0,0,0);
+      return new Date(d.expiry_date) < today;
+    }).length },
+    { id: 'missing_data', label: 'ناقص بيانات', count: documents.filter(d => !d.expiry_date || d.status === 'missing_data').length }
+  ];
 
   return (
     <div className="space-y-6 animate-fade-in">
       {/* Header */}
-      <div className="flex items-center gap-4">
-        <div className="w-14 h-14 bg-gradient-to-br from-blue-600 to-blue-500 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-500/20">
-          <FileText className="w-7 h-7 text-white" />
+      <div className="flex items-center justify-between flex-wrap gap-4">
+        <div className="flex items-center gap-4">
+          <div className="w-14 h-14 bg-gradient-to-br from-blue-600 to-blue-500 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-500/20">
+            <FileText className="w-7 h-7 text-white" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-100">المستندات والوثائق الرسمية</h1>
+            <p className="text-slate-500 dark:text-slate-400">أرشيف مركزي لوثائق شركة عزم</p>
+          </div>
         </div>
-        <div>
-          <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-100">المستندات والسجلات</h1>
-          <p className="text-slate-500 dark:text-slate-400">متابعة المستندات المطلوبة</p>
+        <div className="flex items-center gap-2 flex-wrap">
+          <button
+            onClick={() => setShowAddModal(true)}
+            className="btn-primary flex items-center gap-2 shadow-lg shadow-blue-500/20"
+          >
+            <Plus className="w-5 h-5" />
+            إضافة مستند
+          </button>
         </div>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <StatCard
-          icon={FileText}
-          label="إجمالي المستندات"
-          value={totalCount}
-          color="#0369A1"
-          bgColor="#E0F2FE"
-        />
-        <StatCard
-          icon={CheckCircle}
-          label="مكتمل"
-          value={completedCount}
-          color="#15803D"
-          bgColor="#DCFCE7"
-        />
-        <StatCard
-          icon={Clock}
-          label="قيد التجهيز"
-          value={inProgressCount}
-          color="#B45309"
-          bgColor="#FEF3C7"
-        />
-        <StatCard
-          icon={AlertCircle}
-          label="معلق"
-          value={pendingCount}
-          color="#475569"
-          bgColor="#F1F5F9"
-        />
+      {/* Stats Cards */}
+      <DocumentStatsCards documents={documents} />
+
+      {/* Filters and Actions */}
+      <div className="card">
+        <div className="flex items-center justify-between flex-wrap gap-4 mb-4">
+          <div className="flex items-center gap-2 flex-wrap">
+            <button
+              onClick={() => setShowFilters(!showFilters)}
+              className={`flex items-center gap-2 px-4 py-2 rounded-xl font-medium transition-all ${
+                showFilters ? 'bg-blue-500 text-white' : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300'
+              }`}
+            >
+              <Filter className="w-4 h-4" />
+              فلترة
+            </button>
+            
+            {documents.length > 0 && (
+              <>
+                <button
+                  onClick={handleExportExcel}
+                  className="flex items-center gap-2 px-4 py-2 rounded-xl font-medium bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 hover:bg-green-100 dark:hover:bg-green-900/30 transition-all"
+                >
+                  <Download className="w-4 h-4" />
+                  تصدير Excel
+                </button>
+                <button
+                  onClick={handlePrint}
+                  className="flex items-center gap-2 px-4 py-2 rounded-xl font-medium bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600 transition-all"
+                >
+                  <Printer className="w-4 h-4" />
+                  طباعة / PDF
+                </button>
+              </>
+            )}
+          </div>
+          
+          <div className="text-sm text-slate-500">
+            {getFilteredDocuments().length} مستند
+          </div>
+        </div>
+
+        {/* Filter Tabs */}
+        <div className="flex gap-2 flex-wrap">
+          {filters.map(filter => (
+            <button
+              key={filter.id}
+              onClick={() => setActiveFilter(filter.id)}
+              className={`flex items-center gap-2 px-4 py-2 rounded-xl font-medium transition-all ${
+                activeFilter === filter.id
+                  ? 'bg-blue-500 text-white shadow-lg'
+                  : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600'
+              }`}
+            >
+              {filter.label}
+              <span className={`px-2 py-0.5 rounded-full text-xs ${
+                activeFilter === filter.id ? 'bg-white/20' : 'bg-slate-200 dark:bg-slate-600'
+              }`}>
+                {filter.count}
+              </span>
+            </button>
+          ))}
+        </div>
       </div>
 
-      {/* Overall Progress */}
-      <div className="card-glass">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="font-semibold text-slate-800 dark:text-slate-100 flex items-center gap-2">
-            <FileText className="w-5 h-5 text-azm-green" />
-            نسبة الإنجاز الكلية
-          </h3>
-          <span className="text-2xl font-bold text-azm-green">{progress}%</span>
-        </div>
-        <div className="h-3 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
-          <div 
-            className="h-full bg-gradient-to-r from-emerald-500 to-emerald-400 rounded-full transition-all duration-700"
-            style={{ width: `${progress}%` }}
+      {/* Documents Table or Empty State */}
+      {documents.length > 0 ? (
+        <div className="card overflow-hidden">
+          <DocumentTable 
+            documents={getFilteredDocuments()}
+            onView={setViewingDoc}
+            onEdit={setEditingDoc}
+            onDelete={handleDelete}
+            isAdmin={isAdmin}
           />
         </div>
-        <div className="flex justify-between mt-2 text-sm text-slate-500">
-          <span>{completedCount} مستند مكتمل</span>
-          <span>{pendingCount} مستند متبقي</span>
+      ) : (
+        <div className="card">
+          <EmptyState
+            icon={FileText}
+            title="لا توجد مستندات رسمية بعد"
+            description="ابدأ بإضافة السجل التجاري أو شهادة التوطين أو أي مستند رسمي آخر"
+            action={() => setShowAddModal(true)}
+            actionLabel="إضافة أول مستند"
+            color="#0369A1"
+          />
         </div>
-      </div>
+      )}
 
-      {/* Documents Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {documentsList.map((doc, index) => {
-          const statusInfo = getStatusInfo(doc.status);
-          const StatusIcon = statusInfo.icon;
-          const isEven = index % 2 === 0;
-          
-          return (
-            <div 
-              key={doc.id} 
-              className={`card hover:shadow-lg transition-all cursor-pointer ${
-                doc.status === 'completed' 
-                  ? 'border-green-200 dark:border-green-900/30' 
-                  : doc.status === 'in-progress' 
-                    ? 'border-orange-200 dark:border-orange-900/30' 
-                    : 'border-slate-200 dark:border-slate-700'
-              }`}
-              style={{ borderRightWidth: '4px', borderRightColor: statusInfo.color }}
-            >
-              <div className="flex items-start gap-4">
-                <div className={`w-14 h-14 rounded-2xl flex items-center justify-center text-2xl flex-shrink-0 ${
-                  doc.status === 'completed' 
-                    ? 'bg-green-100 dark:bg-green-900/40' 
-                    : doc.status === 'in-progress' 
-                      ? 'bg-orange-100 dark:bg-orange-900/40' 
-                      : 'bg-slate-100 dark:bg-slate-700'
-                }`}>
-                  {doc.icon}
-                </div>
-                
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-start justify-between gap-3 mb-3">
-                    <h3 className="font-bold text-lg text-slate-800 dark:text-slate-100">{doc.name}</h3>
-                    <span className={`badge flex-shrink-0 ${statusInfo.badgeClass}`}>
-                      <StatusIcon className="w-3.5 h-3.5 ml-1" />
-                      {statusInfo.label}
-                    </span>
-                  </div>
-                  
-                  {doc.status === 'in-progress' && (
-                    <div className="mb-3">
-                      <div className="flex items-center justify-between text-xs mb-1">
-                        <span className="text-slate-500">التقدم</span>
-                        <span className="font-medium text-orange-600">60%</span>
-                      </div>
-                      <div className="h-1.5 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
-                        <div className="h-full bg-gradient-to-r from-orange-400 to-orange-500 rounded-full" style={{ width: '60%' }} />
-                      </div>
-                    </div>
-                  )}
-                  
-                  {doc.status === 'completed' && (
-                    <div className="flex items-center gap-2 text-sm text-green-600">
-                      <CheckCircle className="w-4 h-4" />
-                      <span>تم التجهيز</span>
-                    </div>
-                  )}
-                  
-                  {doc.status === 'pending' && (
-                    <div className="flex items-center gap-2 text-sm text-slate-400">
-                      <Clock className="w-4 h-4" />
-                      <span>في الانتظار</span>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
-      {/* Email & WhatsApp Notice - Postponed */}
-      <div className="space-y-4">
-        <div className="card bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 border-dashed">
-          <div className="flex items-center gap-4">
-            <div className="w-14 h-14 bg-slate-200 dark:bg-slate-700 rounded-2xl flex items-center justify-center">
-              <Mail className="w-7 h-7 text-slate-400" />
-            </div>
-            <div className="flex-1">
-              <h3 className="font-semibold text-slate-600 dark:text-slate-300">البريد الإلكتروني</h3>
-              <p className="text-sm text-slate-400 dark:text-slate-500">مؤجل للمرحلة الأخيرة</p>
-            </div>
-            <span className="badge badge-delayed">مؤجل</span>
-          </div>
+      {/* Old documents section for backward compatibility */}
+      {data.documents && data.documents.length > 0 && (
+        <div className="card">
+          <h3 className="section-title text-slate-600 dark:text-slate-400">ملاحظة</h3>
+          <p className="text-sm text-slate-500">
+            يوجد {data.documents.length} مستند في النظام القديم. يرجى إعادة إضافتها في القسم الجديد.
+          </p>
         </div>
+      )}
 
-        <div className="card bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 border-dashed">
-          <div className="flex items-center gap-4">
-            <div className="w-14 h-14 bg-slate-200 dark:bg-slate-700 rounded-2xl flex items-center justify-center">
-              <MessageSquare className="w-7 h-7 text-slate-400" />
-            </div>
-            <div className="flex-1">
-              <h3 className="font-semibold text-slate-600 dark:text-slate-300">واتساب الأعمال</h3>
-              <p className="text-sm text-slate-400 dark:text-slate-500">مؤجل لمرحلة لاحقة</p>
-            </div>
-            <span className="badge badge-delayed">مؤجل</span>
-          </div>
-        </div>
-      </div>
+      {/* Add/Edit Modal */}
+      {showAddModal && (
+        <DocumentFormModal
+          document={null}
+          onClose={() => setShowAddModal(false)}
+          onSuccess={() => {
+            setShowAddModal(false);
+            success('تم حفظ المستند بنجاح');
+          }}
+        />
+      )}
+
+      {editingDoc && (
+        <DocumentFormModal
+          document={editingDoc}
+          onClose={() => setEditingDoc(null)}
+          onSuccess={() => {
+            setEditingDoc(null);
+            success('تم تحديث المستند بنجاح');
+          }}
+        />
+      )}
+
+      {viewingDoc && (
+        <DocumentDetailsModal
+          document={viewingDoc}
+          onClose={() => setViewingDoc(null)}
+          onEdit={() => setEditingDoc(viewingDoc)}
+        />
+      )}
     </div>
   );
+}
+
+function getDocumentTypeLabel(typeId) {
+  const types = {
+    'commercial_registration': 'السجل التجاري',
+    'transport_license': 'رخصة هيئة النقل',
+    'vat_certificate': 'شهادة ضريبة القيمة المضافة',
+    'zakat_certificate': 'شهادة الزكاة والدخل',
+    'social_insurance': 'شهادة التأمينات الاجتماعية',
+    'tawteen_certificate': 'شهادة التوطين',
+    'national_address': 'العنوان الوطني',
+    'iban_certificate': 'شهادة الآيبان البنكي',
+    'owner_id': 'هوية المالك',
+    'authorized_id': 'هوية المفوض',
+    'authorization': 'التفويض الرسمي',
+    'founding_contract': 'عقد التأسيس',
+    'chamber_certificate': 'شهادة الغرفة التجارية',
+    'other': 'أخرى'
+  };
+  return types[typeId] || typeId || 'غير محدد';
+}
+
+function getStatusLabel(status) {
+  const labels = {
+    'active': 'ساري',
+    'expired': 'منتهي',
+    'expiring_soon': 'قريب الانتهاء',
+    'missing_data': 'ناقص بيانات',
+    'pending_review': 'بانتظار المراجعة'
+  };
+  return labels[status] || status || '-';
 }

@@ -24,7 +24,8 @@ import {
   ClipboardList,
   ShieldAlert,
   BarChart3,
-  Play
+  Play,
+  FileText
 } from 'lucide-react';
 
 const STATUS_COLORS = {
@@ -181,6 +182,22 @@ export default function Dashboard() {
       { name: 'متأخر', value: delayed, color: '#EF4444' },
       { name: 'جديد', value: newTasks, color: '#0369A1' }
     ];
+  };
+
+  const getExpiringDocuments = () => {
+    if (!data.companyDocuments || data.companyDocuments.length === 0) return [];
+    
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    return data.companyDocuments
+      .filter(doc => {
+        if (!doc.expiry_date) return false;
+        const expiry = new Date(doc.expiry_date);
+        const daysUntil = Math.ceil((expiry - today) / (1000 * 60 * 60 * 24));
+        return daysUntil > 0 && daysUntil <= 30;
+      })
+      .sort((a, b) => new Date(a.expiry_date) - new Date(b.expiry_date));
   };
 
   const CustomTooltip = ({ active, payload }) => {
@@ -643,6 +660,49 @@ export default function Dashboard() {
           )}
         </div>
       </div>
+
+      {/* Documents Expiring Soon */}
+      {getExpiringDocuments().length > 0 && (
+        <div className="card">
+          <h3 className="section-title flex items-center gap-2">
+            <FileText className="w-5 h-5 text-orange-500" />
+            وثائق قاربت على الانتهاء ({getExpiringDocuments().length})
+          </h3>
+          <div className="space-y-3">
+            {getExpiringDocuments().slice(0, 4).map(doc => {
+              const today = new Date();
+              today.setHours(0, 0, 0, 0);
+              const expiry = new Date(doc.expiry_date);
+              const daysUntil = Math.ceil((expiry - today) / (1000 * 60 * 60 * 24));
+              
+              return (
+                <Link
+                  key={doc.id}
+                  to="/documents"
+                  className="flex items-center gap-3 p-3 bg-orange-50 dark:bg-orange-900/20 rounded-xl hover:bg-orange-100 dark:hover:bg-orange-900/30 transition-colors"
+                >
+                  <div className="w-10 h-10 rounded-xl bg-orange-100 dark:bg-orange-900/40 flex items-center justify-center">
+                    <FileText className="w-5 h-5 text-orange-500" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-slate-800 dark:text-slate-100 truncate">
+                      {doc.document_name || doc.document_type}
+                    </p>
+                    <p className="text-xs text-orange-500 font-medium">
+                      تنتهي خلال {daysUntil} يوم
+                    </p>
+                  </div>
+                </Link>
+              );
+            })}
+            {getExpiringDocuments().length > 4 && (
+              <Link to="/documents" className="block text-center text-orange-500 text-sm py-2 font-medium">
+                عرض الكل ({getExpiringDocuments().length})
+              </Link>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

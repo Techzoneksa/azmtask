@@ -30,6 +30,7 @@ export function DataProvider({ children }) {
         tasksRes,
         blockersRes,
         documentsRes,
+        companyDocsRes,
         attendanceRes,
         notesRes,
         notificationsRes
@@ -38,6 +39,7 @@ export function DataProvider({ children }) {
         supabase.from('tasks').select('*'),
         supabase.from('blockers').select('*'),
         supabase.from('documents').select('*'),
+        supabase.from('company_documents').select('*').order('created_at', { ascending: false }),
         supabase.from('attendance').select('*').order('work_date', { ascending: false }),
         supabase.from('notes').select('*').order('created_at', { ascending: false }),
         supabase.from('notifications').select('*').eq('user_id', user.id).order('created_at', { ascending: false })
@@ -48,6 +50,7 @@ export function DataProvider({ children }) {
         tasks: tasksRes.data || [],
         blockers: blockersRes.data || [],
         documents: documentsRes.data || [],
+        companyDocuments: companyDocsRes.data || [],
         attendance: attendanceRes.data || [],
         notes: notesRes.data || [],
         notifications: notificationsRes.data || [],
@@ -95,11 +98,19 @@ export function DataProvider({ children }) {
       })
       .subscribe();
 
+    const companyDocsChannel = supabase
+      .channel('company-documents-changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'company_documents' }, () => {
+        fetchAllData();
+      })
+      .subscribe();
+
     return () => {
       supabase.removeChannel(tasksChannel);
       supabase.removeChannel(blockersChannel);
       supabase.removeChannel(attendanceChannel);
       supabase.removeChannel(notificationsChannel);
+      supabase.removeChannel(companyDocsChannel);
     };
   }, [user, fetchAllData]);
 
@@ -417,6 +428,62 @@ export function DataProvider({ children }) {
     }
   };
 
+  const addCompanyDocument = async (docData) => {
+    try {
+      const { error } = await supabase
+        .from('company_documents')
+        .insert({
+          ...docData,
+          created_by: user?.id
+        });
+
+      if (error) throw error;
+
+      await fetchAllData();
+      return { success: true };
+    } catch (error) {
+      console.error('Error adding company document:', error);
+      return { success: false, error: error.message };
+    }
+  };
+
+  const updateCompanyDocument = async (docId, updates) => {
+    try {
+      const { error } = await supabase
+        .from('company_documents')
+        .update({
+          ...updates,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', docId);
+
+      if (error) throw error;
+
+      await fetchAllData();
+      return { success: true };
+    } catch (error) {
+      console.error('Error updating company document:', error);
+      return { success: false, error: error.message };
+    }
+  };
+
+  const deleteCompanyDocument = async (docId) => {
+    try {
+      const { error } = await supabase
+        .from('company_documents')
+        .delete()
+        .eq('id', docId);
+
+      if (error) throw error;
+
+      await fetchAllData();
+      return { success: true };
+    } catch (error) {
+      console.error('Error deleting company document:', error);
+      return { success: false, error: error.message };
+    }
+  };
+
   const refreshData = () => {
     fetchAllData();
   };
@@ -435,6 +502,9 @@ export function DataProvider({ children }) {
       addBlocker,
       resolveBlocker,
       markNotificationRead,
+      addCompanyDocument,
+      updateCompanyDocument,
+      deleteCompanyDocument,
       refreshData
     }}>
       {children}
