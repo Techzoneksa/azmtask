@@ -51,7 +51,7 @@ const mainNavItems = [
 ];
 
 export default function Layout() {
-  const { user, logout } = useAuth();
+  const { user, profile, logout } = useAuth();
   const { data } = useData();
   const { isDark, toggleTheme } = useTheme();
   const location = useLocation();
