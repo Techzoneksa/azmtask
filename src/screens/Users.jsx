@@ -40,28 +40,28 @@ export default function UsersPage() {
 
   const handleAddUser = async (formData) => {
     try {
-      const { data: sessionData } = await supabase.auth.getSession();
-      if (!sessionData.session) throw new Error('Not authenticated');
-
-      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-user`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${sessionData.session.access_token}`
-        },
-        body: JSON.stringify({
-          email: formData.email,
-          password: 'TempPass123!',
-          name: formData.name,
-          role: formData.role,
-          position: formData.position
-        })
+      const { data, error } = await supabase.rpc('admin_create_user', {
+        p_email: formData.email,
+        p_password: formData.password,
+        p_name: formData.name,
+        p_position: formData.position,
+        p_role: formData.role
       });
 
-      const result = await response.json();
-      if (!response.ok) throw new Error(result.error || 'Failed to create user');
+      if (error) {
+        console.error('Create user RPC error:', error);
+        error('تعذر إضافة المستخدم: ' + (error.message || 'خطأ غير معروف'));
+        return;
+      }
+
+      if (!data?.success) {
+        console.error('Create user RPC failed:', data);
+        error(data?.message || 'تعذر إضافة المستخدم');
+        return;
+      }
 
       success('تم إضافة المستخدم بنجاح');
+      setModalOpen(false);
       fetchUsers();
     } catch (err) {
       console.error('Error creating user:', err);

@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
-import { X, User, Mail, Shield, Briefcase } from 'lucide-react';
+import { X, User, Mail, Shield, Briefcase, Lock } from 'lucide-react';
 import { ROLES, isRoleHigherOrEqual, getRoleLabel } from '../lib/permissions';
 
 export default function UserFormModal({ isOpen, onClose, onSubmit, user = null, currentUserRole }) {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
+    password: '',
     role: ROLES.EMPLOYEE,
     position: ''
   });
@@ -16,20 +17,26 @@ export default function UserFormModal({ isOpen, onClose, onSubmit, user = null, 
       setFormData({
         name: user.name || '',
         email: user.email || '',
+        password: '',
         role: user.role || ROLES.EMPLOYEE,
         position: user.position || ''
       });
     } else {
-      setFormData({ name: '', email: '', role: ROLES.EMPLOYEE, position: '' });
+      setFormData({ name: '', email: '', password: '', role: ROLES.EMPLOYEE, position: '' });
     }
   }, [user, isOpen]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    if (!user && formData.password.length < 8) {
+      alert('كلمة المرور يجب أن تكون 8 أحرف على الأقل');
+      return;
+    }
+    
     setIsSubmitting(true);
     try {
       await onSubmit(formData);
-      onClose();
     } finally {
       setIsSubmitting(false);
     }
@@ -105,6 +112,28 @@ export default function UserFormModal({ isOpen, onClose, onSubmit, user = null, 
               dir="ltr"
             />
           </div>
+
+          {!user && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <span className="flex items-center gap-2">
+                  <Lock className="w-4 h-4" />
+                  كلمة المرور
+                </span>
+              </label>
+              <input
+                type="password"
+                name="password"
+                value={formData.password}
+                onChange={handleChange}
+                required
+                minLength={8}
+                className="input-field"
+                placeholder="8 أحرف على الأقل"
+                dir="ltr"
+              />
+            </div>
+          )}
 
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
