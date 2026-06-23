@@ -3,7 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { useData } from '../context/DataContext';
 import { useFeedback } from '../context/FeedbackContext';
 import { supabase } from '../lib/supabase';
-import { X, Upload, FileText, Loader2, Sparkles } from 'lucide-react';
+import { X, Upload, FileText, Loader2, Sparkles, CheckCircle } from 'lucide-react';
 import DocumentStatusBadge, { getDocumentStatus } from './DocumentStatusBadge';
 
 const DOCUMENT_TYPES = [
@@ -86,7 +86,7 @@ export default function DocumentFormModal({ document, onClose, onSuccess }) {
     try {
       const timestamp = Date.now();
       const fileName = `${timestamp}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
-      const filePath = `company-documents/${formData.document_type || 'general'}/${fileName}`;
+      const filePath = `${formData.document_type || 'general'}/${fileName}`;
 
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from('company-documents')
