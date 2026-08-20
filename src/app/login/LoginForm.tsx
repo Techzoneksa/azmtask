@@ -92,7 +92,7 @@ export function LoginForm({
           required
           value={email}
           onChange={(event) => setEmail(event.target.value)}
-          placeholder="name@nokhba-hotel.sa"
+          placeholder="name@example.com"
           leading={<Mail className="h-4 w-4" aria-hidden />}
         />
 
