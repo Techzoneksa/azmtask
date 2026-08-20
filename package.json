@@ -20,7 +20,8 @@
     "test": "vitest run",
     "db:demo-seed": "tsx prisma/demo-seed.ts",
     "db:demo-reset": "tsx prisma/demo-reset.ts",
-    "db:demo-validate": "tsx prisma/demo-validate.ts"
+    "db:demo-validate": "tsx prisma/demo-validate.ts",
+    "db:check": "tsx scripts/db-check.ts"
   },
   "//": "Build-time packages (tailwindcss, postcss, autoprefixer, typescript, @types/*) live in dependencies on purpose. Hosts that install with NODE_ENV=production or `npm ci --omit=dev` skip devDependencies entirely — without typescript Next cannot read tsconfig.json, so the `@/*` path aliases stop resolving, and without tailwindcss the CSS pipeline fails. Only the lint toolchain, which the build does not need, stays in devDependencies.",
   "dependencies": {
@@ -36,6 +37,7 @@
     "dotenv": "^17.2.3",
     "jose": "^5.9.6",
     "lucide-react": "^0.468.0",
+    "mariadb": "^3.5.3",
     "next": "^15.1.6",
     "postcss": "^8.5.23",
     "prisma": "^7.9.1",
