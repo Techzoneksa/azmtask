@@ -38,6 +38,26 @@ function poolConfigFromUrl(rawUrl: string) {
      * single property; raise it via DATABASE_POOL_SIZE on a bigger plan.
      */
     connectionLimit: Number(process.env.DATABASE_POOL_SIZE ?? 5),
+
+    /*
+     * Fail fast, and fail with the reason.
+     *
+     * A pool's default behaviour when it cannot connect is to keep retrying until an
+     * acquire timeout expires, then report "timed out waiting for a connection" —
+     * which describes the pool's predicament, not the cause. Wrong password, unknown
+     * database and unreachable host all arrive looking identical, ten seconds late,
+     * on every request.
+     *
+     * A short connect timeout with a matching acquire timeout surfaces the driver's
+     * own error instead, in about as long as the handshake takes. `npm run db:check`
+     * exists for the same reason and bypasses the pool entirely.
+     */
+    connectTimeout: 5000,
+    initializationTimeout: 5000,
+    acquireTimeout: 6000,
+    /* Keep MySQL's own wait_timeout from closing sockets the pool still believes in. */
+    idleTimeout: 60,
+
     /*
      * Every instant in this system is stored and compared in UTC. Pinning the driver
      * to UTC keeps the connection's session timezone out of the equation, so a

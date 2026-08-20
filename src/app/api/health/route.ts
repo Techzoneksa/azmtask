@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { prisma } from "@/lib/db";
+import { logConnectionDiagnosis } from "@/server/db-diagnose";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -29,6 +30,13 @@ export async function GET() {
     );
   } catch (error) {
     console.error("[health] database check failed", error);
+
+    /*
+     * The pool reports every cause as a timeout, so the log above is not actionable
+     * on its own. One direct connection recovers the server's real error and writes
+     * it here — to the log only. The response below stays vague on purpose.
+     */
+    await logConnectionDiagnosis("health");
 
     return NextResponse.json(
       { status: "degraded", database: "unreachable" },
