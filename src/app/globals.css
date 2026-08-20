@@ -1,0 +1,83 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --surface: 255 255 255;
+    --surface-muted: 248 250 251;
+    --surface-subtle: 241 245 246;
+    --surface-inset: 235 240 241;
+
+    --line: 226 232 234;
+    --line-strong: 203 213 216;
+
+    --content: 15 33 36;
+    --content-muted: 90 108 112;
+    --content-subtle: 133 149 153;
+    --content-inverted: 255 255 255;
+
+    --ok-bg: 220 244 231;
+    --ok-fg: 21 106 65;
+    --warn-bg: 254 243 214;
+    --warn-fg: 138 87 6;
+    --danger-bg: 254 228 226;
+    --danger-fg: 165 36 32;
+    --info-bg: 224 239 253;
+    --info-fg: 27 84 143;
+  }
+
+  * {
+    @apply border-line;
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    @apply bg-surface-muted text-content antialiased;
+    font-feature-settings: "kern", "liga";
+  }
+
+  /* Arabic numerals stay Latin so operational figures read consistently */
+  body {
+    font-variant-numeric: lining-nums tabular-nums;
+  }
+
+  h1, h2, h3, h4 {
+    @apply font-semibold tracking-tight;
+  }
+
+  /* Remove number input spinners — rates and amounts are typed, not stepped */
+  input[type="number"]::-webkit-outer-spin-button,
+  input[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  input[type="number"] {
+    -moz-appearance: textfield;
+  }
+
+  /* Consistent focus ring across every interactive element */
+  :focus-visible {
+    @apply outline-none ring-2 ring-brand-500/60 ring-offset-1 ring-offset-surface;
+  }
+}
+
+@layer components {
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: rgb(var(--line-strong)) transparent;
+  }
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    @apply rounded-full bg-line-strong;
+  }
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: transparent;
+  }
+}
