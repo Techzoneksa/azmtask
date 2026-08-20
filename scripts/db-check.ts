@@ -41,6 +41,26 @@ if (!raw) {
   ]);
 }
 
+/*
+ * A panel's environment-variable field stores exactly what was pasted, including a
+ * trailing space or a stray quote that a .env file would have stripped. Either ends
+ * up inside the password and the server answers 1045 — indistinguishable from a
+ * genuinely wrong password, and invisible when you read the value back.
+ */
+if (raw !== raw.trim()) {
+  fail("الرابط يحتوي مسافة أو سطرًا جديدًا في أوله أو آخره", [
+    "المسافة تدخل ضمن كلمة المرور فيرفضها الخادم بالخطأ 1045",
+    "احذف القيمة من لوحة التحكم وأعد لصقها بلا مسافات",
+  ]);
+}
+
+if (/^["']|["']$/.test(raw)) {
+  fail("الرابط محاط بعلامات اقتباس", [
+    "في ملف .env تُحذف تلقائيًا، أما في حقل لوحة التحكم فتصبح جزءًا من القيمة",
+    "أدخل الرابط بلا علامات اقتباس إطلاقًا",
+  ]);
+}
+
 if (!raw.startsWith("mysql://")) {
   fail("الرابط لا يبدأ بـ mysql://", [
     `الرابط الحالي يبدأ بـ: ${raw.slice(0, 12)}…`,
@@ -73,7 +93,11 @@ line("كلمة المرور", password ? `${password.length} حرفًا` : "(ف�
  * The commonest failure is not a wrong password but a correct one that was pasted
  * unencoded, so the URL parser silently truncated it. Say so before connecting.
  */
-const risky = [...`@#/?:[]`].filter((ch) => password.includes(ch));
+if (password !== password.trim()) {
+  console.log("\n⚠️  كلمة المرور تبدأ أو تنتهي بمسافة — الأرجح أنها التصقت عند النسخ.");
+}
+
+const risky = [...`@#/?:[]&`].filter((ch) => password.includes(ch));
 if (risky.length > 0) {
   console.log(
     `\n⚠️  كلمة المرور تحتوي رموزًا يجب ترميزها في الرابط: ${risky.join(" ")}`,
