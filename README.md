@@ -56,12 +56,35 @@ npm run lint
    - **Build command:** `npm ci && npm run build`
    - **Start command:** `npm run start`
    - **Application root:** جذر المستودع
-3. أضف متغيرات البيئة في لوحة هوستنجر — على الأقل `AUTH_SECRET`.
+3. أضف متغيرات البيئة — `AUTH_SECRET` إجباري.
 4. كل دفعة (push) إلى `main` تُطلق إعادة بناء ونشر تلقائيًا.
 
 التطبيق يستمع على `process.env.PORT`، وهو ما يمرره هوستنجر، فلا حاجة لتعديل إضافي.
 
----
+### ⚠️ لا تضف `NODE_ENV=production` كمتغير بيئة
+
+`next start` يضبطها بنفسه. أما أثناء التثبيت فإن `NODE_ENV=production` تجعل npm
+يتخطى `devDependencies` بالكامل — وهذا يكسر البناء.
+
+المشروع محصَّن ضد هذه الحالة: كل حزم وقت البناء (`tailwindcss`, `postcss`,
+`autoprefixer`, `typescript`, `@types/*`) موجودة في `dependencies` لا في
+`devDependencies`، فينجح البناء حتى مع `npm ci --omit=dev`. لكن الأفضل ألا تضبط
+المتغير أصلًا.
+
+**سبب هذا القرار:** بدون `typescript` لا يقرأ Next ملف `tsconfig.json`، فتتوقف
+مسارات `@/*` عن العمل وتظهر أخطاء `Module not found` لملفات موجودة فعلًا. وبدون
+`tailwindcss` تفشل معالجة CSS. الأعراض تبدو وكأن الملفات ناقصة، والسبب الحقيقي
+طريقة التثبيت.
+
+### الفحص قبل كل دفعة
+
+```bash
+npm run verify    # typecheck + lint + build
+```
+
+الـ lint معطّل أثناء بناء الإنتاج (`eslint.ignoreDuringBuilds`) لأن أدوات الفحص
+تبقى في `devDependencies` التي قد لا تُثبَّت على الخادم. الفحص مسؤولية `npm run verify`
+محليًا قبل الدفع.
 
 ## بنية المشروع
 
