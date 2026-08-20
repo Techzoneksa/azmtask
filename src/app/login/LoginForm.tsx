@@ -23,10 +23,13 @@ export function LoginForm({
   nextPath,
   demoAccounts = [],
   demoPassword,
+  unavailable = false,
 }: {
   nextPath?: string;
   demoAccounts?: DemoAccountOption[];
   demoPassword?: string;
+  /** The service could not reach its database. Say so before anyone tries. */
+  unavailable?: boolean;
 }) {
   const router = useRouter();
   const [email, setEmail] = useState("");
@@ -73,6 +76,24 @@ export function LoginForm({
   return (
     <div className="space-y-6">
       <form onSubmit={submit} className="space-y-4" noValidate>
+        {/*
+          Shown before anyone types: the service is up but cannot reach its data, so
+          a sign-in cannot succeed no matter how correct the credentials are. Saying
+          that up front beats letting someone doubt their own password.
+        */}
+        {unavailable && !error && (
+          <div
+            role="alert"
+            className="flex items-start gap-2.5 rounded-lg border border-warn-fg/25 bg-warn-bg px-3.5 py-3"
+          >
+            <AlertCircle className="mt-0.5 h-4.5 w-4.5 shrink-0 text-warn-fg" aria-hidden />
+            <p className="text-[13px] leading-relaxed text-warn-fg">
+              الخدمة غير متاحة مؤقتًا — تعذّر الاتصال بقاعدة البيانات. تسجيل الدخول
+              لن ينجح حتى تُستعاد. راجع مدير النظام.
+            </p>
+          </div>
+        )}
+
         {error && (
           <div
             role="alert"

@@ -15,13 +15,37 @@ import { getSession, type Session } from "./session";
  * never the control.
  */
 
-/** Session or a redirect to the login screen. Never returns null. */
+/**
+ * Session or a redirect to the login screen. Never returns null.
+ *
+ * Resolving a session reads the database, so an outage makes this throw — and an
+ * uncaught throw here collapses every authenticated page into a generic system
+ * error that names no cause. The failure is caught and turned into a redirect
+ * carrying a reason, so the visitor lands on a working page that says what is
+ * wrong instead of a dead end.
+ *
+ * It stays fail-closed: an unreadable session is never treated as a valid one.
+ * `redirect` is called outside the try because Next implements it by throwing,
+ * and catching that would swallow the navigation.
+ */
 export async function requireSession(returnTo?: string): Promise<Session> {
-  const session = await getSession();
+  let session: Session | null = null;
+  let unavailable = false;
+
+  try {
+    session = await getSession();
+  } catch (error) {
+    console.error("[auth] could not resolve the session", error);
+    unavailable = true;
+  }
+
+  if (unavailable) redirect("/login?unavailable=1");
+
   if (!session) {
     const target = returnTo ? `/login?next=${encodeURIComponent(returnTo)}` : "/login";
     redirect(target);
   }
+
   return session;
 }
 

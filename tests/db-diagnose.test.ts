@@ -78,3 +78,44 @@ describe("diagnoseConnection", () => {
     expect(Date.now() - started).toBeLessThan(3000);
   });
 });
+
+describe("outage classification", () => {
+  it("reports a pool exhaustion as a service outage, not an internal fault", async () => {
+    const { PrismaMariaDb } = await import("@prisma/adapter-mariadb");
+    const { PrismaClient } = await import("@/generated/prisma/client");
+    const { toAppError } = await import("@/server/errors");
+
+    const url = new URL(REAL);
+    const broken = new PrismaClient({
+      adapter: new PrismaMariaDb({
+        host: url.hostname,
+        port: url.port ? Number(url.port) : 3306,
+        user: decodeURIComponent(url.username),
+        password: "not-the-password",
+        database: decodeURIComponent(url.pathname.slice(1)),
+        connectionLimit: 2,
+        connectTimeout: 2000,
+        initializationTimeout: 2000,
+        acquireTimeout: 3000,
+        timezone: "Z",
+      }),
+    });
+
+    try {
+      await broken.user.count();
+      throw new Error("the query should not have succeeded");
+    } catch (error) {
+      const appError = toAppError(error);
+
+      /*
+       * The distinction matters at the login screen: an outage must not be answered
+       * with "try again", which reads as though the password were wrong.
+       */
+      expect(appError.code).toBe("UNAVAILABLE");
+      expect(appError.status).toBe(503);
+      expect(appError.message).toContain("قاعدة البيانات");
+    } finally {
+      await broken.$disconnect().catch(() => {});
+    }
+  }, 30_000);
+});

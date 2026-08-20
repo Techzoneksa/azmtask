@@ -161,6 +161,21 @@ export function toAppError(error: unknown): AppError {
   if (error instanceof AppError) return error;
 
   if (error instanceof Prisma.PrismaClientKnownRequestError) {
+    /*
+     * Every database outage reaches this layer as a pool exhaustion: the adapter
+     * could not hand out a connection. Prisma files it under a generic code and
+     * puts the real one (45028) in the message, so the message is what identifies
+     * it. Without this the login screen answers an outage by telling someone to
+     * try again, as though their password were the problem.
+     */
+    if (/45028|pool timeout|failed to retrieve a connection/i.test(error.message)) {
+      return new AppError(
+        "UNAVAILABLE",
+        "تعذّر الاتصال بقاعدة البيانات. حاول مجددًا بعد قليل.",
+        { cause: error },
+      );
+    }
+
     switch (error.code) {
       case "P2002":
         return duplicateFrom(error);

@@ -32,13 +32,22 @@ export const metadata: Metadata = { title: "تسجيل الدخول" };
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ next?: string }>;
+  searchParams: Promise<{ next?: string; unavailable?: string }>;
 }) {
-  // An already-signed-in visitor has no business on the login screen.
-  const session = await getSession();
+  /*
+   * An already-signed-in visitor has no business on the login screen. This read
+   * touches the database, and during an outage it throws — which must not take the
+   * login screen down too, since that is exactly where a visitor gets sent.
+   */
+  let session = null;
+  try {
+    session = await getSession();
+  } catch {
+    session = null;
+  }
   if (session) redirect(defaultRouteFor(session.permissions));
 
-  const { next } = await searchParams;
+  const { next, unavailable } = await searchParams;
   const accounts = await demoAccounts();
 
   return (
@@ -57,6 +66,7 @@ export default async function LoginPage({
               nextPath={next}
               demoPassword={DEMO_PASSWORD_HINT ?? undefined}
               demoAccounts={accounts}
+              unavailable={unavailable === "1"}
             />
           </div>
         </div>
