@@ -23,6 +23,7 @@ import { Topbar } from "./Topbar";
  */
 
 export function AppShell({
+  propertyName,
   permissions,
   user,
   canOpenSettings,
@@ -30,6 +31,7 @@ export function AppShell({
 }: {
   permissions: Permission[];
   user: { name: string; email: string; role: string; jobTitle: string };
+  propertyName: string;
   canOpenSettings: boolean;
   children: ReactNode;
 }) {
@@ -64,7 +66,7 @@ export function AppShell({
         <div className="flex min-h-screen">
           {/* Persistent sidebar from lg upward */}
           <aside className="fixed inset-y-0 start-0 hidden w-64 border-e border-line lg:block">
-            <SidebarContent sections={sections} />
+            <SidebarContent propertyName={propertyName} sections={sections} />
           </aside>
 
           {/* Mobile drawer */}
@@ -89,7 +91,7 @@ export function AppShell({
                 >
                   <X className="h-4.5 w-4.5" aria-hidden />
                 </button>
-                <SidebarContent
+                <SidebarContent propertyName={propertyName}
                   sections={sections}
                   onNavigate={() => setMobileOpen(false)}
                 />
@@ -98,7 +100,7 @@ export function AppShell({
           )}
 
           <div className="flex min-w-0 flex-1 flex-col lg:ms-64">
-            <Topbar
+            <Topbar propertyName={propertyName}
               onOpenSidebar={() => setMobileOpen(true)}
               user={user}
               canOpenSettings={canOpenSettings}

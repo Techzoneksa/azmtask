@@ -100,6 +100,20 @@ export function formatCurrency(
   }).format(amount);
 }
 
+/**
+ * Formats a canonical amount string such as "1234.50", the form the data layer
+ * hands to the view. Keeping a string-aware formatter means no screen has to call
+ * Number() on money — the one habit that lets float drift back in.
+ */
+export function formatAmount(
+  value: string | number | null | undefined,
+  options: { decimals?: number } = {},
+): string {
+  if (value === null || value === undefined || value === "") return formatCurrency(0, options);
+  const amount = typeof value === "number" ? value : Number.parseFloat(value);
+  return formatCurrency(Number.isFinite(amount) ? amount : 0, options);
+}
+
 /** 1,250 — plain grouped number. */
 export function formatNumber(
   value: number | null | undefined,

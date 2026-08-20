@@ -51,6 +51,16 @@ export const HOUSEKEEPING_STATUS = {
 
 export type HousekeepingStatus = keyof typeof HOUSEKEEPING_STATUS;
 
+export const HOUSEKEEPING_TASK_STATUS = {
+  pending: { label: "بانتظار التنفيذ", tone: "warn" },
+  assigned: { label: "تم الإسناد", tone: "info" },
+  in_progress: { label: "جاري التنفيذ", tone: "info" },
+  completed: { label: "مكتملة", tone: "ok" },
+  cancelled: { label: "ملغاة", tone: "neutral" },
+} as const satisfies Record<string, StatusMeta>;
+
+export type HousekeepingTaskStatus = keyof typeof HOUSEKEEPING_TASK_STATUS;
+
 export const MAINTENANCE_STATUS = {
   open: { label: "مفتوح", tone: "warn" },
   assigned: { label: "تم الإسناد", tone: "info" },

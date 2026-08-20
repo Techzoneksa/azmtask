@@ -1,5 +1,6 @@
 import { AppShell } from "@/components/layout/AppShell";
 import { requireSession } from "@/lib/auth/guard";
+import { getPropertyName } from "@/server/services/property.service";
 
 /**
  * Authenticated area.
@@ -10,9 +11,12 @@ import { requireSession } from "@/lib/auth/guard";
  */
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const session = await requireSession();
+  // The shell names the property it is operating, rather than a name compiled in.
+  const propertyName = await getPropertyName();
 
   return (
     <AppShell
+      propertyName={propertyName}
       permissions={[...session.permissions]}
       user={{
         name: session.name,

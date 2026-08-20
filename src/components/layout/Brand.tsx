@@ -2,9 +2,12 @@ import { cn } from "@/lib/utils";
 
 /** Property mark used in the sidebar and on the login screen. */
 export function Brand({
+  propertyName,
   compact = false,
   className,
 }: {
+  /** The property being operated. Read from the database by the layout. */
+  propertyName: string;
   compact?: boolean;
   className?: string;
 }) {
@@ -34,7 +37,7 @@ export function Brand({
       </span>
       {!compact && (
         <div className="min-w-0 leading-tight">
-          <p className="truncate text-[15px] font-semibold text-content">فندق النخبة</p>
+          <p className="truncate text-[15px] font-semibold text-content">{propertyName}</p>
           <p className="truncate text-[11px] text-content-subtle">نظام إدارة الفنادق</p>
         </div>
       )}

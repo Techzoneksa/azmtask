@@ -8,12 +8,14 @@ import { findNavItem } from "@/lib/nav";
 import { UserMenu } from "./UserMenu";
 
 export function Topbar({
+  propertyName,
   onOpenSidebar,
   user,
   canOpenSettings,
 }: {
   onOpenSidebar: () => void;
   user: { name: string; email: string; role: string; jobTitle: string };
+  propertyName: string;
   canOpenSettings: boolean;
 }) {
   const pathname = usePathname();
@@ -31,7 +33,7 @@ export function Topbar({
       </button>
 
       <h1 className="truncate text-[15px] font-semibold text-content lg:hidden">
-        {current?.label ?? "فندق النخبة"}
+        {current?.label ?? propertyName}
       </h1>
 
       {/*

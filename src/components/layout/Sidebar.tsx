@@ -9,9 +9,12 @@ import { cn } from "@/lib/utils";
 import { Brand } from "./Brand";
 
 export function SidebarContent({
+  propertyName,
   sections,
   onNavigate,
 }: {
+  /** The property being operated, shown beside the mark. */
+  propertyName: string;
   sections: NavSection[];
   onNavigate?: () => void;
 }) {
@@ -20,7 +23,7 @@ export function SidebarContent({
   return (
     <div className="flex h-full flex-col bg-surface">
       <div className="flex h-16 shrink-0 items-center border-b border-line px-4">
-        <Brand />
+        <Brand propertyName={propertyName} />
       </div>
 
       <nav

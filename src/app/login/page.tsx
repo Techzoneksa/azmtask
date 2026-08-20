@@ -45,7 +45,7 @@ export default async function LoginPage({
     <div className="grid min-h-screen lg:grid-cols-2">
       <div className="flex items-center justify-center px-5 py-10 sm:px-8">
         <div className="w-full max-w-sm">
-          <Brand className="mb-8" />
+          <Brand propertyName="نظام إدارة الفنادق" className="mb-8" />
           <h1 className="text-2xl font-semibold tracking-tight text-content">
             تسجيل الدخول
           </h1>

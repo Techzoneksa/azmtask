@@ -10,10 +10,15 @@ const arabic = IBM_Plex_Sans_Arabic({
   variable: "--font-arabic",
 });
 
+/*
+ * The root layout runs for the login screen too, where there is no session and no
+ * property context, so the title stays on the product name. The authenticated shell
+ * names the actual property, which is where it matters.
+ */
 export const metadata: Metadata = {
   title: {
-    default: "فندق النخبة — نظام إدارة الفنادق",
-    template: "%s | فندق النخبة",
+    default: "نظام إدارة الفنادق",
+    template: "%s | نظام إدارة الفنادق",
   },
   description:
     "نظام سحابي لإدارة الفنادق والشقق المخدومة: الحجوزات، النزلاء، الوحدات، النظافة، الصيانة، المدفوعات والتقارير.",

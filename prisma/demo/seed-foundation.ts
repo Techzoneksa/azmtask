@@ -2,7 +2,10 @@ import bcrypt from "bcryptjs";
 
 import type { PrismaClient } from "../../src/generated/prisma/client";
 
+import { toISODate } from "../../src/lib/datetime";
+
 import {
+  DEMO_BUSINESS_DATE,
   DEMO_MARKER_KEY,
   DEMO_MARKER_VALUE,
   DEMO_PROPERTY,
@@ -65,6 +68,18 @@ export async function seedProperty(prisma: PrismaClient): Promise<string> {
     where: { propertyId_key: { propertyId: property.id, key: DEMO_MARKER_KEY } },
     create: { propertyId: property.id, key: DEMO_MARKER_KEY, value: DEMO_MARKER_VALUE },
     update: { value: DEMO_MARKER_VALUE },
+  });
+
+  /*
+   * The scenario's fixed operating date, published for the application to read.
+   * Passing it through the database rather than a shared constant keeps the seed
+   * scripts out of the application's import graph, and means a demo can be re-dated
+   * without a rebuild. Its absence is what tells production to use the real date.
+   */
+  await prisma.systemSetting.upsert({
+    where: { propertyId_key: { propertyId: property.id, key: "demo.businessDate" } },
+    create: { propertyId: property.id, key: "demo.businessDate", value: toISODate(DEMO_BUSINESS_DATE) },
+    update: { value: toISODate(DEMO_BUSINESS_DATE) },
   });
 
   return property.id;
