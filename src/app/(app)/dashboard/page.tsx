@@ -10,7 +10,7 @@ import Link from "next/link";
 
 import { Badge, Card, CardBody, CardHeader, PageHeader } from "@/components/ui";
 import { requirePermission } from "@/lib/auth/guard";
-import { ROLE_DESCRIPTIONS, ROLE_LABELS, PERMISSIONS } from "@/lib/permissions";
+import { PERMISSIONS, roleDescription, roleLabel } from "@/lib/permissions";
 import { formatNumber } from "@/lib/format";
 
 export const metadata: Metadata = { title: "لوحة المعلومات" };
@@ -96,10 +96,10 @@ export default async function DashboardPage() {
               <p className="text-[12px] text-content-subtle">الدور الوظيفي</p>
               <p className="mt-1 flex items-center gap-2 text-sm font-medium text-content">
                 <ShieldCheck className="h-4 w-4 text-brand-600" aria-hidden />
-                {ROLE_LABELS[session.role]}
+                {session.roleNames[0] ?? roleLabel(session.role)}
               </p>
               <p className="mt-1.5 text-[12px] leading-relaxed text-content-muted">
-                {ROLE_DESCRIPTIONS[session.role]}
+                {roleDescription(session.role)}
               </p>
             </div>
 

@@ -5,12 +5,11 @@ import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 
 import { Button, Input } from "@/components/ui";
-import { ROLE_DESCRIPTIONS, ROLE_LABELS, type Role } from "@/lib/permissions";
-
 /** Identity-only view of a demo account — no credentials cross into the client. */
 export type DemoAccountOption = {
   email: string;
-  role: Role;
+  roleName: string;
+  roleDescription: string;
 };
 
 /** Rejects absolute URLs so `?next=` cannot be used to bounce off our domain. */
@@ -135,10 +134,10 @@ export function LoginForm({
               >
                 <span className="min-w-0">
                   <span className="block truncate text-[13px] font-medium text-content">
-                    {ROLE_LABELS[account.role]}
+                    {account.roleName}
                   </span>
                   <span className="block truncate text-[11px] text-content-subtle">
-                    {ROLE_DESCRIPTIONS[account.role]}
+                    {account.roleDescription}
                   </span>
                 </span>
                 <span

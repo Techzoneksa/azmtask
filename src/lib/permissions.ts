@@ -233,3 +233,20 @@ export function hasAny(
 export function isRole(value: unknown): value is Role {
   return typeof value === "string" && (ROLES as readonly string[]).includes(value);
 }
+
+/**
+ * Arabic label for a role key coming from the database.
+ *
+ * Roles are rows now, so a key may name a role an administrator created after this
+ * file was written. The seeded roles resolve to their catalogue label; anything else
+ * falls back to the key itself rather than rendering "undefined".
+ */
+export function roleLabel(key: string | null | undefined): string {
+  if (!key) return "—";
+  return isRole(key) ? ROLE_LABELS[key] : key;
+}
+
+export function roleDescription(key: string | null | undefined): string {
+  if (!key) return "";
+  return isRole(key) ? ROLE_DESCRIPTIONS[key] : "";
+}

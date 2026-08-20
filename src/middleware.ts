@@ -11,7 +11,13 @@ import { SESSION_COOKIE, verifySessionToken } from "@/lib/auth/token";
  */
 
 /** Paths reachable without a session. */
-const PUBLIC_PATHS = ["/login", "/api/auth/login", "/api/auth/logout"];
+const PUBLIC_PATHS = [
+  "/login",
+  "/api/auth/login",
+  "/api/auth/logout",
+  // Monitoring calls this without a session; it exposes no data of its own.
+  "/api/health",
+];
 
 function isPublic(pathname: string): boolean {
   return PUBLIC_PATHS.some(

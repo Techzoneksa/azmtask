@@ -36,3 +36,5 @@ Thumbs.db
 # misc
 .vercel
 coverage/
+
+/src/generated/prisma

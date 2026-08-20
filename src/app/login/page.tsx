@@ -2,18 +2,30 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
 import { Brand } from "@/components/layout/Brand";
-import { DEMO_ACCOUNTS } from "@/lib/auth/demo-accounts";
 import { getSession } from "@/lib/auth/session";
 import { defaultRouteFor } from "@/lib/nav";
+import { listDemoAccounts } from "@/server/services/user.service";
 
 import { LoginForm } from "./LoginForm";
 
 /**
  * The demo-account shortcut list is opt-in via DEMO_PASSWORD_HINT. Leave that
- * variable unset in a real deployment and the panel disappears entirely — no
- * account list and no password ever reach the browser.
+ * variable unset in a real deployment and the panel disappears entirely — the query
+ * below never runs and no account list reaches the browser.
  */
 const DEMO_PASSWORD_HINT = process.env.DEMO_PASSWORD_HINT?.trim() || null;
+
+async function demoAccounts() {
+  if (!DEMO_PASSWORD_HINT) return [];
+  try {
+    return await listDemoAccounts();
+  } catch (error) {
+    // The login form must render even when the database is unreachable, so the
+    // user still sees a working sign-in rather than an error page.
+    console.error("[login] could not list demo accounts", error);
+    return [];
+  }
+}
 
 export const metadata: Metadata = { title: "تسجيل الدخول" };
 
@@ -27,6 +39,7 @@ export default async function LoginPage({
   if (session) redirect(defaultRouteFor(session.permissions));
 
   const { next } = await searchParams;
+  const accounts = await demoAccounts();
 
   return (
     <div className="grid min-h-screen lg:grid-cols-2">
@@ -43,14 +56,7 @@ export default async function LoginPage({
             <LoginForm
               nextPath={next}
               demoPassword={DEMO_PASSWORD_HINT ?? undefined}
-              demoAccounts={
-                DEMO_PASSWORD_HINT
-                  ? DEMO_ACCOUNTS.map((account) => ({
-                      email: account.email,
-                      role: account.role,
-                    }))
-                  : []
-              }
+              demoAccounts={accounts}
             />
           </div>
         </div>

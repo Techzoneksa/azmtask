@@ -4,7 +4,6 @@ import { Menu, Search } from "lucide-react";
 import { usePathname } from "next/navigation";
 
 import { findNavItem } from "@/lib/nav";
-import type { Role } from "@/lib/permissions";
 
 import { UserMenu } from "./UserMenu";
 
@@ -14,7 +13,7 @@ export function Topbar({
   canOpenSettings,
 }: {
   onOpenSidebar: () => void;
-  user: { name: string; email: string; role: Role; jobTitle: string };
+  user: { name: string; email: string; role: string; jobTitle: string };
   canOpenSettings: boolean;
 }) {
   const pathname = usePathname();

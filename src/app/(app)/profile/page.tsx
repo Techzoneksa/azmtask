@@ -4,7 +4,7 @@ import type { Metadata } from "next";
 import { Badge, Card, CardBody, CardHeader, PageHeader } from "@/components/ui";
 import { requireSession } from "@/lib/auth/guard";
 import { initials } from "@/lib/format";
-import { ROLE_DESCRIPTIONS, ROLE_LABELS } from "@/lib/permissions";
+import { roleDescription, roleLabel } from "@/lib/permissions";
 
 export const metadata: Metadata = { title: "الملف الشخصي" };
 
@@ -32,11 +32,11 @@ export default async function ProfilePage() {
             </span>
             <p className="mt-3 text-[15px] font-semibold text-content">{session.name}</p>
             <p className="mt-0.5 text-[13px] text-content-muted">
-              {session.jobTitle || ROLE_LABELS[session.role]}
+              {session.jobTitle || roleLabel(session.role)}
             </p>
             <div className="mt-3">
               <Badge tone="brand" dot>
-                {ROLE_LABELS[session.role]}
+                {session.roleNames[0] ?? roleLabel(session.role)}
               </Badge>
             </div>
           </CardBody>
@@ -59,8 +59,8 @@ export default async function ProfilePage() {
             <DetailRow
               icon={<ShieldCheck className="h-4 w-4" aria-hidden />}
               label="الدور الوظيفي"
-              value={ROLE_LABELS[session.role]}
-              hint={ROLE_DESCRIPTIONS[session.role]}
+              value={session.roleNames[0] ?? roleLabel(session.role)}
+              hint={roleDescription(session.role)}
             />
           </CardBody>
         </Card>

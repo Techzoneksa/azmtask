@@ -6,7 +6,7 @@ import { useEffect, useMemo, useState, type ReactNode } from "react";
 
 import { ConfirmProvider, ToastProvider } from "@/components/ui";
 import { visibleSections } from "@/lib/nav";
-import type { Permission, Role } from "@/lib/permissions";
+import type { Permission } from "@/lib/permissions";
 
 import { SidebarContent } from "./Sidebar";
 import { Topbar } from "./Topbar";
@@ -29,7 +29,7 @@ export function AppShell({
   children,
 }: {
   permissions: Permission[];
-  user: { name: string; email: string; role: Role; jobTitle: string };
+  user: { name: string; email: string; role: string; jobTitle: string };
   canOpenSettings: boolean;
   children: ReactNode;
 }) {

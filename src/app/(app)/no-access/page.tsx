@@ -4,7 +4,7 @@ import Link from "next/link";
 import { Card, NoAccessState } from "@/components/ui";
 import { requireSession } from "@/lib/auth/guard";
 import { defaultRouteFor } from "@/lib/nav";
-import { ROLE_LABELS } from "@/lib/permissions";
+import { roleLabel } from "@/lib/permissions";
 
 export const metadata: Metadata = { title: "لا تملك صلاحية الوصول" };
 
@@ -25,7 +25,7 @@ export default async function NoAccessPage({
           description={
             <>
               دورك الحالي هو{" "}
-              <span className="font-medium text-content">{ROLE_LABELS[session.role]}</span>،
+              <span className="font-medium text-content">{session.roleNames[0] ?? roleLabel(session.role)}</span>،
               وهو لا يشمل صلاحية فتح هذه الشاشة
               {required && (
                 <>

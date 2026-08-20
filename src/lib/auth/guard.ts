@@ -4,8 +4,7 @@ import { redirect } from "next/navigation";
 
 import type { Permission } from "@/lib/permissions";
 
-import { getSession } from "./session";
-import type { Session } from "./token";
+import { getSession, type Session } from "./session";
 
 /**
  * Server-side authorization.

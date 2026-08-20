@@ -7,7 +7,7 @@ import { useState } from "react";
 import { Dropdown, DropdownItem, DropdownSeparator } from "@/components/ui";
 import { useToast } from "@/components/ui";
 import { initials } from "@/lib/format";
-import { ROLE_LABELS, type Role } from "@/lib/permissions";
+import { roleLabel } from "@/lib/permissions";
 import { cn } from "@/lib/utils";
 
 export function UserMenu({
@@ -19,7 +19,7 @@ export function UserMenu({
 }: {
   name: string;
   email: string;
-  role: Role;
+  role: string;
   jobTitle: string;
   canOpenSettings: boolean;
 }) {
@@ -66,7 +66,7 @@ export function UserMenu({
               {name}
             </span>
             <span className="block truncate text-[11px] text-content-subtle">
-              {ROLE_LABELS[role]}
+              {roleLabel(role)}
             </span>
           </span>
           <ChevronDown className="h-4 w-4 shrink-0 text-content-subtle" aria-hidden />
@@ -82,7 +82,7 @@ export function UserMenu({
             </p>
             <p className="mt-1.5 inline-flex items-center gap-1.5 rounded-full bg-brand-50 px-2 py-0.5 text-[11px] font-medium text-brand-700">
               <ShieldCheck className="h-3 w-3" aria-hidden />
-              {jobTitle || ROLE_LABELS[role]}
+              {jobTitle || roleLabel(role)}
             </p>
           </div>
 
