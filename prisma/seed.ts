@@ -83,18 +83,21 @@ const PERMISSION_DESCRIPTIONS: Record<string, string> = {
 };
 
 /**
- * Sign-in accounts. Passwords come from the environment so a real deployment never
- * inherits the demo one; the fallback exists only to keep local development and the
- * client demo working out of the box.
+ * The bootstrap administrator.
+ *
+ * Exactly one account, because a fresh production install needs someone who can sign
+ * in and create the real ones — and nothing more. Staff logins belong to the hotel
+ * being set up, not to this script; the demo's own team is created by
+ * `prisma/demo-seed.ts`, which a real deployment never runs.
  */
 const SEED_PASSWORD = process.env.SEED_PASSWORD ?? "Demo@1234";
 
 const SEED_USERS = [
-  { name: "عبدالرحمن الشهري", email: "admin@nokhba-hotel.sa", roleKey: "admin" },
-  { name: "ماجد العتيبي", email: "manager@nokhba-hotel.sa", roleKey: "hotel_manager" },
-  { name: "نورة القحطاني", email: "reception@nokhba-hotel.sa", roleKey: "reception" },
-  { name: "خالد الدوسري", email: "accountant@nokhba-hotel.sa", roleKey: "accountant" },
-  { name: "سلمان الحربي", email: "housekeeping@nokhba-hotel.sa", roleKey: "housekeeping_supervisor" },
+  {
+    name: "مدير النظام",
+    email: process.env.SEED_ADMIN_EMAIL ?? "admin@arwiqah-demo.sa",
+    roleKey: "admin",
+  },
 ] as const;
 
 async function seedPermissions() {
@@ -180,7 +183,7 @@ async function seedUsers() {
     });
   }
 
-  console.log(`  users: ${SEED_USERS.length}`);
+  console.log(`  bootstrap admin: ${SEED_USERS[0].email}`);
 }
 
 async function main() {
