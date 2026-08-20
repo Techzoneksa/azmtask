@@ -81,6 +81,25 @@ if (risky.length > 0) {
   console.log("    @ → %40   # → %23   / → %2F   ? → %3F   : → %3A");
 }
 
+/*
+ * On shared hosting every database and every user of an account carry the same
+ * numeric prefix. When the two differ it is almost always a mistyped digit, and the
+ * server reports it as 1044 — a message that reads like a permissions problem and
+ * sends people to reset a password that was never wrong. Catch it before connecting.
+ */
+const prefixOf = (value: string) => /^u(\d+)_/.exec(value)?.[1] ?? null;
+const userPrefix = prefixOf(user);
+const databasePrefix = prefixOf(database);
+
+if (userPrefix && databasePrefix && userPrefix !== databasePrefix) {
+  fail("بادئة الحساب في اسم المستخدم لا تطابق بادئة القاعدة", [
+    `بادئة المستخدم: ${userPrefix} (${userPrefix.length} رقمًا)`,
+    `بادئة القاعدة : ${databasePrefix} (${databasePrefix.length} رقمًا)`,
+    "على هوستنجر البادئة واحدة لكل مستخدمي وقواعد الحساب — الأرجح خطأ في رقم",
+    "انسخ الاسمين حرفيًا من hPanel → Databases بدل كتابتهما يدويًا",
+  ]);
+}
+
 if (!database) {
   fail("اسم القاعدة مفقود من الرابط", [
     "الرابط يجب أن ينتهي بـ /اسم_القاعدة",
