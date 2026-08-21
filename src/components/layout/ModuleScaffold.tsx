@@ -4,11 +4,12 @@ import type { ReactNode } from "react";
 import { Card, PageHeader } from "@/components/ui";
 
 /**
- * Placeholder body for a module whose data layer lands in a later stage.
+ * Placeholder body for a module whose screen has not been built yet.
  *
- * The route, its permission guard, its title and its navigation entry are all real —
- * what is missing is the data, and this states exactly that rather than showing a
- * fake table or a button that does nothing.
+ * The route, its permission guard, its title and its navigation entry are all real.
+ * What is missing is the screen — not the data, which several of these modules
+ * already have in the database. Saying "waiting for the data" would send someone to
+ * check a connection that is fine.
  */
 export function ModuleScaffold({
   title,
@@ -21,7 +22,11 @@ export function ModuleScaffold({
   title: string;
   description: string;
   icon?: LucideIcon;
-  /** Which build stage delivers this module's working functionality. */
+  /**
+   * Which stage delivers this module. Must name a stage that has not happened yet —
+   * a placeholder promising a stage already passed is worse than one promising
+   * nothing, because it reads as a bug in the deployment.
+   */
   stage: string;
   capabilities: string[];
   actions?: ReactNode;
@@ -37,12 +42,10 @@ export function ModuleScaffold({
           </div>
 
           <h2 className="text-[15px] font-semibold text-content">
-            الشاشة جاهزة — بانتظار ربط البيانات
+            هذه الشاشة قيد التطوير
           </h2>
           <p className="mt-2 max-w-lg text-sm leading-relaxed text-content-muted">
-            تم إنشاء المسار والصلاحيات والتنقل الخاص بهذه الوحدة ضمن{" "}
-            <span className="font-medium text-content">المرحلة 1</span>. تُفعَّل
-            وظائفها الفعلية في{" "}
+            المسار والصلاحيات والتنقل جاهزة. تُبنى وظائف هذه الشاشة في{" "}
             <span className="font-medium text-brand-700">{stage}</span>.
           </p>
 
