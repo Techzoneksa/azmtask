@@ -1,4 +1,6 @@
 import { afterEach, describe, expect, it } from "vitest";
+import { Prisma } from "@/generated/prisma/client";
+import { toAppError } from "@/server/errors";
 
 import { diagnoseConnection } from "@/server/db-diagnose";
 
@@ -118,4 +120,51 @@ describe("outage classification", () => {
       await broken.$disconnect().catch(() => {});
     }
   }, 30_000);
+});
+
+describe("a database behind the code", () => {
+  /*
+   * The failure that made every units screen fail on a live deployment: the
+   * application shipped, the migrations did not. It has one cause and one fix, so the
+   * message must name them — the generic database error sends an operator to check
+   * the connection, the credentials and the host, which are all fine.
+   */
+  it("recognises a missing table as a pending migration, not a connection fault", () => {
+    const error = new Prisma.PrismaClientKnownRequestError("Table does not exist", {
+      code: "P2021",
+      clientVersion: "7.9.1",
+    });
+
+    const app = toAppError(error);
+    expect(app.code).toBe("UNAVAILABLE");
+    expect(app.message).toContain("db:deploy");
+  });
+
+  it("recognises a missing column the same way", () => {
+    const error = new Prisma.PrismaClientKnownRequestError("Column not found", {
+      code: "P2022",
+      clientVersion: "7.9.1",
+    });
+
+    expect(toAppError(error).message).toContain("db:deploy");
+  });
+
+  it("recognises it from the driver's own wording, before Prisma classifies it", () => {
+    // The mariadb adapter reports this by name rather than by code on some paths.
+    const error = new Prisma.PrismaClientKnownRequestError(
+      "Unknown column 'idempotencyKey' in 'INSERT INTO'",
+      { code: "P2010", clientVersion: "7.9.1" },
+    );
+
+    expect(toAppError(error).message).toContain("db:deploy");
+  });
+
+  it("does not mistake an ordinary database failure for a pending migration", () => {
+    const error = new Prisma.PrismaClientKnownRequestError("Something else entirely", {
+      code: "P2010",
+      clientVersion: "7.9.1",
+    });
+
+    expect(toAppError(error).message).not.toContain("db:deploy");
+  });
 });

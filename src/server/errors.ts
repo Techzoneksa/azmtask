@@ -134,6 +134,16 @@ const DUPLICATE_MESSAGES: Record<string, { message: string; field?: string }> = 
   },
 };
 
+/**
+ * Shown when a table or column the code needs is missing from the database.
+ *
+ * Names the remedy, because this failure has exactly one cause and exactly one fix,
+ * and an operator who has just deployed is the person reading it.
+ */
+export const SCHEMA_BEHIND_MESSAGE =
+  "بنية قاعدة البيانات أقدم من نسخة التطبيق — لم تُطبَّق آخر الترحيلات. " +
+  "شغّل `npm run db:deploy` ثم أعد تشغيل التطبيق.";
+
 function duplicateFrom(error: Prisma.PrismaClientKnownRequestError): AppError {
   const target = error.meta?.target;
   const key = typeof target === "string" ? target : Array.isArray(target) ? target.join("_") : "";
@@ -168,6 +178,14 @@ export function toAppError(error: unknown): AppError {
      * it. Without this the login screen answers an outage by telling someone to
      * try again, as though their password were the problem.
      */
+    /*
+     * The mariadb adapter reports a missing table or column by name before Prisma
+     * assigns it a code, so the message is what identifies it in that path.
+     */
+    if (/TableDoesNotExist|ColumnNotFound|Unknown column|doesn't exist/i.test(error.message)) {
+      return new AppError("UNAVAILABLE", SCHEMA_BEHIND_MESSAGE, { cause: error });
+    }
+
     if (/45028|pool timeout|failed to retrieve a connection/i.test(error.message)) {
       return new AppError(
         "UNAVAILABLE",
@@ -212,6 +230,19 @@ export function toAppError(error: unknown): AppError {
           "تعذّر إتمام العملية بسبب تعارض مع عملية أخرى في نفس اللحظة. أعد المحاولة.",
           { cause: error },
         );
+
+      /*
+       * The schema is older than the code asking questions of it — a deployment that
+       * shipped the application without running its migrations.
+       *
+       * Worth its own message rather than the generic database failure, because the
+       * generic one sends an operator to check the connection, the credentials and the
+       * host: everything except the one thing that is actually wrong. The connection is
+       * fine. The table simply is not there yet.
+       */
+      case "P2021":
+      case "P2022":
+        return new AppError("UNAVAILABLE", SCHEMA_BEHIND_MESSAGE, { cause: error });
 
       default:
         return new AppError("INTERNAL", "تعذّر تنفيذ العملية على قاعدة البيانات.", {

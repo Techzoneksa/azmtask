@@ -1,5 +1,8 @@
 import "dotenv/config";
 
+import { readdirSync } from "node:fs";
+import { join } from "node:path";
+
 import mariadb from "mariadb";
 
 /**
@@ -17,6 +20,35 @@ import mariadb from "mariadb";
  *
  * Run it on the host:  npm run db:check
  */
+
+/**
+ * Migrations present in the repository but not recorded as finished in the database.
+ *
+ * Returns null when the migration table itself is absent — a different problem with a
+ * different remedy, so it is not folded into "some migrations are pending".
+ */
+async function findPendingMigrations(
+  connection: { query: (sql: string) => Promise<unknown> },
+): Promise<string[] | null> {
+  let applied: Set<string>;
+  try {
+    const rows = (await connection.query(
+      "SELECT `migration_name` FROM `_prisma_migrations` WHERE `finished_at` IS NOT NULL",
+    )) as Array<{ migration_name: string }>;
+    applied = new Set(rows.map((row) => row.migration_name));
+  } catch {
+    return null;
+  }
+
+  const onDisk = readdirSync(join(process.cwd(), "prisma", "migrations"), {
+    withFileTypes: true,
+  })
+    .filter((entry) => entry.isDirectory())
+    .map((entry) => entry.name)
+    .sort();
+
+  return onDisk.filter((name) => !applied.has(name));
+}
 
 const line = (label: string, value: string) =>
   console.log(`  ${label.padEnd(22)} ${value}`);
@@ -178,15 +210,34 @@ async function attempt() {
     const count = Number(total);
     line("عدد الجداول", String(count));
 
+    /*
+     * Which migrations the database has actually run, against which ones exist in the
+     * repository.
+     *
+     * This used to compare the table count against a hardcoded 23 — which passes the
+     * moment a database has enough tables, whatever they are, and cannot notice a
+     * migration that only adds a column. A deployment sitting two migrations behind
+     * therefore reported "everything is fine" while half the screens failed. The
+     * migration table is the only thing that actually knows.
+     */
+    const pending = await findPendingMigrations(connection);
+
     await connection.end();
 
     if (count === 0) {
       console.log("\n⚠️  القاعدة فارغة — الاتصال سليم لكن الهجرات لم تُطبَّق بعد.");
       console.log("    شغّل:  npm run db:deploy && npm run db:seed\n");
-    } else if (count < 23) {
-      console.log(`\n⚠️  عدد الجداول ${count} أقل من المتوقع (23).`);
+    } else if (pending === null) {
+      console.log("\n⚠️  جدول الترحيلات غير موجود — القاعدة لم تُهيَّأ بـ Prisma.");
       console.log("    شغّل:  npm run db:deploy\n");
+    } else if (pending.length > 0) {
+      console.log(`\n❌ ${pending.length} ترحيل لم يُطبَّق بعد على هذه القاعدة:`);
+      for (const name of pending) console.log(`    • ${name}`);
+      console.log("\n    الشيفرة أحدث من بنية القاعدة، وبعض الشاشات ستفشل.");
+      console.log("    شغّل:  npm run db:deploy   ثم أعد تشغيل التطبيق\n");
+      process.exitCode = 1;
     } else {
+      line("الترحيلات", "كلها مُطبَّقة");
       console.log("\n✅ كل شيء سليم — الاتصال والبنية جاهزان.\n");
     }
   } catch (error) {
