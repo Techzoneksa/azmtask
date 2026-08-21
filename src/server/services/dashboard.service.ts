@@ -72,6 +72,7 @@ export type UnitStateCounts = {
 export type ArrivalRow = {
   id: string;
   reservationNumber: string;
+  guestId: string;
   guestName: string;
   guestMobile: string | null;
   unitNumber: string | null;
@@ -88,6 +89,7 @@ export type ArrivalRow = {
 export type DepartureRow = {
   id: string;
   reservationNumber: string;
+  guestId: string;
   guestName: string;
   unitNumber: string | null;
   checkInDate: string;
@@ -128,6 +130,7 @@ export type SourceSlice = { source: string; count: number };
 export type RecentReservationRow = {
   id: string;
   reservationNumber: string;
+  guestId: string;
   guestName: string;
   unitNumber: string | null;
   checkInDate: string;
@@ -290,7 +293,7 @@ async function loadArrivals(propertyId: string, date: Date): Promise<ArrivalRow[
       status: true,
       paymentStatus: true,
       balance: true,
-      guest: { select: { fullName: true, mobile: true } },
+      guest: { select: { id: true, fullName: true, mobile: true } },
       unit: { select: { unitNumber: true } },
       unitType: { select: { name: true } },
     },
@@ -300,6 +303,7 @@ async function loadArrivals(propertyId: string, date: Date): Promise<ArrivalRow[
   return rows.map((row) => ({
     id: row.id,
     reservationNumber: row.reservationNumber,
+    guestId: row.guest.id,
     guestName: row.guest.fullName,
     guestMobile: row.guest.mobile,
     // Null is legitimate: the room is chosen at the desk. The view labels it.
@@ -326,7 +330,7 @@ async function loadDepartures(propertyId: string, date: Date): Promise<Departure
       checkInDate: true,
       balance: true,
       paymentStatus: true,
-      guest: { select: { fullName: true } },
+      guest: { select: { id: true, fullName: true } },
       unit: { select: { unitNumber: true } },
     },
     // Guests who still owe money first — they are the ones reception must catch.
@@ -336,6 +340,7 @@ async function loadDepartures(propertyId: string, date: Date): Promise<Departure
   return rows.map((row) => ({
     id: row.id,
     reservationNumber: row.reservationNumber,
+    guestId: row.guest.id,
     guestName: row.guest.fullName,
     unitNumber: row.unit?.unitNumber ?? null,
     checkInDate: toISODate(row.checkInDate),
@@ -514,7 +519,7 @@ async function loadRecentReservations(propertyId: string): Promise<RecentReserva
       total: true,
       balance: true,
       createdAt: true,
-      guest: { select: { fullName: true } },
+      guest: { select: { id: true, fullName: true } },
       unit: { select: { unitNumber: true } },
     },
     orderBy: { createdAt: "desc" },
@@ -524,6 +529,7 @@ async function loadRecentReservations(propertyId: string): Promise<RecentReserva
   return rows.map((row) => ({
     id: row.id,
     reservationNumber: row.reservationNumber,
+    guestId: row.guest.id,
     guestName: row.guest.fullName,
     unitNumber: row.unit?.unitNumber ?? null,
     checkInDate: toISODate(row.checkInDate),
@@ -700,7 +706,7 @@ async function loadAlerts(
             select: {
               id: true,
               balance: true,
-              guest: { select: { fullName: true } },
+              guest: { select: { id: true, fullName: true } },
               unit: { select: { unitNumber: true } },
             },
             orderBy: { balance: "desc" },

@@ -97,6 +97,7 @@ export default async function UnitDetailPage({ params }: { params: Promise<{ id:
 
   const canChangeStatus = await can("units.status.change");
   const canManage = await can("units.manage");
+  const canViewGuests = await can("guests.view");
 
   // Only fetched when editing is actually on offer — the list feeds the type select.
   const unitTypes = canManage
@@ -199,7 +200,20 @@ export default async function UnitDetailPage({ params }: { params: Promise<{ id:
               <div className="flex items-start gap-2.5">
                 <BedDouble className="mt-0.5 size-4 shrink-0 text-brand-600" aria-hidden />
                 <div className="min-w-0">
-                  <p className="text-[14px] font-medium text-content">{unit.currentStay.guestName}</p>
+                  {/* Linked only for a reader who may open the profile — a link that
+                      lands on "غير مصرح" is worse than plain text. */}
+                  {canViewGuests ? (
+                    <Link
+                      href={`/guests/${unit.currentStay.guestId}`}
+                      className="block text-[14px] font-medium text-content transition-colors hover:text-brand-700 hover:underline"
+                    >
+                      {unit.currentStay.guestName}
+                    </Link>
+                  ) : (
+                    <p className="text-[14px] font-medium text-content">
+                      {unit.currentStay.guestName}
+                    </p>
+                  )}
                   <p className="text-[12px] tabular-nums text-content-muted">
                     {unit.currentStay.reservationNumber}
                     {unit.currentStay.guestMobile && ` · ${formatMobile(unit.currentStay.guestMobile)}`}

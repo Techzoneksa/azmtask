@@ -33,3 +33,17 @@ export const getCurrentProperty = cache(
 export async function getPropertyName(): Promise<string> {
   return (await getCurrentProperty())?.name ?? "نظام إدارة الفنادق";
 }
+
+/**
+ * The properties the current user's data may be drawn from.
+ *
+ * One entry today, because the deployment runs one property. It exists as a list, and
+ * every scoped query takes a list, so adding a second property is a change to this
+ * function rather than an audit of every query written before it. A caller with no
+ * accessible property gets an empty list, which scopes queries to nothing — the
+ * fail-closed direction.
+ */
+export const getAccessiblePropertyIds = cache(async (): Promise<string[]> => {
+  const property = await getCurrentProperty();
+  return property ? [property.id] : [];
+});

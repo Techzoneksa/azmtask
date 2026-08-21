@@ -41,8 +41,10 @@ export function Topbar({
       </p>
 
       {/*
-        Global search is wired to real records in a later stage; for now it is
-        presented as a disabled affordance rather than a button that does nothing.
+        Global search spans modules that do not all exist yet, so it stays disabled —
+        but the copy says which, rather than blaming a database connection that has
+        been live since Stage 2. A placeholder that states a stale reason is worse
+        than one that states none: it sends people to check something that is fine.
       */}
       <div className="hidden flex-1 lg:block">
         <div className="relative max-w-md">
@@ -53,9 +55,9 @@ export function Topbar({
           <input
             type="search"
             disabled
-            placeholder="البحث الشامل — يُفعّل مع بيانات النظام"
-            aria-label="البحث الشامل"
-            title="يُفعّل البحث الشامل بعد ربط قاعدة البيانات"
+            placeholder="البحث الشامل — سيُتاح في مرحلة لاحقة"
+            aria-label="البحث الشامل — غير متاح بعد"
+            title="البحث الشامل عبر كل الوحدات سيُتاح في مرحلة لاحقة. للبحث عن نزيل استخدم شاشة النزلاء، وللبحث عن وحدة استخدم شاشة الوحدات."
             className="h-9 w-full cursor-not-allowed rounded-lg border border-line bg-surface-muted ps-9 pe-3 text-[13px] text-content-muted placeholder:text-content-subtle"
           />
         </div>

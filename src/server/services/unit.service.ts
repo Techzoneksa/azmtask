@@ -791,6 +791,7 @@ export async function getUnitDetails(propertyId: string, unitId: string) {
       currentStay: currentStay
         ? {
             id: currentStay.id,
+            guestId: currentStay.guest.id,
             reservationNumber: currentStay.reservationNumber,
             guestName: currentStay.guest.fullName,
             guestMobile: currentStay.guest.mobile,

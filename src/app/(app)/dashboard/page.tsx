@@ -53,6 +53,8 @@ export default async function DashboardPage() {
    * otherwise the cards stay plain, because a link that lands on "غير مصرح" is worse
    * than no link.
    */
+  const canOpenGuests = await can("guests.view");
+
   const unitsHref = (await can("units.view"))
     ? (query: string) => `/units?${query}`
     : () => undefined;
@@ -210,7 +212,7 @@ export default async function DashboardPage() {
             isEmpty={(rows) => rows.length === 0}
             empty="لا توجد وصولات مجدولة اليوم"
           >
-            {(rows) => <ArrivalsList rows={rows} />}
+            {(rows) => <ArrivalsList rows={rows} canOpenGuests={canOpenGuests} />}
           </SectionBody>
         </Panel>
 
@@ -220,7 +222,7 @@ export default async function DashboardPage() {
             isEmpty={(rows) => rows.length === 0}
             empty="لا توجد مغادرات مجدولة اليوم"
           >
-            {(rows) => <DeparturesList rows={rows} />}
+            {(rows) => <DeparturesList rows={rows} canOpenGuests={canOpenGuests} />}
           </SectionBody>
         </Panel>
 
@@ -313,7 +315,7 @@ export default async function DashboardPage() {
             isEmpty={(rows) => rows.length === 0}
             empty="لم تُسجَّل حجوزات بعد"
           >
-            {(rows) => <RecentReservationsTable rows={rows} />}
+            {(rows) => <RecentReservationsTable rows={rows} canOpenGuests={canOpenGuests} />}
           </SectionBody>
         </Panel>
       )}

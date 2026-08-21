@@ -1,4 +1,5 @@
 import { AlertTriangle, Info, TriangleAlert } from "lucide-react";
+import Link from "next/link";
 
 import { Badge } from "@/components/ui";
 import { formatAmount, formatDateShort, formatMobile, formatRelative } from "@/lib/format";
@@ -32,6 +33,35 @@ import type {
 
 const UNASSIGNED = "لم تُحدّد الوحدة بعد";
 
+/**
+ * A guest's name, linked to their profile when the reader may open it.
+ *
+ * Gated rather than always-linked: a link that lands on "غير مصرح" is a worse
+ * experience than plain text, and it tells the reader a screen exists that they
+ * cannot reach.
+ */
+function GuestName({
+  id,
+  name,
+  canOpen,
+  className,
+}: {
+  id: string;
+  name: string;
+  canOpen: boolean;
+  className: string;
+}) {
+  if (!canOpen) return <span className={className}>{name}</span>;
+  return (
+    <Link
+      href={`/guests/${id}`}
+      className={`${className} rounded transition-colors hover:text-brand-700 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600`}
+    >
+      {name}
+    </Link>
+  );
+}
+
 function statusLabel<T extends Record<string, { label: string; tone: string }>>(
   map: T,
   key: string,
@@ -41,7 +71,13 @@ function statusLabel<T extends Record<string, { label: string; tone: string }>>(
 
 // ---------------------------------------------------------------------------
 
-export function ArrivalsList({ rows }: { rows: ArrivalRow[] }) {
+export function ArrivalsList({
+  rows,
+  canOpenGuests = false,
+}: {
+  rows: ArrivalRow[];
+  canOpenGuests?: boolean;
+}) {
   return (
     <ul className="divide-y divide-line">
       {rows.map((row) => {
@@ -52,9 +88,12 @@ export function ArrivalsList({ rows }: { rows: ArrivalRow[] }) {
           <li key={row.id} className="flex flex-wrap items-center gap-x-4 gap-y-2 py-3 first:pt-0">
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2">
-                <span className="truncate text-[14px] font-medium text-content">
-                  {row.guestName}
-                </span>
+                <GuestName
+                  id={row.guestId}
+                  name={row.guestName}
+                  canOpen={canOpenGuests}
+                  className="truncate text-[14px] font-medium text-content"
+                />
                 <Badge tone={payment.tone as never}>{payment.label}</Badge>
               </div>
               <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-[12px] text-content-muted">
@@ -88,7 +127,13 @@ export function ArrivalsList({ rows }: { rows: ArrivalRow[] }) {
   );
 }
 
-export function DeparturesList({ rows }: { rows: DepartureRow[] }) {
+export function DeparturesList({
+  rows,
+  canOpenGuests = false,
+}: {
+  rows: DepartureRow[];
+  canOpenGuests?: boolean;
+}) {
   return (
     <ul className="divide-y divide-line">
       {rows.map((row) => {
@@ -99,9 +144,12 @@ export function DeparturesList({ rows }: { rows: DepartureRow[] }) {
           <li key={row.id} className="flex flex-wrap items-center gap-x-4 gap-y-2 py-3 first:pt-0">
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2">
-                <span className="truncate text-[14px] font-medium text-content">
-                  {row.guestName}
-                </span>
+                <GuestName
+                  id={row.guestId}
+                  name={row.guestName}
+                  canOpen={canOpenGuests}
+                  className="truncate text-[14px] font-medium text-content"
+                />
                 <Badge tone={payment.tone as never}>{payment.label}</Badge>
               </div>
               <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-[12px] text-content-muted">
@@ -162,7 +210,13 @@ export function AlertsList({ alerts }: { alerts: OperationalAlert[] }) {
 
 // ---------------------------------------------------------------------------
 
-export function RecentReservationsTable({ rows }: { rows: RecentReservationRow[] }) {
+export function RecentReservationsTable({
+  rows,
+  canOpenGuests = false,
+}: {
+  rows: RecentReservationRow[];
+  canOpenGuests?: boolean;
+}) {
   return (
     <>
       {/* Desktop: a real table. */}
@@ -185,7 +239,14 @@ export function RecentReservationsTable({ rows }: { rows: RecentReservationRow[]
               return (
                 <tr key={row.id}>
                   <td className="py-2.5 tabular-nums text-content-muted">{row.reservationNumber}</td>
-                  <td className="py-2.5 font-medium text-content">{row.guestName}</td>
+                  <td className="py-2.5">
+                    <GuestName
+                      id={row.guestId}
+                      name={row.guestName}
+                      canOpen={canOpenGuests}
+                      className="font-medium text-content"
+                    />
+                  </td>
                   <td className="py-2.5 tabular-nums text-content-muted">
                     {formatDateShort(row.checkInDate)} — {formatDateShort(row.checkOutDate)}
                   </td>
@@ -217,7 +278,12 @@ export function RecentReservationsTable({ rows }: { rows: RecentReservationRow[]
             <li key={row.id} className="py-3 first:pt-0">
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <p className="truncate text-[14px] font-medium text-content">{row.guestName}</p>
+                  <GuestName
+                    id={row.guestId}
+                    name={row.guestName}
+                    canOpen={canOpenGuests}
+                    className="block truncate text-[14px] font-medium text-content"
+                  />
                   <p className="mt-0.5 text-[12px] tabular-nums text-content-muted">
                     {row.reservationNumber}
                   </p>
