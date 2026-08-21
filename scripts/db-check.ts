@@ -124,6 +124,25 @@ if (userPrefix && databasePrefix && userPrefix !== databasePrefix) {
   ]);
 }
 
+/*
+ * MySQL accounts are user *and* host: 'u123_app'@'127.0.0.1' is a different account
+ * from 'u123_app'@'localhost'. Since Node 17, DNS results are returned in the order
+ * the resolver gives them, so on an IPv6-capable host "localhost" often resolves to
+ * ::1 first — and a grant written for 127.0.0.1 does not match it. The server then
+ * answers ACCESS DENIED for a password that is perfectly correct, which sends you
+ * to reset a credential that was never the problem.
+ *
+ * Run `SELECT CURRENT_USER()` in the database console to see which host the account
+ * is actually bound to.
+ */
+if (url.hostname === "localhost") {
+  console.log(
+    "\n⚠️  المضيف مكتوب localhost. إن كان حساب MySQL مقيّدًا بـ 127.0.0.1 فسيُرفض" +
+      "\n    الاتصال رغم صحة كلمة المرور، لأن Node قد يحلّ localhost إلى ::1." +
+      "\n    جرّب 127.0.0.1 بدلًا منه.",
+  );
+}
+
 if (!database) {
   fail("اسم القاعدة مفقود من الرابط", [
     "الرابط يجب أن ينتهي بـ /اسم_القاعدة",
