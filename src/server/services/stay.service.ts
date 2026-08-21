@@ -13,10 +13,10 @@ import { prisma } from "@/lib/db";
 import { AppError, withDbErrors } from "@/server/errors";
 
 import { recordActivity, type ActivityActor } from "./activity.service";
-import { BLOCKING_STATUSES, lockUnitAndAssertAvailable } from "./reservation.service";
+import { BLOCKING_STATUSES } from "./reservation.service";
 
 /**
- * The stay lifecycle — check-in and check-out.
+ * The stay lifecycle — departure and the housekeeping cycle that follows it.
  *
  * These are the operations where one user action has to move several tables at
  * once: the reservation's status, the unit's occupancy, its housekeeping state, and
@@ -24,99 +24,12 @@ import { BLOCKING_STATUSES, lockUnitAndAssertAvailable } from "./reservation.ser
  * fails; written here, each is a single transaction that either lands completely or
  * not at all.
  *
- * The screens arrive in Stages 9 and 15. This is the transactional core they call,
- * built now so those stages are wiring rather than redesign.
+ * Check-in used to live here too, as a placeholder written ahead of its stage. Stage 9
+ * replaced it with `checkin.service.ts`, which does what a real arrival needs — guest
+ * requirements, room assignment, readiness, unit-type locking, idempotency — and the
+ * placeholder was deleted rather than left beside it. Two functions called `checkIn`
+ * with different rules is exactly how a system starts disagreeing with itself.
  */
-
-export async function checkIn(
-  reservationId: string,
-  actor: ActivityActor,
-  options: { notes?: string } = {},
-) {
-  return withDbErrors("stay.checkIn", () =>
-    prisma.$transaction(async (tx) => {
-      const reservation = await tx.reservation.findUnique({
-        where: { id: reservationId },
-        select: {
-          id: true,
-          reservationNumber: true,
-          propertyId: true,
-          unitId: true,
-          status: true,
-          checkInDate: true,
-          checkOutDate: true,
-        },
-      });
-
-      if (!reservation) throw new AppError("NOT_FOUND", "الحجز غير موجود.");
-
-      if (reservation.status === ReservationStatus.CHECKED_IN) {
-        throw new AppError("CONFLICT", "تم تسجيل دخول هذا الحجز مسبقًا.");
-      }
-      if (reservation.status === ReservationStatus.CANCELLED) {
-        throw new AppError("CONFLICT", "لا يمكن تسجيل دخول حجز ملغي.");
-      }
-      if (reservation.status === ReservationStatus.CHECKED_OUT) {
-        throw new AppError("CONFLICT", "تمت مغادرة هذا الحجز ولا يمكن تسجيل دخوله مرة أخرى.");
-      }
-      if (!reservation.unitId) {
-        throw new AppError(
-          "VALIDATION",
-          "لا يمكن تسجيل الدخول قبل تحديد الوحدة المخصصة للنزيل.",
-          { fields: { unitId: "يجب تحديد الوحدة أولًا" } },
-        );
-      }
-
-      // Locks the unit and re-verifies that nothing else booked it in the meantime.
-      await lockUnitAndAssertAvailable(tx, {
-        unitId: reservation.unitId,
-        checkInDate: reservation.checkInDate,
-        checkOutDate: reservation.checkOutDate,
-        excludeReservationId: reservation.id,
-      });
-
-      const unit = await tx.unit.findUnique({
-        where: { id: reservation.unitId },
-        select: { id: true, unitNumber: true, maintenanceStatus: true, housekeepingStatus: true },
-      });
-
-      if (unit?.maintenanceStatus === UnitMaintenanceStatus.OUT_OF_SERVICE) {
-        throw new AppError("CONFLICT", "الوحدة خارج الخدمة حاليًا ولا يمكن إشغالها.");
-      }
-
-      const updated = await tx.reservation.update({
-        where: { id: reservationId },
-        data: {
-          status: ReservationStatus.CHECKED_IN,
-          checkedInAt: new Date(),
-          ...(options.notes ? { internalNotes: options.notes } : {}),
-        },
-        select: { id: true, reservationNumber: true, status: true, checkedInAt: true },
-      });
-
-      await tx.unit.update({
-        where: { id: reservation.unitId },
-        data: { status: UnitStatus.OCCUPIED },
-      });
-
-      await recordActivity(
-        {
-          actor,
-          propertyId: reservation.propertyId,
-          module: "reservations",
-          action: "check_in",
-          entityType: "Reservation",
-          entityId: reservation.id,
-          description: `تسجيل دخول الحجز ${reservation.reservationNumber} في الوحدة ${unit?.unitNumber ?? "-"}`,
-          metadata: { unitId: reservation.unitId, reservationNumber: reservation.reservationNumber },
-        },
-        tx,
-      );
-
-      return updated;
-    }),
-  );
-}
 
 /**
  * Completes a stay. Beyond the status change this releases the room and puts it

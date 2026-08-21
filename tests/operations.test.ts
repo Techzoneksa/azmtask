@@ -2,10 +2,17 @@ import { beforeEach, describe, expect, it } from "vitest";
 
 import { prisma } from "@/lib/db";
 import { recordMovement } from "@/server/services/inventory.service";
+import { checkInReservation } from "@/server/services/checkin.service";
 import { createReservation } from "@/server/services/reservation.service";
-import { checkIn, checkOut, completeHousekeepingTask } from "@/server/services/stay.service";
+import { checkOut, completeHousekeepingTask } from "@/server/services/stay.service";
 
-import { TEST_ACTOR, resetDatabase, seedGuest, seedProperty } from "./helpers";
+import {
+  TEST_ACTOR,
+  resetDatabase,
+  seedCheckInGuest,
+  seedProperty,
+  setBusinessDate,
+} from "./helpers";
 
 /**
  * Operations — the stay lifecycle, housekeeping, maintenance and stock.
@@ -13,16 +20,23 @@ import { TEST_ACTOR, resetDatabase, seedGuest, seedProperty } from "./helpers";
  * These verify the linkages the brief asks for: a checkout must put the room into
  * the cleaning queue by itself, and completing that clean must return it to the
  * market. Nobody should have to remember to do either by hand.
+ *
+ * Arrivals themselves are Stage 9's subject and live in `checkin.test.ts`; here
+ * check-in is only the setup a departure needs, performed through the same canonical
+ * command the front desk uses so the fixture cannot drift from the real path.
  */
 
 let ctx: Awaited<ReturnType<typeof seedProperty>>;
-let guest: Awaited<ReturnType<typeof seedGuest>>;
+let guest: Awaited<ReturnType<typeof seedCheckInGuest>>;
 let reservationId: string;
+
+const arrive = (id: string) => checkInReservation({ reservationId: id }, TEST_ACTOR);
 
 beforeEach(async () => {
   await resetDatabase();
   ctx = await seedProperty({ unitNumber: "101" });
-  guest = await seedGuest();
+  guest = await seedCheckInGuest();
+  await setBusinessDate("2026-08-20");
 
   const reservation = await createReservation(
     {
@@ -48,66 +62,9 @@ async function unitState() {
   });
 }
 
-describe("check-in", () => {
-  it("occupies the unit and stamps the arrival time", async () => {
-    const result = await checkIn(reservationId, TEST_ACTOR);
-
-    expect(result.status).toBe("CHECKED_IN");
-    expect(result.checkedInAt).toBeInstanceOf(Date);
-    expect((await unitState()).status).toBe("OCCUPIED");
-  });
-
-  it("refuses a second check-in for the same stay", async () => {
-    await checkIn(reservationId, TEST_ACTOR);
-    await expect(checkIn(reservationId, TEST_ACTOR)).rejects.toMatchObject({
-      code: "CONFLICT",
-    });
-  });
-
-  it("refuses to check in a cancelled reservation", async () => {
-    await prisma.reservation.update({
-      where: { id: reservationId },
-      data: { status: "CANCELLED" },
-    });
-    await expect(checkIn(reservationId, TEST_ACTOR)).rejects.toMatchObject({
-      code: "CONFLICT",
-    });
-  });
-
-  it("refuses to check in when no unit has been assigned", async () => {
-    const unassigned = await createReservation(
-      {
-        propertyId: ctx.property.id,
-        guestId: guest.id,
-        unitTypeId: ctx.unitType.id,
-        checkInDate: "2026-09-01",
-        checkOutDate: "2026-09-03",
-        adults: 1,
-        nightlyRate: "400.00",
-      } as never,
-      TEST_ACTOR,
-    );
-
-    await expect(checkIn(unassigned.id, TEST_ACTOR)).rejects.toMatchObject({
-      code: "VALIDATION",
-    });
-  });
-
-  it("refuses a unit that is out of service", async () => {
-    await prisma.unit.update({
-      where: { id: ctx.unit.id },
-      data: { maintenanceStatus: "OUT_OF_SERVICE" },
-    });
-
-    await expect(checkIn(reservationId, TEST_ACTOR)).rejects.toMatchObject({
-      code: "CONFLICT",
-    });
-  });
-});
-
 describe("check-out", () => {
   beforeEach(async () => {
-    await checkIn(reservationId, TEST_ACTOR);
+    await arrive(reservationId);
   });
 
   it("blocks on an outstanding balance", async () => {
@@ -151,24 +108,26 @@ describe("check-out", () => {
   });
 
   it("does not queue a duplicate clean for a room already waiting", async () => {
-    await checkOut(reservationId, TEST_ACTOR, { allowOutstandingBalance: true });
-
-    const second = await createReservation(
-      {
+    /*
+     * A clean is already queued for this room — a stay-over service booked while the
+     * guest is still in it. The departure must not add a second one to the same room.
+     *
+     * This used to be written as two consecutive stays in the same room, which Stage 9
+     * made impossible for the right reason: the first checkout leaves the room DIRTY,
+     * and check-in now refuses a room that has not been cleaned. The scenario the test
+     * is actually about — checkout finding an open task — is reached directly instead.
+     */
+    await prisma.housekeepingTask.create({
+      data: {
         propertyId: ctx.property.id,
-        guestId: guest.id,
         unitId: ctx.unit.id,
-        unitTypeId: ctx.unitType.id,
-        checkInDate: "2026-08-24",
-        checkOutDate: "2026-08-26",
-        adults: 1,
-        nightlyRate: "450.00",
-        status: "CONFIRMED",
-      } as never,
-      TEST_ACTOR,
-    );
-    await checkIn(second.id, TEST_ACTOR);
-    await checkOut(second.id, TEST_ACTOR, { allowOutstandingBalance: true });
+        taskType: "STAY_OVER",
+        status: "PENDING",
+        priority: "NORMAL",
+      },
+    });
+
+    await checkOut(reservationId, TEST_ACTOR, { allowOutstandingBalance: true });
 
     const openTasks = await prisma.housekeepingTask.count({
       where: { unitId: ctx.unit.id, status: "PENDING" },
@@ -198,7 +157,7 @@ describe("check-out", () => {
 
 describe("housekeeping", () => {
   it("returns the room to available once cleaning completes", async () => {
-    await checkIn(reservationId, TEST_ACTOR);
+    await arrive(reservationId);
     await checkOut(reservationId, TEST_ACTOR, { allowOutstandingBalance: true });
 
     const task = await prisma.housekeepingTask.findFirstOrThrow({
@@ -213,7 +172,7 @@ describe("housekeeping", () => {
   });
 
   it("keeps a room out of service when maintenance is still open", async () => {
-    await checkIn(reservationId, TEST_ACTOR);
+    await arrive(reservationId);
     await checkOut(reservationId, TEST_ACTOR, { allowOutstandingBalance: true });
     await prisma.unit.update({
       where: { id: ctx.unit.id },

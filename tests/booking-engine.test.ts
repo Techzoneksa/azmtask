@@ -232,6 +232,40 @@ describe("pricing", () => {
 // ---------------------------------------------------------------------------
 
 describe("concurrency", () => {
+  it("confirms a booking once when the button is clicked ten times", async () => {
+    /*
+     * Every attempt ends with the booking confirmed, so the status alone cannot tell
+     * whether the work happened once or ten times. The audit trail can — and a
+     * booking whose history says it was confirmed ten times is a booking nobody can
+     * reconstruct.
+     *
+     * This is the failure the lock ordering exists to prevent, and it only appears
+     * under concurrency: MySQL hands a transaction a snapshot from its first read, so
+     * a status check made before the lock still shows PENDING long after somebody
+     * else confirmed.
+     */
+    const reservation = await book({ status: "PENDING" });
+
+    const attempts = await Promise.allSettled(
+      Array.from({ length: 10 }, () =>
+        confirmReservation(reservation.id, [ctx.property.id], TEST_ACTOR),
+      ),
+    );
+
+    expect(attempts.filter((a) => a.status === "fulfilled")).toHaveLength(10);
+
+    const stored = await prisma.reservation.findUniqueOrThrow({
+      where: { id: reservation.id },
+      select: { status: true },
+    });
+    expect(stored.status).toBe("CONFIRMED");
+
+    const entries = await prisma.activityLog.count({
+      where: { entityId: reservation.id, action: "confirm" },
+    });
+    expect(entries).toBe(1);
+  });
+
   it("sells one room once when twenty receptionists try at the same instant", async () => {
     /*
      * All twenty read an empty calendar. Without the row lock all twenty insert and

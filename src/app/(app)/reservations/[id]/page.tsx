@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
-import { ArrowRight, Ban, BedDouble } from "lucide-react";
+import { ArrowRight, Ban, BedDouble, UserCheck, UserX } from "lucide-react";
 
 import { Badge, PageHeader } from "@/components/ui";
 import { can, requirePermission } from "@/lib/auth/guard";
@@ -94,9 +94,10 @@ export default async function ReservationDetailPage({
     throw error;
   }
 
-  const [canEdit, canCancel, canViewGuests, canViewUnits] = await Promise.all([
+  const [canEdit, canCancel, canCheckIn, canViewGuests, canViewUnits] = await Promise.all([
     can("reservations.edit"),
     can("reservations.cancel"),
+    can("reservations.checkin"),
     can("guests.view"),
     can("units.view"),
   ]);
@@ -123,9 +124,12 @@ export default async function ReservationDetailPage({
               reservationId={detail.id}
               reservationNumber={detail.reservationNumber}
               guards={detail.guards}
+              checkIn={detail.checkIn}
+              noShow={detail.noShow}
               canEdit={canEdit}
               canConfirm={canEdit}
               canCancel={canCancel}
+              canCheckIn={canCheckIn}
             />
           </div>
         }
@@ -188,6 +192,53 @@ export default async function ReservationDetailPage({
         </div>
       )}
 
+      {/*
+        A checked-in booking is no longer a booking, it is a stay. The page says so at
+        the top and states the facts a desk is asked for by phone: who, which room,
+        when they arrived and when they are due to leave.
+      */}
+      {detail.status === "CHECKED_IN" && (
+        <div className="flex items-start gap-3 rounded-xl border border-ok-fg/25 bg-ok-bg px-4 py-3">
+          <UserCheck className="mt-0.5 size-4 shrink-0 text-ok-fg" aria-hidden />
+          <div className="min-w-0">
+            <p className="text-[13px] font-medium text-ok-fg">
+              تم تسجيل الوصول — النزيل مقيم حاليًا
+            </p>
+            <p className="mt-1 text-[12px] leading-relaxed text-content-muted">
+              {detail.stay.unitNumber && `الوحدة ${detail.stay.unitNumber} · `}
+              {detail.stay.checkedInAt
+                ? `وقت الوصول الفعلي ${formatDateTime(detail.stay.checkedInAt)}`
+                : "وقت الوصول الفعلي غير مسجَّل"}
+              {detail.stay.checkedInBy && ` · بواسطة ${detail.stay.checkedInBy}`}
+              {` · المغادرة المتوقعة ${formatDateShort(detail.stay.checkOutDate)}`}
+            </p>
+            <p className="mt-1 text-[12px] text-content-subtle">
+              تعديل الغرفة أو التواريخ لحجز قيد الإقامة يتم من إجراءات الإقامة، وليس من نموذج
+              الحجز.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {detail.noShow.at && (
+        <div className="flex items-start gap-3 rounded-xl border border-line bg-surface-inset px-4 py-3">
+          <UserX className="mt-0.5 size-4 shrink-0 text-content-muted" aria-hidden />
+          <div className="min-w-0">
+            <p className="text-[13px] font-medium text-content">
+              سُجّل عدم الحضور في {formatDateTime(detail.noShow.at)}
+              {detail.noShow.by && ` · بواسطة ${detail.noShow.by}`}
+            </p>
+            {detail.noShow.reason && (
+              <p className="mt-1 text-[12px] text-content-muted">{detail.noShow.reason}</p>
+            )}
+            <p className="mt-1 text-[12px] text-content-subtle">
+              لم تُعدَّل أي مدفوعات أو فواتير — قرار الغرامة أو الاسترجاع يُتخذ من شاشة
+              المدفوعات.
+            </p>
+          </div>
+        </div>
+      )}
+
       <div className="grid gap-4 lg:grid-cols-3">
         <Panel title="الإقامة">
           <dl className="grid grid-cols-2 gap-x-4 gap-y-3">
@@ -232,6 +283,15 @@ export default async function ReservationDetailPage({
                 </span>
               }
             />
+            {detail.stay.checkedInAt && (
+              <Row
+                label="وقت الوصول الفعلي"
+                value={formatDateTime(detail.stay.checkedInAt)}
+              />
+            )}
+            {detail.stay.checkedInBy && (
+              <Row label="سجّل الوصول" value={detail.stay.checkedInBy} />
+            )}
           </dl>
         </Panel>
 

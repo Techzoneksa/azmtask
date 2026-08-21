@@ -132,3 +132,53 @@ export async function setVatRate(propertyId: string, rate: string) {
     update: { value: rate },
   });
 }
+
+/**
+ * A guest complete enough to be checked in.
+ *
+ * `seedGuest` deliberately stays minimal — that shape is what the guest tests are
+ * about. Check-in has stricter requirements, so it gets its own fixture rather than
+ * making every other test carry a document it does not care about. The document is
+ * unique per call: two fixtures sharing one number would collide on the constraint
+ * that exists to stop exactly that.
+ */
+let documentSequence = 0;
+
+export async function seedCheckInGuest(
+  overrides: Partial<{ fullName: string; mobile: string; nationality: string }> = {},
+) {
+  documentSequence += 1;
+  const suffix = String(documentSequence).padStart(6, "0");
+
+  return prisma.guest.create({
+    data: {
+      fullName: overrides.fullName ?? `نزيل الوصول ${suffix}`,
+      mobile: overrides.mobile ?? `0553${suffix}`,
+      nationality: overrides.nationality ?? "سعودي",
+      identificationType: "NATIONAL_ID",
+      identificationNumber: `10${suffix.padStart(8, "0")}`,
+    },
+  });
+}
+
+/**
+ * Pins the operating date the services will read.
+ *
+ * Written as the global override (null property) so a test does not have to name a
+ * property to move the calendar, and so it survives a fixture that creates several.
+ */
+export async function setBusinessDate(iso: string) {
+  const existing = await prisma.systemSetting.findFirst({
+    where: { key: "demo.businessDate" },
+    select: { id: true },
+  });
+
+  if (existing) {
+    await prisma.systemSetting.update({ where: { id: existing.id }, data: { value: iso } });
+    return;
+  }
+
+  await prisma.systemSetting.create({
+    data: { propertyId: null, key: "demo.businessDate", value: iso },
+  });
+}

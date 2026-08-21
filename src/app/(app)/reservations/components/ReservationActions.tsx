@@ -1,12 +1,13 @@
 "use client";
 
-import { CheckCircle2, Pencil, XCircle } from "lucide-react";
+import { CheckCircle2, Pencil, UserCheck, UserX, XCircle } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 
 import { Button, Modal, Textarea, useConfirm, useToast } from "@/components/ui";
 
+import { markNoShowAction } from "../[id]/check-in/actions";
 import { cancelReservationAction, confirmReservationAction } from "../actions";
 
 /**
@@ -26,9 +27,12 @@ export function ReservationActions({
   reservationId,
   reservationNumber,
   guards,
+  checkIn,
+  noShow,
   canEdit,
   canConfirm,
   canCancel,
+  canCheckIn,
 }: {
   reservationId: string;
   reservationNumber: string;
@@ -40,10 +44,14 @@ export function ReservationActions({
     canCancel: boolean;
     cancelBlockedReason: string | null;
   };
+  /** The booking's own arrival state, decided by the server's rules. */
+  checkIn: { eligible: boolean; lateArrival: boolean };
+  noShow: { eligible: boolean };
   /** What the signed-in user is permitted to do, before the booking's own state. */
   canEdit: boolean;
   canConfirm: boolean;
   canCancel: boolean;
+  canCheckIn: boolean;
 }) {
   const router = useRouter();
   const toast = useToast();
@@ -54,6 +62,11 @@ export function ReservationActions({
   const [reason, setReason] = useState("");
   const [cancelling, setCancelling] = useState(false);
   const [cancelError, setCancelError] = useState<string | null>(null);
+
+  const [noShowOpen, setNoShowOpen] = useState(false);
+  const [noShowReason, setNoShowReason] = useState("");
+  const [noShowSaving, setNoShowSaving] = useState(false);
+  const [noShowError, setNoShowError] = useState<string | null>(null);
 
   async function confirmBooking() {
     const agreed = await confirmDialog({
@@ -99,9 +112,48 @@ export function ReservationActions({
     setCancelError(result.error);
   }
 
+  async function recordNoShow(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (noShowSaving) return;
+
+    setNoShowSaving(true);
+    setNoShowError(null);
+
+    const result = await markNoShowAction({ reservationId, reason: noShowReason.trim() });
+    setNoShowSaving(false);
+
+    if (result.ok) {
+      toast.success(
+        `سُجّل عدم حضور الحجز ${reservationNumber}`,
+        "عادت الليالي إلى المتاح للبيع. لم تتغيّر أي مبالغ أو فواتير.",
+      );
+      setNoShowOpen(false);
+      setNoShowReason("");
+      router.refresh();
+      return;
+    }
+    setNoShowError(result.error);
+  }
+
   return (
     <>
       <div className="flex flex-wrap items-center gap-2">
+        {/*
+          The arrival is the primary action the moment it becomes possible: on the day
+          a guest is expected, this is the only button on this page reception wants.
+        */}
+        {canCheckIn && checkIn.eligible && (
+          <Link
+            href={`/reservations/${reservationId}/check-in`}
+            className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-brand-600 px-3.5 text-[13px] font-medium text-white transition-colors hover:bg-brand-700"
+          >
+            <UserCheck className="size-4" aria-hidden />
+            تسجيل الوصول
+            {checkIn.lateArrival && (
+              <span className="rounded bg-white/20 px-1.5 py-0.5 text-[11px]">وصول متأخر</span>
+            )}
+          </Link>
+        )}
         {canEdit && guards.canEdit && (
           <Link
             href={`/reservations/${reservationId}/edit`}
@@ -126,6 +178,17 @@ export function ReservationActions({
             onClick={() => setCancelOpen(true)}
           >
             إلغاء الحجز
+          </Button>
+        )}
+
+        {canCheckIn && noShow.eligible && (
+          <Button
+            variant="secondary"
+            size="sm"
+            icon={UserX}
+            onClick={() => setNoShowOpen(true)}
+          >
+            تسجيل عدم حضور
           </Button>
         )}
       </div>
@@ -178,6 +241,60 @@ export function ReservationActions({
             onChange={(event) => setReason(event.target.value)}
             placeholder="تغيّرت خطط النزيل · حجز مكرر · تعذّر السداد"
             hint="يُحفظ مع الحجز — سبب مكتوب يوفّر سؤالًا لاحقًا."
+            data-autofocus
+          />
+        </form>
+      </Modal>
+
+      <Modal
+        open={noShowOpen}
+        onClose={() => {
+          if (!noShowSaving) {
+            setNoShowOpen(false);
+            setNoShowError(null);
+          }
+        }}
+        title={`تسجيل عدم حضور — ${reservationNumber}`}
+        description="ستعود الليالي إلى المتاح للبيع فورًا. لا تتغيّر المدفوعات ولا الفواتير: قرار الغرامة أو الاسترجاع يُتخذ لاحقًا من شاشة المدفوعات."
+        closeOnOverlay={false}
+        footer={
+          <>
+            <Button
+              variant="secondary"
+              onClick={() => setNoShowOpen(false)}
+              disabled={noShowSaving}
+            >
+              تراجع
+            </Button>
+            <Button
+              type="submit"
+              form="no-show-form"
+              variant="danger"
+              icon={UserX}
+              loading={noShowSaving}
+            >
+              تأكيد عدم الحضور
+            </Button>
+          </>
+        }
+      >
+        <form id="no-show-form" onSubmit={recordNoShow} className="space-y-4">
+          {noShowError && (
+            <div
+              role="alert"
+              className="rounded-lg border border-danger-fg/25 bg-danger-bg px-3.5 py-3"
+            >
+              <p className="text-[13px] leading-relaxed text-danger-fg">{noShowError}</p>
+            </div>
+          )}
+
+          <Textarea
+            label="سبب عدم الحضور"
+            required
+            value={noShowReason}
+            onChange={(event) => setNoShowReason(event.target.value)}
+            placeholder="لم يحضر ولم يتواصل · تعذّر الوصول إليه هاتفيًا"
+            hint="مطلوب — يُحفظ مع الحجز باسمك ووقته، منفصلًا عن أسباب الإلغاء."
             data-autofocus
           />
         </form>

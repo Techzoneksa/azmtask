@@ -1,4 +1,4 @@
-import { AlertTriangle, Info, TriangleAlert } from "lucide-react";
+import { AlertTriangle, Info, TriangleAlert, UserCheck } from "lucide-react";
 import Link from "next/link";
 
 import { Badge } from "@/components/ui";
@@ -103,10 +103,13 @@ export function ArrivalsList({
   rows,
   canOpenGuests = false,
   canOpenReservations = false,
+  canCheckIn = false,
 }: {
   rows: ArrivalRow[];
   canOpenGuests?: boolean;
   canOpenReservations?: boolean;
+  /** Whether the signed-in user may record arrivals at all. */
+  canCheckIn?: boolean;
 }) {
   return (
     <ul className="divide-y divide-line">
@@ -154,6 +157,20 @@ export function ArrivalsList({
               <div className="mt-1 text-[12px] tabular-nums text-content-subtle">
                 {formatAmount(row.balance)} متبقٍ
               </div>
+              {/*
+                The action, where the arrival is. A receptionist working the morning
+                list should not have to open the booking to find the only button they
+                want on it.
+              */}
+              {canCheckIn && row.checkInEligible && (
+                <Link
+                  href={`/reservations/${row.id}/check-in`}
+                  className="mt-1.5 inline-flex h-7 items-center gap-1 rounded-md border border-brand-500/40 px-2 text-[12px] font-medium text-brand-700 transition-colors hover:bg-brand-50"
+                >
+                  <UserCheck className="size-3.5" aria-hidden />
+                  تسجيل الوصول
+                </Link>
+              )}
             </div>
           </li>
         );

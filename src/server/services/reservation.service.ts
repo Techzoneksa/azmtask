@@ -22,6 +22,13 @@ import {
 
 import { maskIdentificationNumber } from "@/lib/guest-identity";
 import type { Permission } from "@/lib/permissions";
+import { getBusinessDate } from "@/server/business-date";
+import {
+  evaluateCheckInEligibility,
+  evaluateNoShowEligibility,
+  type CheckInEligibility,
+  type NoShowEligibility,
+} from "@/server/checkin-rules";
 import { getVatRate, priceReservation } from "@/server/pricing";
 
 import { recordActivity, type ActivityActor } from "./activity.service";
@@ -255,17 +262,22 @@ function derivePaymentStatus(
  * impossible: whoever gets the type lock first also gets the room lock first, and the
  * other simply waits.
  *
- * When a booking moves between types, both type rows are locked, sorted by id — the
- * same rule applied to a pair, so two receptionists swapping bookings in opposite
- * directions still queue rather than deadlock.
+ * When a booking moves between types — or between rooms, as a check-in that reassigns
+ * one does — every row on both sides is locked, each group sorted by id. The same rule
+ * applied to a pair, so two receptionists swapping bookings in opposite directions
+ * still queue rather than deadlock.
  *
  * The lock is what makes the availability check that follows it meaningful. Without
  * it, two transactions both read "one room left" and both sell it.
  */
-async function lockInventory(tx: Db, unitTypeIds: string[], unitId?: string | null) {
-  const ordered = [...new Set(unitTypeIds)].sort();
+export async function lockInventory(
+  tx: Db,
+  unitTypeIds: string[],
+  units?: string | Array<string | null | undefined> | null,
+) {
+  const orderedTypes = [...new Set(unitTypeIds)].sort();
 
-  for (const unitTypeId of ordered) {
+  for (const unitTypeId of orderedTypes) {
     const rows = await tx.$queryRawUnsafe<Array<{ id: string }>>(
       "SELECT `id` FROM `unit_types` WHERE `id` = ? FOR UPDATE",
       unitTypeId,
@@ -275,7 +287,11 @@ async function lockInventory(tx: Db, unitTypeIds: string[], unitId?: string | nu
     }
   }
 
-  if (unitId) {
+  const orderedUnits = [
+    ...new Set((typeof units === "string" ? [units] : (units ?? [])).filter(Boolean)),
+  ].sort();
+
+  for (const unitId of orderedUnits) {
     const rows = await tx.$queryRawUnsafe<Array<{ id: string }>>(
       "SELECT `id` FROM `units` WHERE `id` = ? FOR UPDATE",
       unitId,
@@ -295,7 +311,7 @@ async function lockInventory(tx: Db, unitTypeIds: string[], unitId?: string | nu
  * mistake that oversells: five rooms, five unassigned confirmed bookings, and a sixth
  * booking finds every room "free" because none of the five points at one.
  */
-async function assertInventoryAvailable(
+export async function assertInventoryAvailable(
   tx: Db,
   params: {
     propertyId: string;
@@ -756,8 +772,23 @@ export async function confirmReservation(
   propertyIds: string[],
   actor: ActivityActor,
 ) {
+  /*
+   * Read before the transaction opens, and only to learn which rows to lock.
+   *
+   * MySQL fixes a transaction's snapshot at its first read, and every ordinary read
+   * afterwards sees that frozen world. A lookup before the lock would freeze the
+   * snapshot before a competing confirmation committed, and both callers would then
+   * see the booking as still pending — same final status, but two audit entries and
+   * two inventory checks for one decision. Taking the lock as the first statement
+   * means the snapshot is established only once the lock is granted.
+   */
+  const scoped = await requireScoped(prisma, reservationId, propertyIds);
+
   return withDbErrors("reservation.confirm", () =>
     prisma.$transaction(async (tx) => {
+      await lockInventory(tx, [scoped.unitTypeId], scoped.unitId);
+
+      // Read under the lock, so this is the booking as it actually stands now.
       const reservation = await requireScoped(tx, reservationId, propertyIds);
 
       const facts = await guardFactsFor(tx, reservationId);
@@ -770,7 +801,9 @@ export async function confirmReservation(
         throw new AppError("CONFLICT", guards.confirmBlockedReason ?? "لا يمكن تأكيد الحجز.");
       }
 
-      await lockInventory(tx, [reservation.unitTypeId], reservation.unitId);
+      if (reservation.unitTypeId !== scoped.unitTypeId) {
+        throw new AppError("CONFLICT", "تغيّر الحجز أثناء تنفيذ العملية. أعد المحاولة.");
+      }
 
       await assertInventoryAvailable(tx, {
         propertyId: reservation.propertyId,
@@ -898,7 +931,7 @@ export async function cancelReservation(
  * enough to read or change another property's booking — and ids leak through logs,
  * links and browser history far more easily than anyone expects.
  */
-async function requireScoped(tx: Db, reservationId: string, propertyIds?: string[]) {
+export async function requireScoped(tx: Db, reservationId: string, propertyIds?: string[]) {
   const reservation = await tx.reservation.findUnique({
     where: { id: reservationId },
     select: {
@@ -1491,8 +1524,12 @@ export type ReservationDetail = {
     adults: number;
     children: number;
     checkedInAt: string | null;
+    checkedInBy: string | null;
     checkedOutAt: string | null;
   };
+  /** Whether an arrival may be recorded now, and why not when it may not. */
+  checkIn: CheckInEligibility;
+  noShow: NoShowEligibility & { at: string | null; reason: string | null; by: string | null };
   /** Null — not zeroed — when the caller has no financial permission. */
   financial: {
     nightlyRate: string;
@@ -1583,6 +1620,8 @@ export async function getReservationDetail(
         checkedOutAt: true,
         cancelledAt: true,
         cancelReason: true,
+        noShowAt: true,
+        noShowReason: true,
         specialRequests: true,
         internalNotes: true,
         nightlyRate: true,
@@ -1597,6 +1636,8 @@ export async function getReservationDetail(
         property: { select: { name: true } },
         createdBy: { select: { name: true } },
         cancelledBy: { select: { name: true } },
+        checkedInBy: { select: { name: true } },
+        noShowBy: { select: { name: true } },
         guest: {
           select: {
             id: true,
@@ -1617,7 +1658,7 @@ export async function getReservationDetail(
       throw new AppError("NOT_FOUND", "الحجز غير موجود.");
     }
 
-    const [charges, payments, invoices, activity, issuedInvoices, vatRate] =
+    const [charges, payments, invoices, activity, issuedInvoices, vatRate, businessDay] =
       await Promise.all([
         canSeeMoney
           ? prisma.reservationCharge.findMany({
@@ -1685,6 +1726,7 @@ export async function getReservationDetail(
           },
         }),
         getVatRate(reservation.propertyId),
+        getBusinessDate(),
       ]);
 
     const guest = reservation.guest;
@@ -1721,7 +1763,31 @@ export async function getReservationDetail(
         adults: reservation.adults,
         children: reservation.children,
         checkedInAt: reservation.checkedInAt?.toISOString() ?? null,
+        checkedInBy: reservation.checkedInBy?.name ?? null,
         checkedOutAt: reservation.checkedOutAt?.toISOString() ?? null,
+      },
+      /*
+       * Computed here rather than in the page, from the same pure rules the check-in
+       * transaction applies. The detail screen decides whether to offer the action;
+       * a screen that decided for itself would eventually show a button the service
+       * refuses.
+       */
+      checkIn: evaluateCheckInEligibility({
+        status: reservation.status,
+        checkInDate: reservation.checkInDate,
+        checkOutDate: reservation.checkOutDate,
+        businessDay,
+      }),
+      noShow: {
+        ...evaluateNoShowEligibility({
+          status: reservation.status,
+          checkInDate: reservation.checkInDate,
+          businessDay,
+          issuedInvoices,
+        }),
+        at: reservation.noShowAt?.toISOString() ?? null,
+        reason: reservation.noShowReason,
+        by: reservation.noShowBy?.name ?? null,
       },
       financial: canSeeMoney
         ? {

@@ -336,7 +336,16 @@ model Reservation {
 
   specialRequests String?   @db.Text
   internalNotes   String?   @db.Text
+  /// When the guest actually walked in, and who handed them the key.
+  ///
+  /// Two different facts, kept apart on purpose. `checkInDate` is the business date
+  /// the stay was sold for; this is the instant the desk completed the arrival. A
+  /// late arrival at 23:40 on the 21st against a booking that started on the 20th is
+  /// an ordinary night in a hotel, and only a schema that stores both can describe
+  /// it. Reconstructing this later from the audit log would tie an operational fact
+  /// to a table that exists to be prunable.
   checkedInAt     DateTime? @db.DateTime(3)
+  checkedInById   String?   @db.VarChar(30)
   checkedOutAt    DateTime? @db.DateTime(3)
   cancelledAt     DateTime? @db.DateTime(3)
   cancelReason    String?   @db.VarChar(255)
@@ -350,6 +359,15 @@ model Reservation {
   /// answers half the question anyone ever asks of it.
   cancelledById String? @db.VarChar(30)
 
+  /// No-show is its own decision, so it gets its own columns rather than borrowing
+  /// the cancellation ones. A booking the guest never arrived for and a booking
+  /// somebody cancelled are different things commercially — one may carry a penalty,
+  /// the other a refund — and a report that cannot tell them apart is a report that
+  /// will eventually charge the wrong person.
+  noShowAt     DateTime? @db.DateTime(3)
+  noShowById   String?   @db.VarChar(30)
+  noShowReason String?   @db.VarChar(255)
+
   /// Idempotency key for creation, supplied by the client once per booking form.
   /// Unique, so two submissions of the same form cannot both insert — the second
   /// loses on the constraint and is answered with the reservation the first made.
@@ -362,6 +380,8 @@ model Reservation {
   unitType    UnitType @relation(fields: [unitTypeId], references: [id], onDelete: Restrict)
   createdBy   User?    @relation("ReservationCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
   cancelledBy User?    @relation("ReservationCancelledBy", fields: [cancelledById], references: [id], onDelete: SetNull)
+  checkedInBy User?    @relation("ReservationCheckedInBy", fields: [checkedInById], references: [id], onDelete: SetNull)
+  noShowBy    User?    @relation("ReservationNoShowBy", fields: [noShowById], references: [id], onDelete: SetNull)
 
   charges  ReservationCharge[]
   payments Payment[]
@@ -696,6 +716,8 @@ model User {
   activityLogs          ActivityLog[]
   createdReservations   Reservation[]          @relation("ReservationCreatedBy")
   cancelledReservations Reservation[]          @relation("ReservationCancelledBy")
+  checkedInReservations Reservation[]          @relation("ReservationCheckedInBy")
+  noShowReservations    Reservation[]          @relation("ReservationNoShowBy")
   createdPayments       Payment[]              @relation("PaymentCreatedBy")
   createdCharges        ReservationCharge[]    @relation("ChargeCreatedBy")
   createdExpenses       Expense[]              @relation("ExpenseCreatedBy")

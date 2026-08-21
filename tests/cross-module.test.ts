@@ -279,3 +279,154 @@ describe("the deterministic demo snapshot", () => {
     expect(agenda.summary.unassignedArrivals).toBe(2);
   });
 });
+
+// ---------------------------------------------------------------------------
+// Stage 9 — one real arrival, seen from every screen
+// ---------------------------------------------------------------------------
+
+/**
+ * Deliberately last in the file: it changes the data the pinned figures above
+ * describe. It also deliberately performs a *real* check-in rather than fabricating
+ * one per module — the point is that a single transition moves every screen at once,
+ * and six separately-constructed fixtures could all agree while the real path did
+ * something else entirely.
+ */
+describe("a check-in seen from every module", () => {
+  it("moves every figure the way its name says it should", async () => {
+    const arrival = await prisma.reservation.findFirstOrThrow({
+      where: {
+        propertyId,
+        status: "CONFIRMED",
+        checkInDate: today,
+        unitId: { not: null },
+      },
+      select: {
+        id: true,
+        unitId: true,
+        guestId: true,
+        checkInDate: true,
+        checkOutDate: true,
+      },
+    });
+
+    /*
+     * The guest and the room are made check-in-ready directly. Those rules have their
+     * own suite; here they are preconditions, and a demo guest missing a passport
+     * number would make this test fail for a reason that has nothing to do with
+     * cross-module agreement.
+     */
+    await prisma.guest.update({
+      where: { id: arrival.guestId },
+      data: {
+        nationality: "سعودي",
+        mobile: "0555000111",
+        identificationType: "NATIONAL_ID",
+        identificationNumber: `19${Date.now().toString().slice(-8)}`,
+      },
+    });
+    await prisma.unit.update({
+      where: { id: arrival.unitId! },
+      data: { housekeepingStatus: "CLEAN" },
+    });
+
+    const before = {
+      dashboard: await dashboard(),
+      calendar: await calendar(),
+    };
+    const beforeUnits = before.dashboard!.units.ok ? before.dashboard!.units.data : null;
+    const beforeBar = before.calendar.rows
+      .flatMap((row) => row.bars)
+      .find((bar) => bar.id === arrival.id);
+
+    expect(beforeBar).toBeDefined();
+    expect(beforeBar!.status).toBe("CONFIRMED");
+
+    const { checkInReservation } = await import("@/server/services/checkin.service");
+    await checkInReservation({ reservationId: arrival.id }, {
+      id: null,
+      name: "اختبار الربط",
+      email: "cross@nokhba-hotel.sa",
+      roles: ["admin"],
+    });
+
+    const after = {
+      dashboard: await dashboard(),
+      calendar: await calendar(),
+    };
+    const afterUnits = after.dashboard!.units.ok ? after.dashboard!.units.data : null;
+
+    // ---- the reservation itself
+    const stored = await prisma.reservation.findUniqueOrThrow({
+      where: { id: arrival.id },
+      select: { status: true, checkedInAt: true, unitId: true },
+    });
+    expect(stored.status).toBe("CHECKED_IN");
+    expect(stored.checkedInAt).toBeInstanceOf(Date);
+
+    // ---- the unit
+    const unit = await prisma.unit.findUniqueOrThrow({
+      where: { id: arrival.unitId! },
+      select: { status: true },
+    });
+    expect(unit.status).toBe("OCCUPIED");
+
+    // ---- the dashboard, in the vocabulary Stage 8 fixed
+    const beforeExpected = before.dashboard!.arrivals.ok
+      ? before.dashboard!.arrivals.data.length
+      : -1;
+    const afterExpected = after.dashboard!.arrivals.ok
+      ? after.dashboard!.arrivals.data.length
+      : -1;
+
+    expect(afterExpected).toBe(beforeExpected - 1);
+    expect(afterUnits!.occupied).toBe(beforeUnits!.occupied + 1);
+
+    // ---- but the total for the day does not move: the guest still arrived today
+    expect(after.calendar.agenda.summary.allArrivals).toBe(
+      before.calendar.agenda.summary.allArrivals,
+    );
+
+    // ---- the calendar draws the same stay, only differently labelled
+    const afterBar = after.calendar.rows
+      .flatMap((row) => row.bars)
+      .find((bar) => bar.id === arrival.id);
+
+    expect(afterBar).toBeDefined();
+    expect(afterBar!.status).toBe("CHECKED_IN");
+    // Geometry is a property of the dates, and the dates did not change.
+    expect(afterBar!.geometry.startIndex).toBe(beforeBar!.geometry.startIndex);
+    expect(afterBar!.geometry.span).toBe(beforeBar!.geometry.span);
+    expect(afterBar!.kind).toBe(beforeBar!.kind);
+
+    // ---- the guest profile moves the booking from upcoming to current, once
+    const { getGuestDetails } = await import("@/server/services/guest.service");
+    const profile = await getGuestDetails(
+      arrival.guestId,
+      [propertyId],
+      new Set(ALL),
+    );
+
+    const inCurrent = profile.currentStays.filter((stay) => stay.id === arrival.id);
+    const inUpcoming = profile.upcoming.filter((stay) => stay.id === arrival.id);
+    expect(inCurrent).toHaveLength(1);
+    expect(inUpcoming).toHaveLength(0);
+
+    // ---- the unit page names the guest now in the room
+    const { getUnitDetails } = await import("@/server/services/unit.service");
+    const detail = await getUnitDetails(propertyId, arrival.unitId!);
+    expect(detail.currentStay?.id).toBe(arrival.id);
+
+    // ---- money is untouched by an arrival
+    const financial = await prisma.reservation.findUniqueOrThrow({
+      where: { id: arrival.id },
+      select: { total: true, paidAmount: true, balance: true },
+    });
+    const payments = await prisma.payment.aggregate({
+      where: { reservationId: arrival.id },
+      _sum: { amount: true },
+    });
+    expect(financial.paidAmount.toString()).toBe(
+      (payments._sum.amount ?? 0).toString(),
+    );
+  });
+});

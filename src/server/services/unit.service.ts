@@ -46,8 +46,9 @@ const HOLDING = ["CONFIRMED", "CHECKED_IN"] as const;
 export async function deriveUnitStatus(
   unitId: string,
   tx: Pick<typeof prisma, "unit" | "reservation" | "housekeepingTask" | "maintenanceRequest" | "unitBlock"> = prisma,
+  businessDay?: Date,
 ): Promise<{ status: string; maintenanceStatus: string }> {
-  const today = await getBusinessDate();
+  const today = businessDay ?? (await getBusinessDate());
 
   const [inHouse, openFault, activeBlock, activeClean, upcomingToday] = await Promise.all([
     tx.reservation.count({
@@ -102,6 +103,28 @@ export async function deriveUnitStatus(
 export async function refreshUnitStatus(unitId: string): Promise<void> {
   const { status } = await deriveUnitStatus(unitId);
   await prisma.unit.update({ where: { id: unitId }, data: { status: status as never } });
+}
+
+/**
+ * The same recomputation, bound to the caller's transaction.
+ *
+ * A room's status must change in the same commit as the event that justified it. A
+ * check-in that updated the reservation and then refreshed the room on its own
+ * connection would leave a window — and, if the transaction rolled back, a room
+ * permanently marked occupied by a guest who was never checked in.
+ *
+ * The business date is passed in rather than read again: the caller already resolved
+ * it to decide eligibility, and a second read on a different connection could answer
+ * differently across midnight.
+ */
+export async function syncUnitStatus(
+  tx: Pick<typeof prisma, "unit" | "reservation" | "housekeepingTask" | "maintenanceRequest" | "unitBlock">,
+  unitId: string,
+  businessDay: Date,
+): Promise<string> {
+  const { status } = await deriveUnitStatus(unitId, tx, businessDay);
+  await tx.unit.update({ where: { id: unitId }, data: { status: status as never } });
+  return status;
 }
 
 // ---------------------------------------------------------------------------

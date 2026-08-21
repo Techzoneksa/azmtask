@@ -5,6 +5,7 @@ import { prisma } from "@/lib/db";
 import { add, money, subtract, toAmountString, type Money } from "@/lib/money";
 import type { Permission } from "@/lib/permissions";
 import { getBusinessDateContext } from "@/server/business-date";
+import { evaluateCheckInEligibility } from "@/server/checkin-rules";
 import { toAppError } from "@/server/errors";
 
 import type { Prisma } from "@/generated/prisma/client";
@@ -84,6 +85,8 @@ export type ArrivalRow = {
   status: string;
   paymentStatus: string;
   balance: string;
+  /** Whether this arrival could be checked in right now — the same rule the desk uses. */
+  checkInEligible: boolean;
 };
 
 export type DepartureRow = {
@@ -318,6 +321,17 @@ async function loadArrivals(propertyId: string, date: Date): Promise<ArrivalRow[
     status: row.status,
     paymentStatus: row.paymentStatus,
     balance: toAmountString(row.balance),
+    /*
+     * Decided by the check-in rules, not by re-reading the status here. The dashboard
+     * offering an arrival the check-in screen then refuses is exactly the kind of
+     * disagreement a second copy of a rule produces.
+     */
+    checkInEligible: evaluateCheckInEligibility({
+      status: row.status,
+      checkInDate: row.checkInDate,
+      checkOutDate: row.checkOutDate,
+      businessDay: date,
+    }).eligible,
   }));
 }
 
