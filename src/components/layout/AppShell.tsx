@@ -5,6 +5,8 @@ import { usePathname } from "next/navigation";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 
 import { ConfirmProvider, ToastProvider } from "@/components/ui";
+
+import { SchemaBanner } from "./SchemaBanner";
 import { visibleSections } from "@/lib/nav";
 import type { Permission } from "@/lib/permissions";
 
@@ -27,12 +29,15 @@ export function AppShell({
   permissions,
   user,
   canOpenSettings,
+  pendingMigrations,
   children,
 }: {
   permissions: Permission[];
   user: { name: string; email: string; role: string; jobTitle: string };
   propertyName: string;
   canOpenSettings: boolean;
+  /** Migrations the database has not run. Empty on a healthy deployment. */
+  pendingMigrations: string[];
   children: ReactNode;
 }) {
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -105,6 +110,9 @@ export function AppShell({
               user={user}
               canOpenSettings={canOpenSettings}
             />
+            {/* Nothing at all on a healthy deployment; a plain explanation when the
+                database is behind the code. */}
+            <SchemaBanner pending={pendingMigrations} />
             <main className="flex-1 px-4 py-5 lg:px-6 lg:py-6">
               <div className="mx-auto w-full max-w-[1600px] space-y-5">{children}</div>
             </main>

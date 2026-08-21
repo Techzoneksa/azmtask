@@ -168,3 +168,22 @@ describe("a database behind the code", () => {
     expect(toAppError(error).message).not.toContain("db:deploy");
   });
 });
+
+describe("the pending-migration banner", () => {
+  /*
+   * The banner is what turns "this screen is broken" into "run one command". It must
+   * be silent on a healthy deployment — a warning that shows when nothing is wrong is
+   * one people stop reading, and this one has to be believed the day it matters.
+   */
+  it("stays silent when every migration has been applied", async () => {
+    const { getPendingMigrations } = await import("@/server/schema-state");
+    expect(await getPendingMigrations()).toEqual([]);
+  });
+
+  /*
+   * The banner's rendering is verified in the browser run rather than here: this
+   * suite has no JSX transform, and adding one so a three-line conditional can be
+   * asserted twice would cost more than it proves. What matters and is testable in
+   * process is the question it asks — which migrations are missing.
+   */
+});

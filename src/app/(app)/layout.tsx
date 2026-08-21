@@ -1,5 +1,6 @@
 import { AppShell } from "@/components/layout/AppShell";
 import { requireSession } from "@/lib/auth/guard";
+import { getPendingMigrations } from "@/server/schema-state";
 import { getPropertyName } from "@/server/services/property.service";
 
 /**
@@ -12,7 +13,10 @@ import { getPropertyName } from "@/server/services/property.service";
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const session = await requireSession();
   // The shell names the property it is operating, rather than a name compiled in.
-  const propertyName = await getPropertyName();
+  const [propertyName, pendingMigrations] = await Promise.all([
+    getPropertyName(),
+    getPendingMigrations(),
+  ]);
 
   return (
     <AppShell
@@ -25,6 +29,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         jobTitle: session.jobTitle,
       }}
       canOpenSettings={session.permissions.includes("settings.view")}
+      pendingMigrations={pendingMigrations}
     >
       {children}
     </AppShell>
