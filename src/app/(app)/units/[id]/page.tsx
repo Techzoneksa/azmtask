@@ -68,6 +68,26 @@ function Empty({ children }: { children: React.ReactNode }) {
   return <p className="py-6 text-center text-[13px] text-content-subtle">{children}</p>;
 }
 
+/** A reservation number, linked to its booking when the reader may open it. */
+function ReservationRef({
+  id,
+  number,
+  canOpen,
+  className,
+}: {
+  id: string;
+  number: string;
+  canOpen: boolean;
+  className: string;
+}) {
+  if (!canOpen) return <span className={className}>{number}</span>;
+  return (
+    <Link href={`/reservations/${id}`} className={`${className} text-brand-700 hover:underline`}>
+      {number}
+    </Link>
+  );
+}
+
 function Field({ label: name, value }: { label: string; value: React.ReactNode }) {
   return (
     <div>
@@ -98,6 +118,7 @@ export default async function UnitDetailPage({ params }: { params: Promise<{ id:
   const canChangeStatus = await can("units.status.change");
   const canManage = await can("units.manage");
   const canViewGuests = await can("guests.view");
+  const canViewReservations = await can("reservations.view");
 
   // Only fetched when editing is actually on offer — the list feeds the type select.
   const unitTypes = canManage
@@ -215,7 +236,12 @@ export default async function UnitDetailPage({ params }: { params: Promise<{ id:
                     </p>
                   )}
                   <p className="text-[12px] tabular-nums text-content-muted">
-                    {unit.currentStay.reservationNumber}
+                    <ReservationRef
+                      id={unit.currentStay.id}
+                      number={unit.currentStay.reservationNumber}
+                      canOpen={canViewReservations}
+                      className="tabular-nums"
+                    />
                     {unit.currentStay.guestMobile && ` · ${formatMobile(unit.currentStay.guestMobile)}`}
                   </p>
                 </div>
@@ -259,7 +285,12 @@ export default async function UnitDetailPage({ params }: { params: Promise<{ id:
             <div className="space-y-2.5">
               <p className="text-[14px] font-medium text-content">{unit.upcoming.guestName}</p>
               <p className="text-[12px] tabular-nums text-content-muted">
-                {unit.upcoming.reservationNumber}
+                <ReservationRef
+                  id={unit.upcoming.id}
+                  number={unit.upcoming.reservationNumber}
+                  canOpen={canViewReservations}
+                  className="tabular-nums"
+                />
               </p>
               <dl className="grid grid-cols-2 gap-x-4 gap-y-2.5">
                 <Field label="الوصول" value={formatDateShort(unit.upcoming.checkInDate)} />
@@ -356,7 +387,14 @@ export default async function UnitDetailPage({ params }: { params: Promise<{ id:
                   const state = label(RESERVATION_STATUS, row.status);
                   return (
                     <tr key={row.id}>
-                      <td className="py-2.5 tabular-nums text-content-muted">{row.reservationNumber}</td>
+                      <td className="py-2.5">
+                        <ReservationRef
+                          id={row.id}
+                          number={row.reservationNumber}
+                          canOpen={canViewReservations}
+                          className="tabular-nums text-content-muted"
+                        />
+                      </td>
                       <td className="py-2.5 text-content">{row.guestName}</td>
                       <td className="py-2.5 tabular-nums text-content-muted">
                         {formatDateShort(row.checkInDate)} — {formatDateShort(row.checkOutDate)}

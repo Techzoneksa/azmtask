@@ -345,11 +345,23 @@ model Reservation {
   createdAt   DateTime @default(now()) @db.DateTime(3)
   updatedAt   DateTime @updatedAt @db.DateTime(3)
 
-  property  Property  @relation(fields: [propertyId], references: [id], onDelete: Restrict)
-  guest     Guest     @relation(fields: [guestId], references: [id], onDelete: Restrict)
-  unit      Unit?     @relation(fields: [unitId], references: [id], onDelete: Restrict)
-  unitType  UnitType  @relation(fields: [unitTypeId], references: [id], onDelete: Restrict)
-  createdBy User?     @relation("ReservationCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  /// Who cancelled, alongside the existing when and why. A cancellation is a
+  /// decision someone made; an audit trail that records the act without the actor
+  /// answers half the question anyone ever asks of it.
+  cancelledById String? @db.VarChar(30)
+
+  /// Idempotency key for creation, supplied by the client once per booking form.
+  /// Unique, so two submissions of the same form cannot both insert — the second
+  /// loses on the constraint and is answered with the reservation the first made.
+  /// A disabled button is a courtesy; this is the guarantee.
+  idempotencyKey String? @unique @db.VarChar(64)
+
+  property    Property @relation(fields: [propertyId], references: [id], onDelete: Restrict)
+  guest       Guest    @relation(fields: [guestId], references: [id], onDelete: Restrict)
+  unit        Unit?    @relation(fields: [unitId], references: [id], onDelete: Restrict)
+  unitType    UnitType @relation(fields: [unitTypeId], references: [id], onDelete: Restrict)
+  createdBy   User?    @relation("ReservationCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  cancelledBy User?    @relation("ReservationCancelledBy", fields: [cancelledById], references: [id], onDelete: SetNull)
 
   charges  ReservationCharge[]
   payments Payment[]
@@ -363,7 +375,11 @@ model Reservation {
   @@index([propertyId, status, checkInDate])
   @@index([propertyId, checkOutDate])
   @@index([guestId])
-  @@index([unitTypeId])
+  /// Serves unit-type inventory directly: for a type, the reservations in an
+  /// inventory-consuming status whose dates overlap a requested interval. That is
+  /// the query every availability check and every booking write runs, including the
+  /// ones holding a row lock — so it is the one that must not become a scan.
+  @@index([unitTypeId, status, checkInDate, checkOutDate])
   @@index([paymentStatus])
   @@map("reservations")
 }
@@ -454,11 +470,11 @@ enum InvoiceStatus {
 }
 
 model Invoice {
-  id            String  @id @default(cuid()) @db.VarChar(30)
-  invoiceNumber String  @unique @db.VarChar(24)
-  propertyId    String  @db.VarChar(30)
-  reservationId String  @db.VarChar(30)
-  guestId       String  @db.VarChar(30)
+  id            String @id @default(cuid()) @db.VarChar(30)
+  invoiceNumber String @unique @db.VarChar(24)
+  propertyId    String @db.VarChar(30)
+  reservationId String @db.VarChar(30)
+  guestId       String @db.VarChar(30)
 
   /// DERIVED — snapshot of the reservation's figures at issue time. Deliberately a
   /// copy, not a live join: an issued invoice must keep showing what the guest was
@@ -674,17 +690,18 @@ model User {
   createdAt    DateTime   @default(now()) @db.DateTime(3)
   updatedAt    DateTime   @updatedAt @db.DateTime(3)
 
-  employee Employee? @relation(fields: [employeeId], references: [id], onDelete: SetNull)
+  employee Employee?  @relation(fields: [employeeId], references: [id], onDelete: SetNull)
   roles    UserRole[]
 
-  activityLogs        ActivityLog[]
-  createdReservations Reservation[]         @relation("ReservationCreatedBy")
-  createdPayments     Payment[]             @relation("PaymentCreatedBy")
-  createdCharges      ReservationCharge[]   @relation("ChargeCreatedBy")
-  createdExpenses     Expense[]             @relation("ExpenseCreatedBy")
-  createdStockMoves   InventoryTransaction[] @relation("StockMoveCreatedBy")
-  createdUnitBlocks   UnitBlock[]            @relation("UnitBlockCreatedBy")
-  endedUnitBlocks     UnitBlock[]            @relation("UnitBlockEndedBy")
+  activityLogs          ActivityLog[]
+  createdReservations   Reservation[]          @relation("ReservationCreatedBy")
+  cancelledReservations Reservation[]          @relation("ReservationCancelledBy")
+  createdPayments       Payment[]              @relation("PaymentCreatedBy")
+  createdCharges        ReservationCharge[]    @relation("ChargeCreatedBy")
+  createdExpenses       Expense[]              @relation("ExpenseCreatedBy")
+  createdStockMoves     InventoryTransaction[] @relation("StockMoveCreatedBy")
+  createdUnitBlocks     UnitBlock[]            @relation("UnitBlockCreatedBy")
+  endedUnitBlocks       UnitBlock[]            @relation("UnitBlockEndedBy")
 
   @@index([status])
   @@map("users")
@@ -848,17 +865,17 @@ enum StockMovementType {
 }
 
 model InventoryTransaction {
-  id         String            @id @default(cuid()) @db.VarChar(30)
-  itemId     String            @db.VarChar(30)
-  propertyId String            @db.VarChar(30)
-  type       StockMovementType
+  id          String            @id @default(cuid()) @db.VarChar(30)
+  itemId      String            @db.VarChar(30)
+  propertyId  String            @db.VarChar(30)
+  type        StockMovementType
   /// Signed: positive adds to stock, negative removes. STOCK_OUT rows are stored
   /// negative so SUM(quantity) is the item's true quantity with no case analysis.
-  quantity   Decimal           @db.Decimal(12, 2)
-  reference  String?           @db.VarChar(120)
-  notes      String?           @db.Text
-  createdById String?          @db.VarChar(30)
-  createdAt  DateTime          @default(now()) @db.DateTime(3)
+  quantity    Decimal           @db.Decimal(12, 2)
+  reference   String?           @db.VarChar(120)
+  notes       String?           @db.Text
+  createdById String?           @db.VarChar(30)
+  createdAt   DateTime          @default(now()) @db.DateTime(3)
 
   item      InventoryItem @relation(fields: [itemId], references: [id], onDelete: Restrict)
   property  Property      @relation(fields: [propertyId], references: [id], onDelete: Restrict)

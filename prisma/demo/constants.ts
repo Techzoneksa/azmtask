@@ -109,3 +109,12 @@ export const OUTLETS = [
   { name: "مغسلة الفندق", type: "LAUNDRY", location: "القبو" },
   { name: "مطعم الشاطئ", type: "RESTAURANT", location: "الطابق الأول" },
 ] as const;
+
+/**
+ * VAT percentage the demo prices with.
+ *
+ * Also written to `system_settings` as `tax.vatRate` by the foundation seed, which is
+ * where the running application reads it. One value, two readers — a demo folio and a
+ * folio the app prices agree because they came from the same number.
+ */
+export const VAT_RATE = 15;

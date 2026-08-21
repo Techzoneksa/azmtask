@@ -40,6 +40,34 @@ const UNASSIGNED = "لم تُحدّد الوحدة بعد";
  * experience than plain text, and it tells the reader a screen exists that they
  * cannot reach.
  */
+/**
+ * A reservation number, linked to its booking when the reader may open it.
+ *
+ * Gated on the permission rather than always linked: a link landing on "غير مصرح" is
+ * worse than plain text, and tells the reader a screen exists that they cannot reach.
+ */
+function ReservationRef({
+  id,
+  number,
+  canOpen,
+  className,
+}: {
+  id: string;
+  number: string;
+  canOpen: boolean;
+  className: string;
+}) {
+  if (!canOpen) return <span className={className}>{number}</span>;
+  return (
+    <Link
+      href={`/reservations/${id}`}
+      className={`${className} rounded transition-colors hover:text-brand-700 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600`}
+    >
+      {number}
+    </Link>
+  );
+}
+
 function GuestName({
   id,
   name,
@@ -74,9 +102,11 @@ function statusLabel<T extends Record<string, { label: string; tone: string }>>(
 export function ArrivalsList({
   rows,
   canOpenGuests = false,
+  canOpenReservations = false,
 }: {
   rows: ArrivalRow[];
   canOpenGuests?: boolean;
+  canOpenReservations?: boolean;
 }) {
   return (
     <ul className="divide-y divide-line">
@@ -97,7 +127,12 @@ export function ArrivalsList({
                 <Badge tone={payment.tone as never}>{payment.label}</Badge>
               </div>
               <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-[12px] text-content-muted">
-                <span className="tabular-nums">{row.reservationNumber}</span>
+                <ReservationRef
+                  id={row.id}
+                  number={row.reservationNumber}
+                  canOpen={canOpenReservations}
+                  className="tabular-nums"
+                />
                 <span>{row.unitTypeName}</span>
                 <span>{source.label}</span>
                 {row.guestMobile && (
@@ -130,9 +165,11 @@ export function ArrivalsList({
 export function DeparturesList({
   rows,
   canOpenGuests = false,
+  canOpenReservations = false,
 }: {
   rows: DepartureRow[];
   canOpenGuests?: boolean;
+  canOpenReservations?: boolean;
 }) {
   return (
     <ul className="divide-y divide-line">
@@ -153,7 +190,12 @@ export function DeparturesList({
                 <Badge tone={payment.tone as never}>{payment.label}</Badge>
               </div>
               <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-[12px] text-content-muted">
-                <span className="tabular-nums">{row.reservationNumber}</span>
+                <ReservationRef
+                  id={row.id}
+                  number={row.reservationNumber}
+                  canOpen={canOpenReservations}
+                  className="tabular-nums"
+                />
                 <span>منذ {formatDateShort(row.checkInDate)}</span>
               </div>
             </div>
@@ -213,9 +255,11 @@ export function AlertsList({ alerts }: { alerts: OperationalAlert[] }) {
 export function RecentReservationsTable({
   rows,
   canOpenGuests = false,
+  canOpenReservations = false,
 }: {
   rows: RecentReservationRow[];
   canOpenGuests?: boolean;
+  canOpenReservations?: boolean;
 }) {
   return (
     <>
@@ -238,7 +282,14 @@ export function RecentReservationsTable({
               const status = statusLabel(RESERVATION_STATUS, row.status);
               return (
                 <tr key={row.id}>
-                  <td className="py-2.5 tabular-nums text-content-muted">{row.reservationNumber}</td>
+                  <td className="py-2.5">
+                    <ReservationRef
+                      id={row.id}
+                      number={row.reservationNumber}
+                      canOpen={canOpenReservations}
+                      className="tabular-nums text-content-muted"
+                    />
+                  </td>
                   <td className="py-2.5">
                     <GuestName
                       id={row.guestId}
@@ -284,9 +335,12 @@ export function RecentReservationsTable({
                     canOpen={canOpenGuests}
                     className="block truncate text-[14px] font-medium text-content"
                   />
-                  <p className="mt-0.5 text-[12px] tabular-nums text-content-muted">
-                    {row.reservationNumber}
-                  </p>
+                  <ReservationRef
+                    id={row.id}
+                    number={row.reservationNumber}
+                    canOpen={canOpenReservations}
+                    className="mt-0.5 block text-[12px] tabular-nums text-content-muted"
+                  />
                 </div>
                 <Badge tone={status.tone as never}>{status.label}</Badge>
               </div>

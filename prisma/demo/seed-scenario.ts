@@ -3,7 +3,7 @@ import { add, money, multiply, subtract } from "../../src/lib/money";
 
 import type { PrismaClient } from "../../src/generated/prisma/client";
 
-import { DEMO_BUSINESS_DATE } from "./constants";
+import { DEMO_BUSINESS_DATE, VAT_RATE } from "./constants";
 import type { Random } from "./random";
 import type { Foundation } from "./seed-foundation";
 import type { PlannedStay, UnitRole } from "./seed-reservations";
@@ -20,7 +20,6 @@ import type { PlannedStay, UnitRole } from "./seed-reservations";
  * during the stay it belongs to rather than at whatever moment the seed ran.
  */
 
-const VAT_RATE = 15;
 
 type Actor = { id: string; name: string; email: string; roles: string[] };
 

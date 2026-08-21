@@ -76,10 +76,15 @@ describe("creation", () => {
       select: { subtotal: true, total: true, balance: true, paidAmount: true, paymentStatus: true },
     });
 
-    // 3 nights x 450.00
+    /*
+     * 3 nights x 450.00 = 1350, plus VAT at the property's configured rate. Stage 7
+     * moved tax out of the caller's hands: it used to be an optional input that
+     * defaulted to nothing, which meant a booking created without one was quietly
+     * untaxed. The server computes it now, so these figures include it.
+     */
     expect(found.subtotal.toFixed(2)).toBe("1350.00");
-    expect(found.total.toFixed(2)).toBe("1350.00");
-    expect(found.balance.toFixed(2)).toBe("1350.00");
+    expect(found.total.toFixed(2)).toBe("1552.50");
+    expect(found.balance.toFixed(2)).toBe("1552.50");
     expect(found.paidAmount.toFixed(2)).toBe("0.00");
     expect(found.paymentStatus).toBe("UNPAID");
   });
@@ -249,10 +254,24 @@ describe("collision prevention", () => {
     expect(stored).toBe(1);
   });
 
-  it("does not block when no unit is assigned yet", async () => {
+  it("does not lock a specific room when none is assigned yet", async () => {
+    /*
+     * This test used to assert that two unassigned confirmed bookings both succeed,
+     * against a property with exactly one room. That was the overselling bug Stage 7
+     * exists to close: neither booking names a room, so a per-room check finds the
+     * room free twice — and the hotel has sold one room to two people.
+     *
+     * What is actually true, and what this now asserts: no *specific* room is held,
+     * so the room stays individually free — while the type's one unit of capacity is
+     * spent, and the second booking is refused.
+     */
     const first = await book({ unitId: undefined });
-    const second = await book({ unitId: undefined });
-    expect(first.id).not.toBe(second.id);
+
+    const unit = await prisma.unit.findUniqueOrThrow({ where: { id: ctx.unit.id } });
+    expect(unit.status).toBe("AVAILABLE");
+    expect(first.unitId).toBeNull();
+
+    await expect(book({ unitId: undefined })).rejects.toMatchObject({ code: "CONFLICT" });
   });
 });
 

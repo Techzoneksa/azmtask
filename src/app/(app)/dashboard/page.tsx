@@ -54,6 +54,7 @@ export default async function DashboardPage() {
    * than no link.
    */
   const canOpenGuests = await can("guests.view");
+  const canOpenReservations = await can("reservations.view");
 
   const unitsHref = (await can("units.view"))
     ? (query: string) => `/units?${query}`
@@ -212,7 +213,7 @@ export default async function DashboardPage() {
             isEmpty={(rows) => rows.length === 0}
             empty="لا توجد وصولات مجدولة اليوم"
           >
-            {(rows) => <ArrivalsList rows={rows} canOpenGuests={canOpenGuests} />}
+            {(rows) => <ArrivalsList rows={rows} canOpenGuests={canOpenGuests} canOpenReservations={canOpenReservations} />}
           </SectionBody>
         </Panel>
 
@@ -222,7 +223,7 @@ export default async function DashboardPage() {
             isEmpty={(rows) => rows.length === 0}
             empty="لا توجد مغادرات مجدولة اليوم"
           >
-            {(rows) => <DeparturesList rows={rows} canOpenGuests={canOpenGuests} />}
+            {(rows) => <DeparturesList rows={rows} canOpenGuests={canOpenGuests} canOpenReservations={canOpenReservations} />}
           </SectionBody>
         </Panel>
 
@@ -315,7 +316,7 @@ export default async function DashboardPage() {
             isEmpty={(rows) => rows.length === 0}
             empty="لم تُسجَّل حجوزات بعد"
           >
-            {(rows) => <RecentReservationsTable rows={rows} canOpenGuests={canOpenGuests} />}
+            {(rows) => <RecentReservationsTable rows={rows} canOpenGuests={canOpenGuests} canOpenReservations={canOpenReservations} />}
           </SectionBody>
         </Panel>
       )}

@@ -80,3 +80,55 @@ export const TEST_ACTOR = {
   email: "test@nokhba-hotel.sa",
   roles: ["admin"],
 };
+
+/**
+ * A property with a unit type and N rooms of it — the fixture inventory tests need.
+ *
+ * Capacity questions cannot be asked of a one-room hotel: with a single unit, "the
+ * room is taken" and "the type is sold out" are the same sentence, and a test cannot
+ * tell which rule refused it.
+ */
+export async function seedInventory(options: {
+  units: number;
+  name?: string;
+  baseRate?: string;
+  unitPrefix?: string;
+}) {
+  const property = await prisma.property.create({
+    data: { name: options.name ?? "فندق السعة", type: "HOTEL", city: "الرياض" },
+  });
+
+  const unitType = await prisma.unitType.create({
+    data: {
+      propertyId: property.id,
+      name: "غرفة قياسية",
+      capacity: 2,
+      baseRate: options.baseRate ?? "400.00",
+    },
+  });
+
+  const units = [];
+  for (let index = 0; index < options.units; index++) {
+    units.push(
+      await prisma.unit.create({
+        data: {
+          propertyId: property.id,
+          unitTypeId: unitType.id,
+          unitNumber: `${options.unitPrefix ?? "R"}${101 + index}`,
+          floor: 1,
+        },
+      }),
+    );
+  }
+
+  return { property, unitType, units };
+}
+
+/** The VAT rate the pricing engine will read for a property. */
+export async function setVatRate(propertyId: string, rate: string) {
+  await prisma.systemSetting.upsert({
+    where: { propertyId_key: { propertyId, key: "tax.vatRate" } },
+    create: { propertyId, key: "tax.vatRate", value: rate },
+    update: { value: rate },
+  });
+}

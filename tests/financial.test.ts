@@ -6,7 +6,7 @@ import { issueInvoice } from "@/server/services/invoice.service";
 import { recordPayment } from "@/server/services/payment.service";
 import { createReservation } from "@/server/services/reservation.service";
 
-import { TEST_ACTOR, resetDatabase, seedGuest, seedProperty } from "./helpers";
+import { TEST_ACTOR, resetDatabase, seedGuest, seedProperty, setVatRate } from "./helpers";
 
 /**
  * Money.
@@ -25,6 +25,17 @@ beforeEach(async () => {
   await resetDatabase();
   ctx = await seedProperty({ unitNumber: "101" });
   guest = await seedGuest();
+
+  /*
+   * Zero VAT, deliberately.
+   *
+   * This suite is about payments reconciling against a total: paidAmount summing from
+   * the rows, the balance following it, the status derived from both. Tax is a
+   * confound here — Stage 7 made the server compute it, and every figure below would
+   * otherwise carry an extra term that has nothing to do with what is under test.
+   * Tax arithmetic has its own tests in the booking-engine suite.
+   */
+  await setVatRate(ctx.property.id, "0");
 
   const reservation = await createReservation(
     {

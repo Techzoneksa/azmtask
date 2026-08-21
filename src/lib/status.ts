@@ -21,9 +21,17 @@ export const RESERVATION_STATUS = {
 
 export type ReservationStatus = keyof typeof RESERVATION_STATUS;
 
+/*
+ * Keyed by the database's own enum values, lower-cased.
+ *
+ * `partially_paid` used to be spelled `partial` here, which matched nothing — so a
+ * part-paid booking rendered the raw `PARTIALLY_PAID` on screen, which is exactly what
+ * a label map exists to prevent. Keys in these maps must be the enum member, not a
+ * shortened reading of it.
+ */
 export const PAYMENT_STATUS = {
   unpaid: { label: "غير مدفوع", tone: "danger" },
-  partial: { label: "مدفوع جزئيًا", tone: "warn" },
+  partially_paid: { label: "مدفوع جزئيًا", tone: "warn" },
   paid: { label: "مدفوع بالكامل", tone: "ok" },
   refunded: { label: "مسترجع", tone: "neutral" },
 } as const satisfies Record<string, StatusMeta>;
@@ -71,12 +79,17 @@ export const MAINTENANCE_STATUS = {
 
 export type MaintenanceStatus = keyof typeof MAINTENANCE_STATUS;
 
+/*
+ * Keyed by the InvoiceStatus enum. `partial` and `void` were invented here and match
+ * nothing the database can produce — the real members are PARTIALLY_PAID and
+ * CANCELLED — so a part-paid or cancelled invoice showed its raw enum.
+ */
 export const INVOICE_STATUS = {
   draft: { label: "مسودة", tone: "neutral" },
   issued: { label: "صادرة", tone: "info" },
-  partial: { label: "مدفوعة جزئيًا", tone: "warn" },
+  partially_paid: { label: "مدفوعة جزئيًا", tone: "warn" },
   paid: { label: "مدفوعة", tone: "ok" },
-  void: { label: "ملغاة", tone: "danger" },
+  cancelled: { label: "ملغاة", tone: "danger" },
 } as const satisfies Record<string, StatusMeta>;
 
 export type InvoiceStatus = keyof typeof INVOICE_STATUS;
@@ -132,7 +145,16 @@ export function statusMeta(
   key: string | null | undefined,
 ): StatusMeta {
   if (!key) return { label: "—", tone: "neutral" };
-  return map[key] ?? { label: key, tone: "neutral" };
+
+  /*
+   * Case-normalised, because the two sides of this lookup are written differently on
+   * purpose: the maps above read as lower-case identifiers, and the database's enums
+   * arrive SCREAMING_CASE. An exact match therefore never succeeded, and every caller
+   * fell through to the fallback — which renders the raw enum on screen, the one thing
+   * a label map exists to prevent. Several modules had quietly grown their own
+   * lowercasing wrapper around this function rather than fixing it.
+   */
+  return map[key.toLowerCase()] ?? { label: key, tone: "neutral" };
 }
 
 /** Turns a status map into `<Select>` options in declaration order. */

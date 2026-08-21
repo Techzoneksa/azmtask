@@ -1,4 +1,13 @@
 import { beforeAll, describe, expect, it } from "vitest";
+import {
+  INVOICE_STATUS,
+  PAYMENT_METHOD,
+  PAYMENT_STATUS,
+  RESERVATION_SOURCE,
+  RESERVATION_STATUS,
+  UNIT_STATUS,
+  statusMeta,
+} from "@/lib/status";
 
 import { prisma } from "@/lib/db";
 
@@ -220,5 +229,37 @@ describe("Money precision", () => {
       data: { propertyId: property.id, name: "جناح ملكي", capacity: 4, baseRate: "9999999.99" },
     });
     expect(type.baseRate.toFixed(2)).toBe("9999999.99");
+  });
+});
+
+describe("status labels", () => {
+  /*
+   * Every value these enums can hold must have an Arabic label. A missing key does not
+   * throw — it renders the raw enum on screen, which is a silent failure that reaches
+   * the guest-facing screen and nowhere else.
+   */
+  const CASES: Array<[string, Parameters<typeof statusMeta>[0], string[]]> = [
+    ["ReservationStatus", RESERVATION_STATUS, ["PENDING", "CONFIRMED", "CHECKED_IN", "CHECKED_OUT", "CANCELLED", "NO_SHOW"]],
+    ["PaymentStatus", PAYMENT_STATUS, ["UNPAID", "PARTIALLY_PAID", "PAID", "REFUNDED"]],
+    ["ReservationSource", RESERVATION_SOURCE, ["DIRECT", "WEBSITE", "PHONE", "WALK_IN", "CHANNEL", "CORPORATE"]],
+    ["PaymentMethod", PAYMENT_METHOD, ["CASH", "CARD", "TRANSFER", "OTHER"]],
+    ["InvoiceStatus", INVOICE_STATUS, ["DRAFT", "ISSUED", "PARTIALLY_PAID", "PAID", "CANCELLED"]],
+    ["UnitStatus", UNIT_STATUS, ["AVAILABLE", "OCCUPIED", "RESERVED", "CLEANING", "MAINTENANCE", "BLOCKED"]],
+  ];
+
+  for (const [name, map, values] of CASES) {
+    it(`labels every ${name} in Arabic`, () => {
+      for (const value of values) {
+        const meta = statusMeta(map, value);
+        // The fallback returns the key itself — which is exactly the failure.
+        expect(meta.label, `${name}.${value} has no Arabic label`).not.toBe(value);
+        expect(meta.label).toMatch(/[؀-ۿ]/);
+      }
+    });
+  }
+
+  it("survives an unknown value without throwing", () => {
+    expect(statusMeta(RESERVATION_STATUS, "SOMETHING_NEW").label).toBe("SOMETHING_NEW");
+    expect(statusMeta(RESERVATION_STATUS, null).label).toBe("—");
   });
 });

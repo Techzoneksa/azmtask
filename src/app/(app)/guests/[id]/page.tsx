@@ -86,11 +86,19 @@ function Row({ label: name, value }: { label: string; value: React.ReactNode }) 
 /**
  * One stay.
  *
- * The reservation number is text, not a link: the reservation detail route does not
- * exist yet, and a number that looks clickable and goes nowhere is worse than one that
- * plainly does not.
+ * The reservation number became a link in Stage 7, when the booking detail route it
+ * points at started to exist — gated on the permission to open it, because a link
+ * landing on "غير مصرح" is worse than plain text.
  */
-function StayCard({ stay, tone }: { stay: GuestStayRow; tone: "current" | "upcoming" | "past" }) {
+function StayCard({
+  stay,
+  tone,
+  canOpenReservation,
+}: {
+  stay: GuestStayRow;
+  tone: "current" | "upcoming" | "past";
+  canOpenReservation: boolean;
+}) {
   const status = label(RESERVATION_STATUS, stay.status);
   const source = label(RESERVATION_SOURCE, stay.source);
 
@@ -102,9 +110,19 @@ function StayCard({ stay, tone }: { stay: GuestStayRow; tone: "current" | "upcom
     >
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="text-[13px] font-medium tabular-nums text-content" dir="ltr">
-            {stay.reservationNumber}
-          </p>
+          {canOpenReservation ? (
+            <Link
+              href={`/reservations/${stay.id}`}
+              className="block text-[13px] font-medium tabular-nums text-brand-700 hover:underline"
+              dir="ltr"
+            >
+              {stay.reservationNumber}
+            </Link>
+          ) : (
+            <p className="text-[13px] font-medium tabular-nums text-content" dir="ltr">
+              {stay.reservationNumber}
+            </p>
+          )}
           <p className="mt-0.5 text-[12px] text-content-muted">
             {stay.unitNumber ? `الوحدة ${stay.unitNumber}` : "لم تُسنَد وحدة بعد"} ·{" "}
             {stay.unitTypeName}
@@ -166,6 +184,7 @@ export default async function GuestProfilePage({
   }
 
   const canEdit = await can("guests.edit");
+  const canOpenReservation = await can("reservations.view");
   const { guest, financial, payments, invoices, activity } = profile;
 
   const tabs: GuestTab[] = [
@@ -231,7 +250,7 @@ export default async function GuestProfilePage({
             </h2>
           </div>
           {profile.currentStays.map((stay) => (
-            <StayCard key={stay.id} stay={stay} tone="current" />
+            <StayCard key={stay.id} stay={stay} tone="current" canOpenReservation={canOpenReservation} />
           ))}
         </div>
       )}
@@ -377,7 +396,7 @@ export default async function GuestProfilePage({
               <Panel title={`حجوزات قادمة (${profile.upcoming.length})`}>
                 <div className="space-y-2.5">
                   {profile.upcoming.map((stay) => (
-                    <StayCard key={stay.id} stay={stay} tone="upcoming" />
+                    <StayCard key={stay.id} stay={stay} tone="upcoming" canOpenReservation={canOpenReservation} />
                   ))}
                 </div>
               </Panel>
@@ -394,7 +413,7 @@ export default async function GuestProfilePage({
                 <>
                   <div className="space-y-2.5">
                     {profile.history.rows.map((stay) => (
-                      <StayCard key={stay.id} stay={stay} tone="past" />
+                      <StayCard key={stay.id} stay={stay} tone="past" canOpenReservation={canOpenReservation} />
                     ))}
                   </div>
 

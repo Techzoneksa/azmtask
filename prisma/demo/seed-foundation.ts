@@ -6,6 +6,7 @@ import { toISODate } from "../../src/lib/datetime";
 
 import {
   DEMO_BUSINESS_DATE,
+  VAT_RATE,
   DEMO_MARKER_KEY,
   DEMO_MARKER_VALUE,
   DEMO_PROPERTY,
@@ -80,6 +81,18 @@ export async function seedProperty(prisma: PrismaClient): Promise<string> {
     where: { propertyId_key: { propertyId: property.id, key: "demo.businessDate" } },
     create: { propertyId: property.id, key: "demo.businessDate", value: toISODate(DEMO_BUSINESS_DATE) },
     update: { value: toISODate(DEMO_BUSINESS_DATE) },
+  });
+
+  /*
+   * The VAT rate the pricing engine reads. Published here rather than compiled into
+   * the application: a tax rate is a jurisdiction's decision, and Saudi VAT has
+   * already moved once. The seed and the running system now read one value, so a
+   * demo folio and a folio priced by the app agree by construction.
+   */
+  await prisma.systemSetting.upsert({
+    where: { propertyId_key: { propertyId: property.id, key: "tax.vatRate" } },
+    create: { propertyId: property.id, key: "tax.vatRate", value: String(VAT_RATE) },
+    update: { value: String(VAT_RATE) },
   });
 
   return property.id;
