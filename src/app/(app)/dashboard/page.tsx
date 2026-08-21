@@ -12,7 +12,7 @@ import { Sparkline } from "@/components/charts/Sparkline";
 import { BarSeries } from "@/components/charts/BarSeries";
 import { RankedBars } from "@/components/charts/RankedBars";
 import { PageHeader } from "@/components/ui";
-import { requirePermission } from "@/lib/auth/guard";
+import { can, requirePermission } from "@/lib/auth/guard";
 import { getSession } from "@/lib/auth/session";
 import { formatAmount, formatDate, formatNumber } from "@/lib/format";
 import { RESERVATION_SOURCE } from "@/lib/status";
@@ -46,6 +46,16 @@ export const dynamic = "force-dynamic";
 
 export default async function DashboardPage() {
   await requirePermission("dashboard.view");
+
+  /*
+   * Every unit figure below is a filtered view of the units screen. Linking to it
+   * turns a number into a work list — but only for someone allowed on that screen;
+   * otherwise the cards stay plain, because a link that lands on "غير مصرح" is worse
+   * than no link.
+   */
+  const unitsHref = (await can("units.view"))
+    ? (query: string) => `/units?${query}`
+    : () => undefined;
   const session = await getSession();
 
   const snapshot = await getDashboardSnapshot(session?.permissions ?? []);
@@ -107,6 +117,7 @@ export default async function DashboardPage() {
           value={show(units?.occupied ?? null)}
           hint={units ? `من إجمالي ${units.total} وحدة` : undefined}
           icon={BedDouble}
+          href={unitsHref("status=OCCUPIED&view=table")}
         />
         <KpiCard
           label="الوحدات المتاحة"
@@ -114,6 +125,7 @@ export default async function DashboardPage() {
           hint={units ? `${units.reserved} محجوزة لوصول اليوم` : undefined}
           icon={DoorOpen}
           tone="ok"
+          href={unitsHref("status=AVAILABLE&view=table")}
         />
         <KpiCard
           label="وصولات اليوم"
@@ -131,6 +143,7 @@ export default async function DashboardPage() {
           hint={units ? `${units.cleaning} جارٍ تنظيفها الآن` : undefined}
           icon={SprayCan}
           tone="warn"
+          href={unitsHref("housekeeping=DIRTY&view=table")}
         />
         <KpiCard
           label="تحت الصيانة"
@@ -138,6 +151,7 @@ export default async function DashboardPage() {
           hint={units ? `${units.blocked} وحدة موقوفة` : undefined}
           icon={Wrench}
           tone="danger"
+          href={unitsHref("status=MAINTENANCE&view=table")}
         />
         {snapshot.financial && (
           <>

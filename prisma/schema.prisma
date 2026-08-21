@@ -77,6 +77,7 @@ model Property {
   inventoryItems      InventoryItem[]
   inventoryMovements  InventoryTransaction[]
   outlets             Outlet[]
+  unitBlocks          UnitBlock[]
   activityLogs        ActivityLog[]
   settings            SystemSetting[]
 
@@ -153,6 +154,7 @@ model Unit {
   reservations        Reservation[]
   housekeepingTasks   HousekeepingTask[]
   maintenanceRequests MaintenanceRequest[]
+  blocks              UnitBlock[]
 
   /// Room 101 exists once per property. This is the constraint that makes the unit
   /// board trustworthy.
@@ -161,6 +163,56 @@ model Unit {
   @@index([propertyId, housekeepingStatus])
   @@index([unitTypeId])
   @@map("units")
+}
+
+enum UnitBlockReason {
+  RENOVATION
+  DEEP_CLEANING
+  STAFF_USE
+  OWNER_USE
+  LONG_TERM_MAINTENANCE
+  SEASONAL_CLOSURE
+  OTHER
+}
+
+/// Why a room is off the market, and for how long.
+///
+/// A status column alone answers "is it blocked" but never "why, since when, and
+/// who decided". A front desk turning guests away needs all three, and a room that
+/// has been out of service for a month with nobody able to say why is how inventory
+/// quietly disappears. Blocks are therefore records with a history, not a flag:
+/// ending one closes the row rather than erasing it.
+model UnitBlock {
+  id         String          @id @default(cuid()) @db.VarChar(30)
+  propertyId String          @db.VarChar(30)
+  unitId     String          @db.VarChar(30)
+  reason     UnitBlockReason
+  notes      String?         @db.Text
+
+  /// Business dates, half-open like a stay: the room is unsellable from startDate
+  /// up to but not including endDate. A null endDate means open-ended.
+  startDate DateTime  @db.Date
+  endDate   DateTime? @db.Date
+
+  /// An active block is the one holding the room now; ending it sets endedAt and
+  /// leaves the row in place as the record of what happened.
+  active  Boolean   @default(true)
+  endedAt DateTime? @db.DateTime(3)
+
+  createdById String?  @db.VarChar(30)
+  endedById   String?  @db.VarChar(30)
+  createdAt   DateTime @default(now()) @db.DateTime(3)
+  updatedAt   DateTime @updatedAt @db.DateTime(3)
+
+  property  Property @relation(fields: [propertyId], references: [id], onDelete: Restrict)
+  unit      Unit     @relation(fields: [unitId], references: [id], onDelete: Restrict)
+  createdBy User?    @relation("UnitBlockCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  endedBy   User?    @relation("UnitBlockEndedBy", fields: [endedById], references: [id], onDelete: SetNull)
+
+  /// Serves "is this room blocked right now" and the overlap check a new block runs.
+  @@index([unitId, active, startDate])
+  @@index([propertyId, active])
+  @@map("unit_blocks")
 }
 
 // ===========================================================================
@@ -631,6 +683,8 @@ model User {
   createdCharges      ReservationCharge[]   @relation("ChargeCreatedBy")
   createdExpenses     Expense[]             @relation("ExpenseCreatedBy")
   createdStockMoves   InventoryTransaction[] @relation("StockMoveCreatedBy")
+  createdUnitBlocks   UnitBlock[]            @relation("UnitBlockCreatedBy")
+  endedUnitBlocks     UnitBlock[]            @relation("UnitBlockEndedBy")
 
   @@index([status])
   @@map("users")

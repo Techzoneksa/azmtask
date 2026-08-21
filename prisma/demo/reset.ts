@@ -73,6 +73,7 @@ export async function resetDemoData(prisma: PrismaClient): Promise<void> {
   await prisma.payment.deleteMany({ where: scope });
   await prisma.reservationCharge.deleteMany({ where: scope });
   await prisma.reservation.deleteMany({ where: scope });
+  await prisma.unitBlock.deleteMany({ where: scope });
   await prisma.housekeepingTask.deleteMany({ where: scope });
   await prisma.maintenanceRequest.deleteMany({ where: scope });
   await prisma.expense.deleteMany({ where: scope });

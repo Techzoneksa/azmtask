@@ -32,9 +32,13 @@ export function Topbar({
         <Menu className="h-5 w-5" aria-hidden />
       </button>
 
-      <h1 className="truncate text-[15px] font-semibold text-content lg:hidden">
+      {/*
+        The section name, not the page's heading — every page renders its own h1,
+        and a second one here would give mobile readers two competing top headings.
+      */}
+      <p className="truncate text-[15px] font-semibold text-content lg:hidden">
         {current?.label ?? propertyName}
-      </h1>
+      </p>
 
       {/*
         Global search is wired to real records in a later stage; for now it is
