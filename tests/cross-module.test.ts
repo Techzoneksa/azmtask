@@ -5,6 +5,8 @@ import { beforeAll, describe, expect, it } from "vitest";
 
 import { toISODate } from "@/lib/datetime";
 import { prisma } from "@/lib/db";
+
+import { resetDatabase } from "./helpers";
 import type { Permission } from "@/lib/permissions";
 import { getBusinessDate } from "@/server/business-date";
 import {
@@ -54,6 +56,14 @@ const ALL: Permission[] = [
 
 beforeAll(async () => {
   const env = { ...process.env, DATABASE_URL: process.env.DATABASE_URL! };
+    /*
+   * Truncate first. This suite builds its own world from the real seed commands, and
+   * reservation numbers are globally unique — so rows another file left behind make
+   * the seed collide, and the suite then passes or fails on file ordering rather than
+   * on anything it is testing.
+   */
+  await resetDatabase();
+
   await run("npx", ["tsx", "prisma/seed.ts"], { env });
   await run("npx", ["tsx", "prisma/demo-seed.ts"], { env });
 
@@ -428,5 +438,152 @@ describe("a check-in seen from every module", () => {
     expect(financial.paidAmount.toString()).toBe(
       (payments._sum.amount ?? 0).toString(),
     );
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Stage 10 — one room through the cleaning cycle, seen from every screen
+// ---------------------------------------------------------------------------
+
+/**
+ * The chain Stage 11's checkout will lean on, exercised end to end through the real
+ * services: a departure dirties a room and queues the work, the work moves through
+ * assignment and cleaning, and the room comes back as something reception can hand to
+ * a guest — without a single manual status write anywhere.
+ *
+ * Also last in the file, for the same reason as the arrival test above: it changes the
+ * data the pinned figures describe.
+ */
+describe("a cleaning cycle seen from every module", () => {
+  it("carries a departed room back to check-in readiness by itself", async () => {
+    const { checkOut } = await import("@/server/services/stay.service");
+    const {
+      completeHousekeepingTask,
+      assignHousekeepingTask,
+      startHousekeepingTask,
+      getHousekeepingSummary,
+      inspectUnit,
+    } = await import("@/server/services/housekeeping.service");
+    const { getUnitDetails } = await import("@/server/services/unit.service");
+
+    const actor = {
+      id: null,
+      name: "اختبار النظافة",
+      email: "hk-cross@nokhba-hotel.sa",
+      roles: ["admin"],
+    };
+
+    const stay = await prisma.reservation.findFirstOrThrow({
+      where: { propertyId, status: "CHECKED_IN", unitId: { not: null } },
+      select: { id: true, unitId: true },
+    });
+
+    const before = await getHousekeepingSummary([propertyId]);
+
+    // ---- the departure dirties the room and queues the work, in one transaction
+    await checkOut(stay.id, actor, { allowOutstandingBalance: true });
+
+    const afterCheckout = await prisma.unit.findUniqueOrThrow({
+      where: { id: stay.unitId! },
+      select: { status: true, housekeepingStatus: true },
+    });
+    expect(afterCheckout.housekeepingStatus).toBe("DIRTY");
+    expect(afterCheckout.status).toBe("CLEANING");
+
+    const task = await prisma.housekeepingTask.findFirstOrThrow({
+      where: {
+        unitId: stay.unitId!,
+        status: { in: ["PENDING", "ASSIGNED", "IN_PROGRESS"] },
+      },
+      select: { id: true, source: true, sourceReservationId: true, priority: true },
+    });
+    // The origin is a reference, not a sentence in a notes field.
+    expect(task.source).toBe("CHECKOUT");
+    expect(task.sourceReservationId).toBe(stay.id);
+    expect(task.priority).toBe("HIGH");
+
+    // ---- the summary moves with it
+    const queued = await getHousekeepingSummary([propertyId]);
+    expect(queued.dirty).toBe(before.dirty + 1);
+
+    // ---- assignment, start, completion
+    const attendant = await prisma.employee.findFirstOrThrow({
+      where: { propertyId, department: "HOUSEKEEPING", employmentStatus: "ACTIVE" },
+      select: { id: true },
+    });
+
+    await assignHousekeepingTask({ taskId: task.id, employeeId: attendant.id }, actor, [propertyId]);
+    await startHousekeepingTask(task.id, actor, [propertyId]);
+
+    expect(
+      (
+        await prisma.unit.findUniqueOrThrow({
+          where: { id: stay.unitId! },
+          select: { housekeepingStatus: true },
+        })
+      ).housekeepingStatus,
+    ).toBe("CLEANING");
+
+    const completed = await completeHousekeepingTask({ taskId: task.id }, actor, [propertyId]);
+    expect(completed.housekeepingStatus).toBe("CLEAN");
+    // Derived, not asserted: nobody is in it, nothing blocks it, no fault is open.
+    expect(completed.unitStatus).toBe("AVAILABLE");
+
+    // ---- the unit page agrees
+    const detail = await getUnitDetails(propertyId, stay.unitId!);
+    expect(detail.housekeepingStatus).toBe("CLEAN");
+    expect(detail.currentStay).toBeNull();
+    expect(detail.housekeeping.some((entry) => entry.id === task.id && !entry.active)).toBe(true);
+
+    // ---- the sign-off is recorded with a name and a time
+    const inspected = await inspectUnit(stay.unitId!, actor, [propertyId]);
+    expect(inspected.housekeepingStatus).toBe("INSPECTED");
+
+    /*
+     * The dirty count comes back to where it started. The clean count does *not* go
+     * up: the room was occupied and clean before the guest left, so it was already
+     * counted — which is the whole point of the name. Housekeeping counts physical
+     * readiness; it does not count what can be sold.
+     */
+    const finished = await getHousekeepingSummary([propertyId]);
+    expect(finished.dirty).toBe(before.dirty);
+    expect(finished.cleanRooms).toBe(before.cleanRooms);
+  });
+
+  it("keeps a room out of service when a fault outlives the clean", async () => {
+    const { createHousekeepingTask, completeHousekeepingTask } = await import(
+      "@/server/services/housekeeping.service"
+    );
+
+    const actor = {
+      id: null,
+      name: "اختبار الصيانة",
+      email: "mt-cross@nokhba-hotel.sa",
+      roles: ["admin"],
+    };
+
+    // A room nobody is in, taken out of service and left dirty.
+    const unit = await prisma.unit.findFirstOrThrow({
+      where: {
+        propertyId,
+        reservations: { none: { status: "CHECKED_IN" } },
+        blocks: { none: { active: true } },
+        housekeepingTasks: { none: { status: { in: ["PENDING", "ASSIGNED", "IN_PROGRESS"] } } },
+      },
+      select: { id: true },
+    });
+
+    await prisma.unit.update({
+      where: { id: unit.id },
+      data: { housekeepingStatus: "DIRTY", maintenanceStatus: "OUT_OF_SERVICE" },
+    });
+
+    const task = await createHousekeepingTask({ unitId: unit.id } as never, actor, [propertyId]);
+    const result = await completeHousekeepingTask({ taskId: task.taskId }, actor, [propertyId]);
+
+    // Housekeeping did its job; the room is still not sellable, and cleaning is not
+    // what decides that.
+    expect(result.housekeepingStatus).toBe("CLEAN");
+    expect(result.unitStatus).toBe("MAINTENANCE");
   });
 });

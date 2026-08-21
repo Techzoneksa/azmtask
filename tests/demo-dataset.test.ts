@@ -4,6 +4,8 @@ import { promisify } from "node:util";
 import { beforeAll, describe, expect, it } from "vitest";
 
 import { prisma } from "@/lib/db";
+
+import { resetDatabase } from "./helpers";
 import { money } from "@/lib/money";
 
 import { DEMO_BUSINESS_DATE } from "../prisma/demo/constants";
@@ -33,6 +35,14 @@ let propertyId: string;
 
 beforeAll(async () => {
   const env = { ...process.env, DATABASE_URL: process.env.DATABASE_URL! };
+
+    /*
+   * Truncate first. This suite builds its own world from the real seed commands, and
+   * reservation numbers are globally unique — so rows another file left behind make
+   * the seed collide, and the suite then passes or fails on file ordering rather than
+   * on anything it is testing.
+   */
+  await resetDatabase();
 
   await run("npx", ["tsx", "prisma/seed.ts"], { env });
   await run("npx", ["tsx", "prisma/demo-seed.ts"], { env });
@@ -90,6 +100,42 @@ describe("dataset shape", () => {
     expect(counts.movements).toBeGreaterThan(0);
     expect(counts.outlets).toBeGreaterThanOrEqual(3);
     expect(counts.activity).toBeGreaterThanOrEqual(80);
+  });
+
+  it("stages a housekeeping scenario with work in every live state", async () => {
+    /*
+     * Pinned, because the seed is deterministic and the housekeeping screens are read
+     * against these figures. If a future change to the scenario moves them, that is a
+     * decision somebody should make on purpose rather than discover on a demo.
+     */
+    const byStatus = await prisma.housekeepingTask.groupBy({
+      by: ["status"],
+      where: { propertyId },
+      _count: { _all: true },
+    });
+
+    const count = (status: string) =>
+      byStatus.find((row) => row.status === status)?._count._all ?? 0;
+
+    expect(count("COMPLETED")).toBe(58);
+    expect(count("IN_PROGRESS")).toBe(2);
+    expect(count("PENDING")).toBe(3);
+    expect(count("CANCELLED")).toBe(0);
+    expect(byStatus.reduce((sum, row) => sum + row._count._all, 0)).toBe(63);
+
+    // Rooms in each state the board has to render.
+    const rooms = await prisma.unit.groupBy({
+      by: ["housekeepingStatus"],
+      where: { propertyId },
+      _count: { _all: true },
+    });
+    const inState = (status: string) =>
+      rooms.find((row) => row.housekeepingStatus === status)?._count._all ?? 0;
+
+    expect(inState("DIRTY")).toBeGreaterThan(0);
+    expect(inState("CLEANING")).toBeGreaterThan(0);
+    expect(inState("CLEAN")).toBeGreaterThan(0);
+    expect(inState("INSPECTED")).toBeGreaterThan(0);
   });
 
   it("covers every reservation status the workflows need", async () => {

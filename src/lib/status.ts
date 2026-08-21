@@ -49,22 +49,46 @@ export const UNIT_STATUS = {
 
 export type UnitStatus = keyof typeof UNIT_STATUS;
 
+/*
+ * Keyed by the HousekeepingStatus enum. `out_of_service` was invented here and matches
+ * nothing the column can hold — being out of service is a maintenance fact, on a
+ * different column entirely — so it is gone.
+ *
+ * CLEAN and INSPECTED are both ready to receive a guest; the difference is that
+ * somebody checked. The labels say so rather than making the reader guess.
+ */
 export const HOUSEKEEPING_STATUS = {
   clean: { label: "نظيفة", tone: "ok" },
   dirty: { label: "تحتاج تنظيف", tone: "warn" },
-  cleaning: { label: "جاري التنظيف", tone: "info" },
-  inspected: { label: "تم الفحص", tone: "ok" },
-  out_of_service: { label: "خارج الخدمة", tone: "danger" },
+  cleaning: { label: "جارٍ التنظيف", tone: "info" },
+  inspected: { label: "نظيفة ومعتمدة", tone: "ok" },
 } as const satisfies Record<string, StatusMeta>;
 
 export type HousekeepingStatus = keyof typeof HOUSEKEEPING_STATUS;
 
 export const HOUSEKEEPING_TASK_STATUS = {
-  pending: { label: "بانتظار التنفيذ", tone: "warn" },
-  assigned: { label: "تم الإسناد", tone: "info" },
-  in_progress: { label: "جاري التنفيذ", tone: "info" },
+  pending: { label: "بانتظار الإسناد", tone: "warn" },
+  assigned: { label: "مسندة", tone: "info" },
+  in_progress: { label: "جارٍ التنظيف", tone: "info" },
   completed: { label: "مكتملة", tone: "ok" },
   cancelled: { label: "ملغاة", tone: "neutral" },
+} as const satisfies Record<string, StatusMeta>;
+
+/** Keyed by the HousekeepingTaskType enum. */
+export const HOUSEKEEPING_TASK_TYPE = {
+  checkout_cleaning: { label: "تنظيف بعد المغادرة", tone: "info" },
+  stay_over: { label: "خدمة أثناء الإقامة", tone: "neutral" },
+  deep_cleaning: { label: "تنظيف عميق", tone: "warn" },
+  inspection: { label: "فحص وتجهيز", tone: "info" },
+  turndown: { label: "تجهيز مسائي", tone: "neutral" },
+  other: { label: "أخرى", tone: "neutral" },
+} as const satisfies Record<string, StatusMeta>;
+
+/** Keyed by the HousekeepingSource enum — why the room needs attention. */
+export const HOUSEKEEPING_SOURCE = {
+  checkout: { label: "مغادرة نزيل", tone: "info" },
+  manual: { label: "طلب يدوي", tone: "neutral" },
+  inspection_failed: { label: "إعادة بعد فحص", tone: "warn" },
 } as const satisfies Record<string, StatusMeta>;
 
 export type HousekeepingTaskStatus = keyof typeof HOUSEKEEPING_TASK_STATUS;
@@ -94,9 +118,14 @@ export const INVOICE_STATUS = {
 
 export type InvoiceStatus = keyof typeof INVOICE_STATUS;
 
+/*
+ * Keyed by the TaskPriority enum: LOW, NORMAL, HIGH, URGENT. `medium` was invented
+ * here and matched nothing, so every ordinary-priority task — the majority of them —
+ * rendered the raw word NORMAL on screen.
+ */
 export const PRIORITY = {
   low: { label: "منخفضة", tone: "neutral" },
-  medium: { label: "متوسطة", tone: "info" },
+  normal: { label: "عادية", tone: "info" },
   high: { label: "عالية", tone: "warn" },
   urgent: { label: "عاجلة", tone: "danger" },
 } as const satisfies Record<string, StatusMeta>;

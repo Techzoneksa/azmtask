@@ -1,19 +1,15 @@
 import "server-only";
 
-import {
-  HousekeepingStatus,
-  HousekeepingTaskStatus,
-  HousekeepingTaskType,
-  ReservationStatus,
-  TaskPriority,
-  UnitMaintenanceStatus,
-  UnitStatus,
-} from "@/generated/prisma/enums";
+import { HousekeepingStatus, ReservationStatus } from "@/generated/prisma/enums";
 import { prisma } from "@/lib/db";
 import { AppError, withDbErrors } from "@/server/errors";
 
+import { getBusinessDate } from "@/server/business-date";
+
 import { recordActivity, type ActivityActor } from "./activity.service";
+import { queueTurnoverClean } from "./housekeeping.service";
 import { BLOCKING_STATUSES } from "./reservation.service";
+import { syncUnitStatus } from "./unit.service";
 
 /**
  * The stay lifecycle — departure and the housekeeping cycle that follows it.
@@ -29,6 +25,12 @@ import { BLOCKING_STATUSES } from "./reservation.service";
  * requirements, room assignment, readiness, unit-type locking, idempotency — and the
  * placeholder was deleted rather than left beside it. Two functions called `checkIn`
  * with different rules is exactly how a system starts disagreeing with itself.
+ *
+ * Cleaning completion went the same way in Stage 10. The version that lived here wrote
+ * `unit.status` from a hand-rolled ternary that knew about maintenance and occupancy
+ * but not about blocks — so cleaning a blocked room quietly put it back on the market.
+ * The housekeeping service owns that transition now, and reaches the room's operational
+ * status through the same derivation everything else uses.
  */
 
 /**
@@ -86,42 +88,29 @@ export async function checkOut(
       });
 
       if (reservation.unitId) {
-        // The room leaves the sold state and enters the cleaning cycle in one step.
+        // The room becomes physically dirty; whether it is sellable follows from the
+        // records — the guest has gone, so derivation, not this line, decides.
         await tx.unit.update({
           where: { id: reservation.unitId },
-          data: {
-            status: UnitStatus.CLEANING,
-            housekeepingStatus: HousekeepingStatus.DIRTY,
-          },
+          data: { housekeepingStatus: HousekeepingStatus.DIRTY },
         });
 
-        // One open cleaning task per unit — a second checkout should not queue a
-        // duplicate for a room already waiting to be cleaned.
-        const openTask = await tx.housekeepingTask.count({
-          where: {
-            unitId: reservation.unitId,
-            status: {
-              in: [
-                HousekeepingTaskStatus.PENDING,
-                HousekeepingTaskStatus.ASSIGNED,
-                HousekeepingTaskStatus.IN_PROGRESS,
-              ],
-            },
-          },
+        /*
+         * The one place a turnover clean is created. Stage 10 moved the dedup rule,
+         * the priority and the origin reference into the housekeeping service so a
+         * departure and a supervisor raising work by hand cannot drift apart — a
+         * second automatic pathway is how a hotel ends up with two tasks for one room
+         * and no idea which is real.
+         */
+        await queueTurnoverClean(tx, {
+          propertyId: reservation.propertyId,
+          unitId: reservation.unitId,
+          reservationId: reservation.id,
+          reservationNumber: reservation.reservationNumber,
+          actor,
         });
 
-        if (openTask === 0) {
-          await tx.housekeepingTask.create({
-            data: {
-              propertyId: reservation.propertyId,
-              unitId: reservation.unitId,
-              taskType: HousekeepingTaskType.CHECKOUT_CLEANING,
-              status: HousekeepingTaskStatus.PENDING,
-              priority: TaskPriority.HIGH,
-              notes: `تنظيف بعد مغادرة الحجز ${reservation.reservationNumber}`,
-            },
-          });
-        }
+        await syncUnitStatus(tx, reservation.unitId, await getBusinessDate());
       }
 
       await recordActivity(
@@ -142,83 +131,6 @@ export async function checkOut(
       );
 
       return updated;
-    }),
-  );
-}
-
-/**
- * Completes a cleaning task and returns the room to the market — the other half of
- * the checkout linkage. A room still under maintenance stays out of service; only
- * an operational room becomes available.
- */
-export async function completeHousekeepingTask(
-  taskId: string,
-  actor: ActivityActor,
-) {
-  return withDbErrors("stay.completeHousekeeping", () =>
-    prisma.$transaction(async (tx) => {
-      const task = await tx.housekeepingTask.findUnique({
-        where: { id: taskId },
-        select: {
-          id: true,
-          propertyId: true,
-          unitId: true,
-          status: true,
-          unit: { select: { unitNumber: true, maintenanceStatus: true } },
-        },
-      });
-
-      if (!task) throw new AppError("NOT_FOUND", "مهمة النظافة غير موجودة.");
-      if (task.status === HousekeepingTaskStatus.COMPLETED) return task;
-      if (task.status === HousekeepingTaskStatus.CANCELLED) {
-        throw new AppError("CONFLICT", "المهمة ملغاة ولا يمكن إكمالها.");
-      }
-
-      await tx.housekeepingTask.update({
-        where: { id: taskId },
-        data: {
-          status: HousekeepingTaskStatus.COMPLETED,
-          completedAt: new Date(),
-        },
-      });
-
-      // A room whose stay has not ended yet was a stay-over clean: it stays occupied.
-      const stillOccupied = await tx.reservation.count({
-        where: {
-          unitId: task.unitId,
-          status: ReservationStatus.CHECKED_IN,
-        },
-      });
-
-      const outOfService =
-        task.unit?.maintenanceStatus === UnitMaintenanceStatus.OUT_OF_SERVICE;
-
-      await tx.unit.update({
-        where: { id: task.unitId },
-        data: {
-          housekeepingStatus: HousekeepingStatus.CLEAN,
-          status: outOfService
-            ? UnitStatus.MAINTENANCE
-            : stillOccupied > 0
-              ? UnitStatus.OCCUPIED
-              : UnitStatus.AVAILABLE,
-        },
-      });
-
-      await recordActivity(
-        {
-          actor,
-          propertyId: task.propertyId,
-          module: "housekeeping",
-          action: "complete",
-          entityType: "HousekeepingTask",
-          entityId: task.id,
-          description: `إنهاء تنظيف الوحدة ${task.unit?.unitNumber ?? "-"}`,
-        },
-        tx,
-      );
-
-      return task;
     }),
   );
 }

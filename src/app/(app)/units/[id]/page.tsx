@@ -8,6 +8,7 @@ import { formatAmount, formatDate, formatDateShort, formatMobile, formatRelative
 import {
   HOUSEKEEPING_STATUS,
   HOUSEKEEPING_TASK_STATUS,
+  HOUSEKEEPING_TASK_TYPE,
   MAINTENANCE_STATUS,
   PAYMENT_STATUS,
   PRIORITY,
@@ -17,8 +18,10 @@ import {
 } from "@/lib/status";
 import { AppError } from "@/server/errors";
 import { getCurrentProperty } from "@/server/services/property.service";
+import { HOUSEKEEPING_PERMISSIONS } from "@/server/housekeeping-rules";
 import { getUnitDetails, listUnitTypes } from "@/server/services/unit.service";
 
+import { ReadinessActions } from "../../housekeeping/components/ReadinessActions";
 import { UnitActions } from "../components/UnitActions";
 
 /**
@@ -119,6 +122,7 @@ export default async function UnitDetailPage({ params }: { params: Promise<{ id:
   const canManage = await can("units.manage");
   const canViewGuests = await can("guests.view");
   const canViewReservations = await can("reservations.view");
+  const canManageHousekeeping = await can(HOUSEKEEPING_PERMISSIONS.manage);
 
   // Only fetched when editing is actually on offer — the list feeds the type select.
   const unitTypes = canManage
@@ -324,6 +328,60 @@ export default async function UnitDetailPage({ params }: { params: Promise<{ id:
 
       <div className="grid gap-4 lg:grid-cols-2">
         <Panel title="النظافة">
+          {unit.inspectedAt && (
+            <p className="mb-3 rounded-lg bg-ok-bg px-3 py-2 text-[12px] text-ok-fg">
+              اعتُمدت الجاهزية {formatRelative(unit.inspectedAt)}
+              {unit.inspectedByName && ` · ${unit.inspectedByName}`}
+            </p>
+          )}
+          {/*
+            The live task first, named as such. A history list with no marker for
+            "this is the one the room is waiting on" makes the reader work it out from
+            five statuses, and the answer is the only thing anyone opened this for.
+          */}
+          {(() => {
+            const active = unit.housekeeping.find((task) => task.active);
+            if (!active) return null;
+
+            const state = label(HOUSEKEEPING_TASK_STATUS, active.status);
+            const priority = label(PRIORITY, active.priority);
+            const type = label(HOUSEKEEPING_TASK_TYPE, active.taskType);
+
+            return (
+              <div className="mb-3 rounded-lg border border-brand-300 bg-brand-50/50 p-3">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-[13px] font-medium text-content">مهمة مفتوحة</span>
+                  <Badge tone={state.tone as never}>{state.label}</Badge>
+                  <Badge tone={priority.tone as never}>{priority.label}</Badge>
+                </div>
+                <p className="mt-1.5 text-[12px] text-content-muted">
+                  {type.label} · {active.assignee ?? "لم تُسنَد بعد"}
+                  {active.startedAt && ` · بدأت ${formatRelative(active.startedAt)}`}
+                </p>
+                {canManageHousekeeping && (
+                  <Link
+                    href={`/housekeeping/${active.id}`}
+                    className="mt-2 inline-block text-[12px] text-brand-700 hover:underline"
+                  >
+                    فتح المهمة
+                  </Link>
+                )}
+              </div>
+            );
+          })()}
+
+          {canManageHousekeeping && (
+            <div className="mb-3">
+              <ReadinessActions
+                unit={{
+                  id: unit.id,
+                  unitNumber: unit.unitNumber,
+                  housekeepingStatus: unit.housekeepingStatus,
+                }}
+              />
+            </div>
+          )}
+
           {unit.housekeeping.length === 0 ? (
             <Empty>لا توجد مهام نظافة مسجّلة لهذه الوحدة</Empty>
           ) : (

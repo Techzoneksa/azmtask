@@ -1,14 +1,27 @@
 import { beforeAll, describe, expect, it } from "vitest";
 import {
+  HOUSEKEEPING_SOURCE,
+  HOUSEKEEPING_STATUS,
+  HOUSEKEEPING_TASK_STATUS,
+  HOUSEKEEPING_TASK_TYPE,
   INVOICE_STATUS,
+  MAINTENANCE_STATUS,
   PAYMENT_METHOD,
   PAYMENT_STATUS,
+  PRIORITY,
   RESERVATION_SOURCE,
   RESERVATION_STATUS,
   UNIT_STATUS,
   statusMeta,
 } from "@/lib/status";
 
+import {
+  formatAmount,
+  formatDate,
+  formatDateShort,
+  formatDateTime,
+  formatNumber,
+} from "@/lib/format";
 import { prisma } from "@/lib/db";
 
 import { resetDatabase, seedGuest, seedProperty } from "./helpers";
@@ -245,6 +258,19 @@ describe("status labels", () => {
     ["PaymentMethod", PAYMENT_METHOD, ["CASH", "CARD", "TRANSFER", "OTHER"]],
     ["InvoiceStatus", INVOICE_STATUS, ["DRAFT", "ISSUED", "PARTIALLY_PAID", "PAID", "CANCELLED"]],
     ["UnitStatus", UNIT_STATUS, ["AVAILABLE", "OCCUPIED", "RESERVED", "CLEANING", "MAINTENANCE", "BLOCKED"]],
+    /*
+     * Added in Stage 10, after the housekeeping board surfaced two maps that had been
+     * wrong since they were written: `PRIORITY` was keyed `medium` for an enum member
+     * actually called NORMAL, so the majority of tasks rendered the raw word on
+     * screen, and `HOUSEKEEPING_STATUS` carried an invented `out_of_service` that no
+     * column can produce. Both are exactly what this test exists to catch.
+     */
+    ["HousekeepingStatus", HOUSEKEEPING_STATUS, ["CLEAN", "DIRTY", "CLEANING", "INSPECTED"]],
+    ["HousekeepingTaskStatus", HOUSEKEEPING_TASK_STATUS, ["PENDING", "ASSIGNED", "IN_PROGRESS", "COMPLETED", "CANCELLED"]],
+    ["HousekeepingTaskType", HOUSEKEEPING_TASK_TYPE, ["CHECKOUT_CLEANING", "STAY_OVER", "DEEP_CLEANING", "INSPECTION", "TURNDOWN", "OTHER"]],
+    ["HousekeepingSource", HOUSEKEEPING_SOURCE, ["CHECKOUT", "MANUAL", "INSPECTION_FAILED"]],
+    ["TaskPriority", PRIORITY, ["LOW", "NORMAL", "HIGH", "URGENT"]],
+    ["MaintenanceStatus", MAINTENANCE_STATUS, ["OPEN", "ASSIGNED", "IN_PROGRESS", "COMPLETED", "CANCELLED"]],
   ];
 
   for (const [name, map, values] of CASES) {
@@ -261,5 +287,44 @@ describe("status labels", () => {
   it("survives an unknown value without throwing", () => {
     expect(statusMeta(RESERVATION_STATUS, "SOMETHING_NEW").label).toBe("SOMETHING_NEW");
     expect(statusMeta(RESERVATION_STATUS, null).label).toBe("—");
+  });
+});
+
+describe("display formatting", () => {
+  /*
+   * `ar-SA` selects the Umm al-Qura calendar by default, and Node and Chromium do not
+   * agree about it: the same instant rendered as "19 أغسطس 2026" on the server and
+   * "6 ربيع الأول 1448 هـ" in the browser. Inside a client component that is a
+   * hydration mismatch, and on screen it is a date that changes as the page loads.
+   *
+   * These assert the calendar and the numerals are pinned, so the output is a function
+   * of the input and of nothing about the machine rendering it.
+   */
+  it("renders Gregorian dates with Latin numerals", () => {
+    const instant = new Date("2026-08-19T10:02:00.000Z");
+
+    expect(formatDate(instant)).toBe("19 أغسطس 2026");
+    expect(formatDateShort(instant)).toContain("19");
+    expect(formatDateShort(instant)).toContain("08");
+    expect(formatDateShort(instant)).toContain("2026");
+    expect(formatDateTime(instant)).toContain("19 أغسطس 2026");
+
+    // No Hijri era marker, and no Arabic-Indic digits anywhere.
+    for (const rendered of [formatDate(instant), formatDateShort(instant), formatDateTime(instant)]) {
+      expect(rendered).not.toContain("هـ");
+      expect(rendered).not.toMatch(/[٠-٩]/);
+    }
+  });
+
+  it("renders numbers and money with Latin numerals", () => {
+    expect(formatNumber(1250)).toBe("1,250");
+    expect(formatAmount("1234.50")).toContain("1,234.50");
+    expect(formatNumber(1250)).not.toMatch(/[٠-٩]/);
+  });
+
+  it("returns the fallback rather than throwing on a missing date", () => {
+    expect(formatDate(null)).toBe("—");
+    expect(formatDateTime(undefined)).toBe("—");
+    expect(formatDateShort("")).toBe("—");
   });
 });

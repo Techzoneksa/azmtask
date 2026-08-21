@@ -4,9 +4,21 @@
  * Every user-facing date, amount and number in the system goes through here so the
  * interface stays consistent. Locale is Arabic (Saudi) but numerals stay Latin —
  * operational staff read room numbers and amounts faster that way.
+ *
+ * ## Why the calendar is pinned
+ *
+ * `ar-SA` selects the Umm al-Qura calendar by default, and the two ICU builds this
+ * code runs on do not agree about it: Node rendered "19 أغسطس 2026" while Chromium
+ * rendered "6 ربيع الأول 1448 هـ" for the same instant. In a client component that is
+ * a hydration mismatch — React throws away the server HTML and regenerates the tree —
+ * and for the reader it is a date that changes as the page loads.
+ *
+ * Every docstring below, every report and the whole booking model are Gregorian, so
+ * that is what gets pinned. `-ca-gregory` alongside `-nu-latn` makes the output a
+ * function of the input and nothing else.
  */
 
-const LOCALE = "ar-SA-u-nu-latn";
+const LOCALE = "ar-SA-u-ca-gregory-nu-latn";
 const TIME_ZONE = "Asia/Riyadh";
 export const CURRENCY = "SAR";
 

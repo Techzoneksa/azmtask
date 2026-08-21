@@ -3,8 +3,9 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { prisma } from "@/lib/db";
 import { recordMovement } from "@/server/services/inventory.service";
 import { checkInReservation } from "@/server/services/checkin.service";
+import { completeHousekeepingTask } from "@/server/services/housekeeping.service";
 import { createReservation } from "@/server/services/reservation.service";
-import { checkOut, completeHousekeepingTask } from "@/server/services/stay.service";
+import { checkOut } from "@/server/services/stay.service";
 
 import {
   TEST_ACTOR,
@@ -164,7 +165,7 @@ describe("housekeeping", () => {
       where: { unitId: ctx.unit.id, status: "PENDING" },
     });
 
-    await completeHousekeepingTask(task.id, TEST_ACTOR);
+    await completeHousekeepingTask({ taskId: task.id }, TEST_ACTOR, [ctx.property.id]);
 
     const unit = await unitState();
     expect(unit.housekeepingStatus).toBe("CLEAN");
@@ -182,7 +183,7 @@ describe("housekeeping", () => {
     const task = await prisma.housekeepingTask.findFirstOrThrow({
       where: { unitId: ctx.unit.id, status: "PENDING" },
     });
-    await completeHousekeepingTask(task.id, TEST_ACTOR);
+    await completeHousekeepingTask({ taskId: task.id }, TEST_ACTOR, [ctx.property.id]);
 
     const unit = await unitState();
     expect(unit.housekeepingStatus).toBe("CLEAN");

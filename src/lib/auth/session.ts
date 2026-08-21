@@ -36,6 +36,15 @@ export type Session = {
   role: string;
   jobTitle: string;
   propertyId: string | null;
+  /**
+   * The staff record behind this login, when there is one.
+   *
+   * Null for an owner or an integration account that is not on the payroll. Screens
+   * that show "my work" filter on this rather than on a role name: a supervisor who
+   * also cleans rooms has tasks of their own, and a role tells you nothing about
+   * which ones.
+   */
+  employeeId: string | null;
   /** Effective permissions: the union of everything their roles grant. */
   permissions: Permission[];
 };
@@ -68,6 +77,7 @@ export const getSession = cache(async (): Promise<Session | null> => {
     role: user.roleKeys[0] ?? "",
     jobTitle: user.roleNames[0] ?? "",
     propertyId: user.propertyId,
+    employeeId: user.employeeId,
     permissions: knownPermissions(user.permissions),
   };
 });

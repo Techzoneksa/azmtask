@@ -145,6 +145,15 @@ model Unit {
   housekeepingStatus HousekeepingStatus    @default(CLEAN)
   maintenanceStatus  UnitMaintenanceStatus @default(OPERATIONAL)
 
+  /// Who signed the room off, and when.
+  ///
+  /// Inspection is a statement about the room as it stands, not about the cleaning
+  /// task that preceded it — a supervisor may sign off a room nobody raised a task
+  /// for. So it lives beside `housekeepingStatus`, which is the other half of the
+  /// same sentence, rather than on the task.
+  inspectedAt   DateTime? @db.DateTime(3)
+  inspectedById String?   @db.VarChar(30)
+
   notes     String?  @db.Text
   createdAt DateTime @default(now()) @db.DateTime(3)
   updatedAt DateTime @updatedAt @db.DateTime(3)
@@ -155,6 +164,7 @@ model Unit {
   housekeepingTasks   HousekeepingTask[]
   maintenanceRequests MaintenanceRequest[]
   blocks              UnitBlock[]
+  inspectedBy         User?                @relation("UnitInspectedBy", fields: [inspectedById], references: [id], onDelete: SetNull)
 
   /// Room 101 exists once per property. This is the constraint that makes the unit
   /// board trustworthy.
@@ -386,6 +396,9 @@ model Reservation {
   charges  ReservationCharge[]
   payments Payment[]
   invoices Invoice[]
+  /// Turnover cleans this departure caused. SetNull on delete, so a purged booking
+  /// leaves the cleaning history intact rather than taking it with it.
+  housekeepingTasks HousekeepingTask[]
 
   /// Serves the availability query directly:
   ///   unitId = ? AND status IN (blocking) AND checkInDate < ? AND checkOutDate > ?
@@ -575,6 +588,20 @@ enum HousekeepingTaskStatus {
   CANCELLED
 }
 
+/// Why a cleaning task exists.
+///
+/// A room is dirty for a reason, and the reason changes what the desk does about it:
+/// a turnover after a departure is urgent because somebody is arriving, a failed
+/// inspection is a re-do that a supervisor is waiting on, and a manual request is
+/// somebody's judgement call. Recording it as a typed origin with a reference — rather
+/// than only as free text in the notes — means the board can group by it and a later
+/// report can count it.
+enum HousekeepingSource {
+  CHECKOUT
+  MANUAL
+  INSPECTION_FAILED
+}
+
 enum HousekeepingTaskType {
   CHECKOUT_CLEANING
   STAY_OVER
@@ -593,10 +620,31 @@ model HousekeepingTask {
   status             HousekeepingTaskStatus @default(PENDING)
   priority           TaskPriority           @default(NORMAL)
   notes              String?                @db.Text
-  startedAt          DateTime?              @db.DateTime(3)
-  completedAt        DateTime?              @db.DateTime(3)
-  createdAt          DateTime               @default(now()) @db.DateTime(3)
-  updatedAt          DateTime               @updatedAt @db.DateTime(3)
+
+  /// Where this task came from, and what it refers to.
+  ///
+  /// `sourceReservationId` is set only for a turnover, and it is the booking whose
+  /// departure created the task — the answer to "why is 305 dirty?" that a note
+  /// saying "clean after checkout" can never give reliably.
+  source              HousekeepingSource @default(MANUAL)
+  sourceReservationId String?            @db.VarChar(30)
+
+  /// Each transition records when it happened and who caused it. `startedAt` and
+  /// `completedAt` were already here; the rest were being reconstructed from the
+  /// activity log, which exists to be prunable and cannot be the operational record.
+  assignedAt         DateTime? @db.DateTime(3)
+  assignedById       String?   @db.VarChar(30)
+  startedAt          DateTime? @db.DateTime(3)
+  startedById        String?   @db.VarChar(30)
+  completedAt        DateTime? @db.DateTime(3)
+  completedById      String?   @db.VarChar(30)
+  cancelledAt        DateTime? @db.DateTime(3)
+  cancelledById      String?   @db.VarChar(30)
+  cancellationReason String?   @db.VarChar(255)
+
+  createdById String?  @db.VarChar(30)
+  createdAt   DateTime @default(now()) @db.DateTime(3)
+  updatedAt   DateTime @updatedAt @db.DateTime(3)
 
   property Property  @relation(fields: [propertyId], references: [id], onDelete: Restrict)
   unit     Unit      @relation(fields: [unitId], references: [id], onDelete: Restrict)
@@ -604,9 +652,18 @@ model HousekeepingTask {
   /// survive them rather than block their removal.
   assignee Employee? @relation(fields: [assignedEmployeeId], references: [id], onDelete: SetNull)
 
+  sourceReservation Reservation? @relation(fields: [sourceReservationId], references: [id], onDelete: SetNull)
+  createdBy   User? @relation("HousekeepingCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  assignedBy  User? @relation("HousekeepingAssignedBy", fields: [assignedById], references: [id], onDelete: SetNull)
+  startedBy   User? @relation("HousekeepingStartedBy", fields: [startedById], references: [id], onDelete: SetNull)
+  completedBy User? @relation("HousekeepingCompletedBy", fields: [completedById], references: [id], onDelete: SetNull)
+  cancelledBy User? @relation("HousekeepingCancelledBy", fields: [cancelledById], references: [id], onDelete: SetNull)
+
   @@index([unitId, status])
   @@index([propertyId, status])
   @@index([assignedEmployeeId, status])
+  /// Serves the board's default sort — open work, most urgent first.
+  @@index([propertyId, status, priority])
   @@map("housekeeping_tasks")
 }
 
@@ -718,6 +775,12 @@ model User {
   cancelledReservations Reservation[]          @relation("ReservationCancelledBy")
   checkedInReservations Reservation[]          @relation("ReservationCheckedInBy")
   noShowReservations    Reservation[]          @relation("ReservationNoShowBy")
+  inspectedUnits        Unit[]                 @relation("UnitInspectedBy")
+  createdHousekeeping   HousekeepingTask[]     @relation("HousekeepingCreatedBy")
+  assignedHousekeeping  HousekeepingTask[]     @relation("HousekeepingAssignedBy")
+  startedHousekeeping   HousekeepingTask[]     @relation("HousekeepingStartedBy")
+  completedHousekeeping HousekeepingTask[]     @relation("HousekeepingCompletedBy")
+  cancelledHousekeeping HousekeepingTask[]     @relation("HousekeepingCancelledBy")
   createdPayments       Payment[]              @relation("PaymentCreatedBy")
   createdCharges        ReservationCharge[]    @relation("ChargeCreatedBy")
   createdExpenses       Expense[]              @relation("ExpenseCreatedBy")

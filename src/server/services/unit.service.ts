@@ -50,12 +50,9 @@ export async function deriveUnitStatus(
 ): Promise<{ status: string; maintenanceStatus: string }> {
   const today = businessDay ?? (await getBusinessDate());
 
-  const [inHouse, openFault, activeBlock, activeClean, upcomingToday] = await Promise.all([
+  const [inHouse, activeBlock, activeClean, upcomingToday] = await Promise.all([
     tx.reservation.count({
       where: { unitId, status: "CHECKED_IN" },
-    }),
-    tx.maintenanceRequest.count({
-      where: { unitId, status: { in: ["OPEN", "ASSIGNED", "IN_PROGRESS"] } },
     }),
     tx.unitBlock.count({
       where: {
@@ -78,10 +75,14 @@ export async function deriveUnitStatus(
     select: { maintenanceStatus: true },
   });
 
-  const maintenanceStatus =
-    openFault > 0 && unit.maintenanceStatus === "OPERATIONAL"
-      ? unit.maintenanceStatus
-      : unit.maintenanceStatus;
+  /*
+   * `maintenanceStatus` is the canonical answer to "can this room be sold at all",
+   * and it is a decision somebody records rather than something inferred from the
+   * existence of a fault ticket: a dripping tap is an open request that does not take
+   * a room off the market, and only a person can say which faults do. So it is passed
+   * through unchanged, and derivation reads it rather than second-guessing it.
+   */
+  const maintenanceStatus = unit.maintenanceStatus;
 
   const status =
     activeBlock > 0
@@ -720,6 +721,8 @@ export async function getUnitDetails(propertyId: string, unitId: string) {
         status: true,
         housekeepingStatus: true,
         maintenanceStatus: true,
+        inspectedAt: true,
+        inspectedBy: { select: { name: true } },
         notes: true,
         createdAt: true,
         unitType: {
@@ -765,6 +768,7 @@ export async function getUnitDetails(propertyId: string, unitId: string) {
           take: 5,
           select: {
             id: true, status: true, taskType: true, priority: true,
+            source: true, notes: true, assignedEmployeeId: true, assignedAt: true,
             startedAt: true, completedAt: true, createdAt: true,
             assignee: { select: { name: true } },
           },
@@ -802,6 +806,8 @@ export async function getUnitDetails(propertyId: string, unitId: string) {
       status: unit.status,
       housekeepingStatus: unit.housekeepingStatus,
       maintenanceStatus: unit.maintenanceStatus,
+      inspectedAt: unit.inspectedAt?.toISOString() ?? null,
+      inspectedByName: unit.inspectedBy?.name ?? null,
       notes: unit.notes,
       createdAt: unit.createdAt.toISOString(),
       unitType: {
@@ -853,10 +859,20 @@ export async function getUnitDetails(propertyId: string, unitId: string) {
         status: task.status,
         taskType: task.taskType,
         priority: task.priority,
+        source: task.source,
+        notes: task.notes,
+        assigneeId: task.assignedEmployeeId,
         assignee: task.assignee?.name ?? null,
+        assignedAt: task.assignedAt?.toISOString() ?? null,
         startedAt: task.startedAt?.toISOString() ?? null,
         completedAt: task.completedAt?.toISOString() ?? null,
         createdAt: task.createdAt.toISOString(),
+        /*
+         * The one the room is waiting on right now, as opposed to the four before it.
+         * The unit page's job is to say what is happening, and a history list with no
+         * marker for "this is the live one" makes the reader work it out from statuses.
+         */
+        active: ["PENDING", "ASSIGNED", "IN_PROGRESS"].includes(task.status),
       })),
       maintenance: maintenance.map((request) => ({
         id: request.id,
