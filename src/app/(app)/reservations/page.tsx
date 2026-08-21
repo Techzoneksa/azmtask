@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { Metadata } from "next";
-import { CalendarPlus } from "lucide-react";
+import { CalendarDays, CalendarPlus } from "lucide-react";
 
 import { PageHeader } from "@/components/ui";
 import { can, requirePermission } from "@/lib/auth/guard";
@@ -102,7 +102,15 @@ export default async function ReservationsPage({ searchParams }: { searchParams:
         title="الحجوزات"
         description={`${formatNumber(total)} حجز${filtered ? " مطابق للفلاتر" : ""} في ${property.name}`}
         actions={
-          canCreate ? (
+          <div className="flex flex-wrap items-center gap-2">
+            <Link
+              href="/reservations/calendar"
+              className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-line px-3 text-[13px] text-content transition-colors hover:bg-surface-inset"
+            >
+              <CalendarDays className="size-4" aria-hidden />
+              تقويم الحجوزات
+            </Link>
+            {canCreate && (
             <Link
               href="/reservations/new"
               className="inline-flex h-9 items-center gap-2 rounded-lg bg-brand-600 px-3.5 text-[13px] font-medium text-white transition-colors hover:bg-brand-700"
@@ -110,7 +118,8 @@ export default async function ReservationsPage({ searchParams }: { searchParams:
               <CalendarPlus className="size-4" aria-hidden />
               حجز جديد
             </Link>
-          ) : undefined
+            )}
+          </div>
         }
       />
 

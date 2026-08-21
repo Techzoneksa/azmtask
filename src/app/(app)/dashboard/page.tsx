@@ -1,7 +1,9 @@
+import Link from "next/link";
 import {
   BedDouble,
   SprayCan,
   CalendarCheck,
+  CalendarDays,
   DoorOpen,
   Percent,
   Wallet,
@@ -91,7 +93,19 @@ export default async function DashboardPage() {
         title="لوحة المعلومات"
         description={`نظرة شاملة على تشغيل ${snapshot.propertyName} اليوم`}
         actions={
-          <div className="flex flex-col items-start gap-1 sm:items-end">
+          <div className="flex flex-wrap items-center gap-3 sm:justify-end">
+            {/* Only for someone who may open it — a link landing on "غير مصرح" is
+                worse than no link. */}
+            {canOpenReservations && (
+              <Link
+                href="/reservations/calendar"
+                className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-line px-3 text-[13px] text-content transition-colors hover:bg-surface-inset"
+              >
+                <CalendarDays className="size-4" aria-hidden />
+                تقويم الحجوزات
+              </Link>
+            )}
+            <div className="flex flex-col items-start gap-1 sm:items-end">
           <span className="text-[13px] font-medium text-content">
             {formatDate(snapshot.businessDate)}
           </span>
@@ -102,6 +116,7 @@ export default async function DashboardPage() {
               تاريخ تشغيلي ثابت — بيئة عرض
             </span>
             )}
+            </div>
           </div>
         }
       />

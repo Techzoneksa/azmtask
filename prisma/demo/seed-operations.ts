@@ -1,5 +1,7 @@
 import type { PrismaClient } from "../../src/generated/prisma/client";
 
+import { addDays } from "../../src/lib/datetime";
+
 import { DEMO_BUSINESS_DATE } from "./constants";
 import type { Random } from "./random";
 import { instantOn } from "./seed-scenario";
@@ -214,14 +216,38 @@ export async function seedOperations(
       }
 
       case "blocked": {
-        await prisma.unit.update({
-          where: { id: unit.id },
-          data: { status: "BLOCKED", housekeepingStatus: "CLEAN", maintenanceStatus: "OPERATIONAL" },
-          // The reason belongs on the record, not in someone's memory.
+        /*
+         * The block record is the reason the room is off the market, and Stage 5 made
+         * it the canonical one — availability, the unit board and the calendar all
+         * read it. The scenario used to set the unit's status and leave a note and
+         * nothing else, which meant the demo had a room marked BLOCKED that no record
+         * explained, and a calendar with nothing to draw.
+         */
+        await prisma.unitBlock.create({
+          data: {
+            propertyId: foundation.propertyId,
+            unitId: unit.id,
+            reason: "STAFF_USE",
+            notes: "محجوزة لإقامة طاقم التشغيل خلال أعمال التجديد بالطابق الرابع",
+            // Open-ended: it lifts when the renovation finishes, not on a date
+            // anybody has committed to.
+            startDate: addDays(DEMO_BUSINESS_DATE, -4),
+            endDate: null,
+            active: true,
+            createdById: foundation.userIds.hotel_manager ?? null,
+            createdAt: instantOn(-4, 9, 30),
+          },
         });
+
         await prisma.unit.update({
           where: { id: unit.id },
-          data: { notes: "محجوزة لإقامة طاقم التشغيل خلال أعمال التجديد بالطابق الرابع" },
+          data: {
+            status: "BLOCKED",
+            housekeepingStatus: "CLEAN",
+            maintenanceStatus: "OPERATIONAL",
+            // The reason belongs on the record, not in someone's memory.
+            notes: "محجوزة لإقامة طاقم التشغيل خلال أعمال التجديد بالطابق الرابع",
+          },
         });
         break;
       }

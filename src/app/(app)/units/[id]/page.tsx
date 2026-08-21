@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowRight, BedDouble, Lock, Users, Wallet } from "lucide-react";
+import { ArrowRight, BedDouble, CalendarDays, Lock, Users, Wallet } from "lucide-react";
 
 import { Badge, PageHeader } from "@/components/ui";
 import { can, requirePermission } from "@/lib/auth/guard";
@@ -146,6 +146,17 @@ export default async function UnitDetailPage({ params }: { params: Promise<{ id:
               <ArrowRight className="size-4" aria-hidden />
               كل الوحدات
             </Link>
+            {/* Filtered to this room's type — a real filter the calendar honours, not
+                a link that lands on an unfiltered board. */}
+            {canViewReservations && (
+              <Link
+                href={`/reservations/calendar?unitTypeId=${unit.unitType.id}`}
+                className="flex items-center gap-1.5 rounded-lg border border-line px-3 py-2 text-[13px] text-content transition-colors hover:bg-surface-inset"
+              >
+                <CalendarDays className="size-4" aria-hidden />
+                عرض في التقويم
+              </Link>
+            )}
             <UnitActions
               unitId={unit.id}
               unitNumber={unit.unitNumber}
