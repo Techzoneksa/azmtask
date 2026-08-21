@@ -1,0 +1,804 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<title>Prime POS — Promo 9:16</title>
+<style>
+/* ============ FONTS ============ */
+@font-face{font-family:'Tajawal';src:url('fonts/Tajawal-400.ttf');font-weight:400;}
+@font-face{font-family:'Tajawal';src:url('fonts/Tajawal-500.ttf');font-weight:500;}
+@font-face{font-family:'Tajawal';src:url('fonts/Tajawal-700.ttf');font-weight:700;}
+@font-face{font-family:'Tajawal';src:url('fonts/Tajawal-800.ttf');font-weight:800;}
+@font-face{font-family:'Tajawal';src:url('fonts/Tajawal-900.ttf');font-weight:900;}
+
+/* ============ PALETTE ============ */
+:root{
+  --navy:#060D24;         /* deepest background */
+  --navy2:#0A1633;
+  --navy3:#101F45;
+  --card:#122148;
+  --card2:#16295A;
+  --blue:#2E6BFF;
+  --blue2:#5A8DFF;
+  --cyan:#39C2FF;
+  --gold:#E8B84B;
+  --gold2:#F6D584;
+  --white:#FFFFFF;
+  --muted:#9FB3DC;
+  --green:#33D69F;
+  --red:#FF6B6B;
+}
+
+*{margin:0;padding:0;box-sizing:border-box;-webkit-font-smoothing:antialiased;}
+html,body{width:1080px;height:1920px;overflow:hidden;background:var(--navy);}
+body{font-family:'Tajawal',sans-serif;color:var(--white);}
+
+#stage{position:relative;width:1080px;height:1920px;overflow:hidden;
+  background:
+    radial-gradient(1400px 900px at 50% -10%, #14264F 0%, transparent 60%),
+    radial-gradient(1200px 800px at 50% 115%, #0E1D42 0%, transparent 55%),
+    linear-gradient(180deg,#081129 0%, #060D24 45%, #081129 100%);}
+
+/* ============ GLOBAL BACKGROUND ============ */
+.bg-grid{position:absolute;inset:-200px;opacity:.16;
+  background-image:
+    linear-gradient(rgba(90,141,255,.25) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(90,141,255,.25) 1px, transparent 1px);
+  background-size:90px 90px;
+  animation: gridPan 30s linear 0s both;}
+@keyframes gridPan{from{transform:translate(0,0)}to{transform:translate(-90px,-180px)}}
+
+.bg-glow{position:absolute;width:1300px;height:1300px;border-radius:50%;
+  filter:blur(10px);opacity:.5;pointer-events:none;}
+.bg-glow.a{left:-500px;top:-350px;background:radial-gradient(circle,rgba(46,107,255,.30) 0%,transparent 62%);
+  animation: drift1 30s ease-in-out 0s both;}
+.bg-glow.b{right:-560px;bottom:-300px;background:radial-gradient(circle,rgba(232,184,75,.16) 0%,transparent 60%);
+  animation: drift2 30s ease-in-out 0s both;}
+@keyframes drift1{0%{transform:translate(0,0) scale(1)}50%{transform:translate(140px,90px) scale(1.08)}100%{transform:translate(0,0) scale(1)}}
+@keyframes drift2{0%{transform:translate(0,0) scale(1)}50%{transform:translate(-120px,-120px) scale(1.1)}100%{transform:translate(0,0) scale(1)}}
+
+.particle{position:absolute;border-radius:50%;pointer-events:none;}
+@keyframes floatUp{0%{transform:translateY(0);opacity:0}8%{opacity:1}92%{opacity:1}100%{transform:translateY(-1750px);opacity:0}}
+
+.vignette{position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(ellipse 120% 90% at 50% 50%, transparent 55%, rgba(3,7,18,.55) 100%);}
+
+/* gold light sweep at scene boundaries */
+.sweep{position:absolute;top:-15%;left:-40%;width:34%;height:130%;pointer-events:none;
+  background:linear-gradient(100deg, transparent 0%, rgba(246,213,132,.16) 38%, rgba(255,255,255,.28) 50%, rgba(246,213,132,.16) 62%, transparent 100%);
+  transform:translateX(-500px) skewX(-14deg);opacity:0;}
+@keyframes sweepGo{0%{transform:translateX(-500px) skewX(-14deg);opacity:0}
+  12%{opacity:1}88%{opacity:1}
+  100%{transform:translateX(2100px) skewX(-14deg);opacity:0}}
+.sweep.s1{animation:sweepGo .75s cubic-bezier(.5,0,.4,1) 3.70s both;}
+.sweep.s2{animation:sweepGo .75s cubic-bezier(.5,0,.4,1) 8.70s both;}
+.sweep.s3{animation:sweepGo .75s cubic-bezier(.5,0,.4,1) 14.70s both;}
+.sweep.s4{animation:sweepGo .75s cubic-bezier(.5,0,.4,1) 21.70s both;}
+.sweep.s5{animation:sweepGo .75s cubic-bezier(.5,0,.4,1) 26.70s both;}
+
+/* ============ SCENE SHELLS ============ */
+.scene{position:absolute;inset:0;opacity:0;}
+@keyframes sceneIn{from{opacity:0;transform:scale(1.045)}to{opacity:1;transform:scale(1)}}
+@keyframes sceneOut{from{opacity:1;transform:scale(1)}to{opacity:0;transform:scale(.965)}}
+#scene1{animation:sceneIn .01s linear 0s both, sceneOut .45s ease-in 3.85s forwards;}
+#scene2{animation:sceneIn .55s cubic-bezier(.2,.8,.25,1) 4.0s both,  sceneOut .45s ease-in 8.85s forwards;}
+#scene3{animation:sceneIn .55s cubic-bezier(.2,.8,.25,1) 9.0s both,  sceneOut .45s ease-in 14.85s forwards;}
+#scene4{animation:sceneIn .55s cubic-bezier(.2,.8,.25,1) 15.0s both, sceneOut .45s ease-in 21.85s forwards;}
+#scene5{animation:sceneIn .55s cubic-bezier(.2,.8,.25,1) 22.0s both, sceneOut .45s ease-in 26.85s forwards;}
+#scene6{animation:sceneIn .6s  cubic-bezier(.2,.8,.25,1) 27.0s both;}
+
+/* ============ SHARED ANIMS ============ */
+@keyframes fadeUp{from{opacity:0;transform:translateY(70px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeDown{from{opacity:0;transform:translateY(-60px)}to{opacity:1;transform:translateY(0)}}
+@keyframes pop{0%{opacity:0;transform:scale(.55)}70%{opacity:1;transform:scale(1.06)}100%{opacity:1;transform:scale(1)}}
+@keyframes popSoft{0%{opacity:0;transform:scale(.85)}100%{opacity:1;transform:scale(1)}}
+@keyframes slideInR{from{opacity:0;transform:translateX(140px)}to{opacity:1;transform:translateX(0)}}
+@keyframes slideInL{from{opacity:0;transform:translateX(-140px)}to{opacity:1;transform:translateX(0)}}
+@keyframes wipeIn{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+@keyframes growBar{from{transform:scaleY(0)}to{transform:scaleY(1)}}
+@keyframes growBarX{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+@keyframes pulseGlow{0%,100%{box-shadow:0 0 0 0 rgba(232,184,75,.55)}50%{box-shadow:0 0 0 26px rgba(232,184,75,0)}}
+@keyframes pulseSoft{0%,100%{transform:scale(1)}50%{transform:scale(1.045)}}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.35}}
+@keyframes ringPing{0%{transform:scale(.4);opacity:.9}100%{transform:scale(2.6);opacity:0}}
+@keyframes dashDraw{from{stroke-dashoffset:var(--dash)}to{stroke-dashoffset:0}}
+@keyframes steam{0%{transform:translateY(0) scaleX(1);opacity:0}25%{opacity:.75}100%{transform:translateY(-46px) scaleX(1.4);opacity:0}}
+@keyframes tapPulse{0%{transform:scale(.3);opacity:0}25%{transform:scale(1);opacity:1}100%{transform:scale(1.9);opacity:0}}
+@keyframes pressBtn{0%,100%{transform:scale(1)}50%{transform:scale(.94)}}
+@keyframes flyChip{0%{opacity:0;transform:translate(0,60px) rotate(4deg)}18%{opacity:1}82%{opacity:1}100%{opacity:0;transform:translate(0,-560px) rotate(-5deg)}}
+@keyframes progressFill{from{width:0%}to{width:100%}}
+
+/* typography helpers */
+.headline{font-weight:900;text-align:center;line-height:1.28;
+  text-shadow:0 6px 40px rgba(0,0,0,.45);}
+.gold-grad{background:linear-gradient(115deg,var(--gold2) 10%,var(--gold) 45%,#C9962F 75%,var(--gold2) 100%);
+  -webkit-background-clip:text;background-clip:text;color:transparent;}
+.badge{display:inline-flex;align-items:center;gap:14px;background:rgba(46,107,255,.14);
+  border:2px solid rgba(90,141,255,.5);border-radius:999px;padding:14px 34px;
+  font-size:36px;font-weight:700;color:var(--blue2);letter-spacing:.5px;
+  backdrop-filter:blur(6px);}
+.badge .dot{width:14px;height:14px;border-radius:50%;background:var(--gold);}
+.en{font-family:'Tajawal',sans-serif;direction:ltr;unicode-bidi:isolate;}
+
+/* ==================================================================
+   SCENE 1 — busy restaurant (0–4s)
+================================================================== */
+#scene1 .badge-wrap{position:absolute;top:250px;width:100%;display:flex;justify-content:center;
+  animation:fadeDown .5s ease-out .15s both;}
+#scene1 .headline{position:absolute;top:1250px;width:100%;font-size:104px;}
+#scene1 .h-l1{display:block;animation:fadeUp .55s cubic-bezier(.2,.9,.3,1) .55s both;}
+#scene1 .h-l2{display:block;font-size:122px;margin-top:6px;animation:pop .6s cubic-bezier(.2,.9,.3,1) .95s both;}
+#scene1 .h-underline{width:360px;height:10px;margin:34px auto 0;border-radius:6px;
+  background:linear-gradient(90deg,var(--gold),var(--gold2));transform-origin:center;
+  animation:wipeIn .5s cubic-bezier(.2,.9,.3,1) 1.35s both;}
+
+/* vignette cards: stylized busy-restaurant illustrations */
+.vign{position:absolute;border-radius:36px;overflow:hidden;
+  background:linear-gradient(160deg,var(--card) 0%,var(--navy3) 100%);
+  border:2px solid rgba(90,141,255,.28);
+  box-shadow:0 30px 80px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.08);
+  display:flex;align-items:center;justify-content:center;}
+#scene1 .v1{top:430px; right:70px; width:430px;height:330px;transform:rotate(-4deg);
+  animation:slideInR .5s cubic-bezier(.2,.9,.3,1) .25s both;}
+#scene1 .v2{top:520px; left:60px;  width:400px;height:310px;transform:rotate(3.5deg);
+  animation:slideInL .5s cubic-bezier(.2,.9,.3,1) .5s both;}
+#scene1 .v3{top:850px; right:190px;width:470px;height:330px;transform:rotate(1.5deg);
+  animation:fadeUp .55s cubic-bezier(.2,.9,.3,1) .75s both;}
+.vign .cap{position:absolute;bottom:16px;right:24px;font-size:30px;font-weight:700;color:var(--muted);}
+
+/* flying order chips */
+.ochip{position:absolute;display:flex;align-items:center;gap:12px;
+  background:rgba(18,33,72,.92);border:2px solid rgba(232,184,75,.55);border-radius:20px;
+  padding:14px 26px;font-size:32px;font-weight:700;box-shadow:0 14px 40px rgba(0,0,0,.4);}
+.ochip .tick{color:var(--green);font-weight:900;}
+#scene1 .oc1{right:120px;top:1180px;animation:flyChip 2.1s cubic-bezier(.3,.1,.3,1) 1.35s both;}
+#scene1 .oc2{left:110px; top:1240px;animation:flyChip 2.1s cubic-bezier(.3,.1,.3,1) 1.75s both;}
+#scene1 .oc3{right:330px;top:1300px;animation:flyChip 2.0s cubic-bezier(.3,.1,.3,1) 2.15s both;}
+
+/* steam puffs */
+.puff{position:absolute;width:16px;height:34px;border-radius:10px;background:rgba(255,255,255,.5);filter:blur(4px);}
+
+/* ==================================================================
+   SCENE 2 — POS touchscreen (4–9s)
+================================================================== */
+#scene2 .headline{position:absolute;top:300px;width:100%;font-size:64px;font-weight:800;
+  animation:fadeDown .5s ease-out 4.25s both;}
+.chips-row{position:absolute;top:1560px;width:100%;display:flex;justify-content:center;gap:22px;}
+.f-chip{display:flex;align-items:center;gap:12px;background:rgba(46,107,255,.16);
+  border:2px solid rgba(90,141,255,.5);border-radius:999px;padding:16px 30px;
+  font-size:34px;font-weight:700;color:#DCE7FF;}
+.f-chip .st{color:var(--gold);font-weight:900;}
+#scene2 .fc1{animation:pop .45s cubic-bezier(.2,.9,.3,1) 7.5s both;}
+#scene2 .fc2{animation:pop .45s cubic-bezier(.2,.9,.3,1) 7.75s both;}
+#scene2 .fc3{animation:pop .45s cubic-bezier(.2,.9,.3,1) 8.0s both;}
+
+/* tablet frame */
+.pos{position:absolute;top:470px;left:70px;width:940px;height:1020px;border-radius:44px;
+  background:linear-gradient(170deg,#0F1E44 0%, #0B1735 100%);
+  border:3px solid rgba(90,141,255,.35);
+  box-shadow:0 40px 110px rgba(0,0,0,.6), 0 0 0 12px rgba(10,18,40,.9), 0 0 90px rgba(46,107,255,.18);
+  overflow:hidden;
+  animation:pop .6s cubic-bezier(.2,.9,.3,1) 4.35s both;}
+.pos-head{height:110px;display:flex;align-items:center;justify-content:space-between;
+  padding:0 40px;background:rgba(46,107,255,.12);border-bottom:2px solid rgba(90,141,255,.25);}
+.pos-head .ttl{font-size:38px;font-weight:800;color:#EAF1FF;display:flex;gap:16px;align-items:center;}
+.pos-head .ttl .logo-mini{color:var(--gold);font-weight:900;}
+.pos-head .time{font-size:30px;color:var(--muted);font-weight:500;direction:ltr;}
+.pos-body{display:flex;height:calc(100% - 110px);}
+.pos-grid{flex:1.35;display:grid;grid-template-columns:1fr 1fr;gap:22px;padding:28px;}
+.prod{position:relative;border-radius:24px;background:linear-gradient(165deg,var(--card2),var(--card));
+  border:2px solid rgba(90,141,255,.22);display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:10px;}
+.prod .ico{font-size:64px;line-height:1;}
+.prod .nm{font-size:31px;font-weight:700;color:#E8EEFF;}
+.prod .pr{font-size:27px;font-weight:500;color:var(--muted);}
+.prod.hot{border-color:rgba(232,184,75,.65);}
+.tapdot{position:absolute;left:50%;top:50%;width:90px;height:90px;margin:-45px 0 0 -45px;border-radius:50%;
+  background:radial-gradient(circle,rgba(246,213,132,.85) 0%,rgba(246,213,132,0) 65%);opacity:0;}
+#scene2 .tp1{animation:tapPulse .55s ease-out 5.0s both;}
+#scene2 .tp2{animation:tapPulse .55s ease-out 5.55s both;}
+#scene2 .tp3{animation:tapPulse .55s ease-out 6.1s both;}
+
+/* invoice panel */
+.inv{flex:1;border-right:2px solid rgba(90,141,255,.25);display:flex;flex-direction:column;
+  background:rgba(8,15,35,.6);}
+.inv .inv-t{padding:22px 30px 10px;font-size:33px;font-weight:800;color:var(--gold2);
+  display:flex;justify-content:space-between;align-items:center;}
+.inv .inv-t .no{font-size:26px;color:var(--muted);font-weight:500;direction:ltr;}
+.inv-rows{flex:1;padding:6px 30px;display:flex;flex-direction:column;gap:14px;}
+.irow{display:flex;justify-content:space-between;align-items:center;font-size:29px;font-weight:500;
+  background:rgba(46,107,255,.10);border:1.5px solid rgba(90,141,255,.22);border-radius:16px;padding:14px 20px;}
+.irow .q{color:var(--cyan);font-weight:700;}
+.irow .p{color:#DCE7FF;direction:ltr;}
+#scene2 .ir1{animation:slideInR .4s cubic-bezier(.2,.9,.3,1) 5.15s both;}
+#scene2 .ir2{animation:slideInR .4s cubic-bezier(.2,.9,.3,1) 5.7s both;}
+#scene2 .ir3{animation:slideInR .4s cubic-bezier(.2,.9,.3,1) 6.25s both;}
+.inv-tot{margin:8px 30px;padding:18px 22px;border-radius:18px;background:rgba(232,184,75,.12);
+  border:2px solid rgba(232,184,75,.5);display:flex;justify-content:space-between;
+  font-size:33px;font-weight:800;animation:popSoft .4s ease-out 5.1s both;}
+.inv-tot .amt{color:var(--gold2);direction:ltr;}
+.inv-btn{margin:8px 30px 26px;padding:22px;border-radius:18px;text-align:center;
+  background:linear-gradient(120deg,var(--blue) 0%,#1D4ED8 100%);
+  font-size:34px;font-weight:800;color:#fff;box-shadow:0 12px 34px rgba(46,107,255,.45);
+  animation:popSoft .4s ease-out 5.3s both, pressBtn .5s ease-in-out 6.7s 1;}
+
+/* receipt overlay */
+.receipt{position:absolute;left:50%;top:54%;width:520px;margin-left:-260px;border-radius:26px 26px 20px 20px;
+  background:#F7F9FF;color:#12203F;padding:40px 44px 34px;box-shadow:0 40px 100px rgba(0,0,0,.6);
+  animation:fadeUp .55s cubic-bezier(.2,.9,.3,1) 7.15s both;}
+.receipt::after{content:'';position:absolute;bottom:-16px;left:0;right:0;height:16px;
+  background:radial-gradient(circle at 10px -6px, transparent 14px, #F7F9FF 15px);background-size:40px 32px;}
+.receipt .rc-t{text-align:center;font-weight:900;font-size:36px;margin-bottom:6px;}
+.receipt .rc-s{text-align:center;font-weight:500;font-size:24px;color:#5A6B94;margin-bottom:18px;}
+.receipt .rc-row{display:flex;justify-content:space-between;font-size:26px;font-weight:500;padding:7px 0;
+  border-bottom:1.5px dashed #C9D4EE;}
+.receipt .rc-row.last{border-bottom:none;font-weight:800;font-size:30px;padding-top:14px;}
+.receipt .rc-row .v{direction:ltr;}
+.rc-check{position:absolute;top:-44px;left:50%;margin-left:-44px;width:88px;height:88px;border-radius:50%;
+  background:linear-gradient(140deg,var(--green),#18B583);display:flex;align-items:center;justify-content:center;
+  font-size:46px;font-weight:900;color:#fff;box-shadow:0 14px 40px rgba(51,214,159,.5);
+  animation:pop .45s cubic-bezier(.2,.9,.3,1) 7.55s both;}
+
+/* ==================================================================
+   SCENE 3 — order → kitchen (9–15s)
+================================================================== */
+#scene3 .headline{position:absolute;top:295px;width:100%;font-size:62px;font-weight:800;
+  animation:fadeDown .5s ease-out 9.3s both;}
+/* cashier card (top) */
+.cashier-card{position:absolute;top:470px;left:150px;width:780px;border-radius:30px;
+  background:linear-gradient(165deg,var(--card2),var(--card));border:2px solid rgba(90,141,255,.3);
+  padding:30px 38px;box-shadow:0 26px 70px rgba(0,0,0,.5);
+  animation:fadeDown .55s cubic-bezier(.2,.9,.3,1) 9.45s both;}
+.cashier-card .cc-h{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;}
+.cashier-card .cc-h .t{font-size:36px;font-weight:800;}
+.cashier-card .cc-h .n{font-size:28px;color:var(--muted);direction:ltr;}
+.cashier-card .cc-items{font-size:30px;font-weight:500;color:#D7E1FA;line-height:1.75;}
+/* flow connector */
+.flow{position:absolute;top:812px;left:50%;margin-left:-6px;width:12px;height:210px;border-radius:8px;overflow:hidden;
+  background:rgba(90,141,255,.18);animation:popSoft .3s ease-out 10.0s both;}
+.flow .fl-fill{position:absolute;top:0;left:0;right:0;height:100%;border-radius:8px;
+  background:linear-gradient(180deg,var(--cyan),var(--blue));transform-origin:top;
+  animation:growBar .55s cubic-bezier(.3,0,.3,1) 10.1s both;}
+.flow-dot{position:absolute;top:800px;left:50%;width:26px;height:26px;margin-left:-13px;border-radius:50%;
+  background:var(--gold);box-shadow:0 0 24px rgba(232,184,75,.9);
+  animation:flowDot .6s cubic-bezier(.3,0,.3,1) 10.1s both;}
+@keyframes flowDot{from{transform:translateY(0)}to{transform:translateY(215px)}}
+/* KDS board */
+.kds{position:absolute;top:1040px;left:70px;width:940px;height:475px;border-radius:36px;
+  background:linear-gradient(170deg,#0F1E44,#0B1735);border:3px solid rgba(90,141,255,.35);
+  box-shadow:0 36px 90px rgba(0,0,0,.55);overflow:hidden;
+  animation:fadeUp .6s cubic-bezier(.2,.9,.3,1) 10.35s both;}
+.kds-head{height:96px;display:flex;align-items:center;justify-content:space-between;padding:0 38px;
+  background:rgba(46,107,255,.12);border-bottom:2px solid rgba(90,141,255,.25);}
+.kds-head .t{font-size:36px;font-weight:800;display:flex;align-items:center;gap:16px;}
+.kds-head .t .ic{font-size:40px;}
+.kds-head .live{display:flex;align-items:center;gap:10px;font-size:26px;color:var(--green);font-weight:700;}
+.kds-head .live .d{width:14px;height:14px;border-radius:50%;background:var(--green);
+  animation:blink 1.2s ease-in-out 10.5s infinite;}
+.kds-body{display:flex;gap:20px;padding:24px;}
+.ticket{flex:1;border-radius:22px;background:rgba(18,33,72,.85);border:2px solid rgba(90,141,255,.25);
+  padding:20px 22px;display:flex;flex-direction:column;gap:12px;}
+.ticket .tk-h{display:flex;justify-content:space-between;align-items:center;}
+.ticket .tk-h .no{font-size:30px;font-weight:800;direction:ltr;}
+.ticket .tk-h .tm{font-size:23px;color:var(--muted);direction:ltr;}
+.ticket .tk-items{font-size:25px;font-weight:500;color:#CBD8F5;line-height:1.7;}
+.stchip{align-self:flex-start;border-radius:999px;padding:8px 22px;font-size:24px;font-weight:800;}
+.st-new{background:rgba(46,107,255,.2);color:var(--blue2);border:2px solid rgba(90,141,255,.55);}
+.st-prep{background:rgba(232,184,75,.16);color:var(--gold2);border:2px solid rgba(232,184,75,.55);}
+.st-done{background:rgba(51,214,159,.15);color:var(--green);border:2px solid rgba(51,214,159,.55);}
+#scene3 .t1{animation:fadeUp .45s ease-out 10.7s both;}
+#scene3 .t2{animation:fadeUp .45s ease-out 10.9s both;border-color:rgba(232,184,75,.5);}
+#scene3 .t3{animation:fadeUp .45s ease-out 11.1s both;}
+/* center ticket status morph stack */
+.st-stack{position:relative;height:52px;}
+.st-stack .stchip{position:absolute;top:0;right:0;}
+#scene3 .m-new {animation:stHide .35s ease 11.9s forwards;}
+#scene3 .m-prep{opacity:0;animation:stShow .35s ease 11.9s forwards, stHide .35s ease 13.35s forwards;}
+#scene3 .m-done{opacity:0;animation:stShow .4s cubic-bezier(.2,.9,.3,1) 13.35s forwards;}
+@keyframes stShow{from{opacity:0;transform:translateY(14px) scale(.8)}to{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes stHide{from{opacity:1}to{opacity:0;transform:translateY(-12px) scale(.85)}}
+.tk-prog{height:12px;border-radius:8px;background:rgba(90,141,255,.16);overflow:hidden;}
+.tk-prog .pf{height:100%;border-radius:8px;width:0%;
+  background:linear-gradient(90deg,var(--blue),var(--cyan) 55%,var(--green));
+  animation:progressFill 2.7s cubic-bezier(.3,.1,.3,1) 11.3s both;}
+/* timeline pills under KDS */
+.stage-pills{position:absolute;top:1590px;width:100%;display:flex;justify-content:center;gap:26px;}
+.spill{display:flex;align-items:center;gap:12px;font-size:29px;font-weight:700;color:var(--muted);
+  background:rgba(18,33,72,.7);border:2px solid rgba(90,141,255,.25);border-radius:999px;padding:12px 26px;}
+.spill .num{width:40px;height:40px;border-radius:50%;background:rgba(90,141,255,.25);display:flex;
+  align-items:center;justify-content:center;font-size:24px;color:#fff;}
+#scene3 .sp1{animation:popSoft .35s ease-out 11.0s both;}
+#scene3 .sp2{animation:popSoft .35s ease-out 12.0s both;border-color:rgba(232,184,75,.55);color:var(--gold2);}
+#scene3 .sp3{animation:popSoft .35s ease-out 13.45s both;border-color:rgba(51,214,159,.55);color:var(--green);}
+
+/* ==================================================================
+   SCENE 4 — dashboard (15–22s)
+================================================================== */
+#scene4 .headline{position:absolute;top:285px;width:100%;font-size:62px;font-weight:800;
+  animation:fadeDown .5s ease-out 15.3s both;}
+.dash{position:absolute;top:450px;left:60px;width:960px;display:grid;
+  grid-template-columns:1fr 1fr;gap:24px;}
+.kpi{border-radius:28px;background:linear-gradient(165deg,var(--card2),var(--card));
+  border:2px solid rgba(90,141,255,.26);padding:26px 30px;min-height:150px;
+  box-shadow:0 18px 50px rgba(0,0,0,.4);position:relative;overflow:hidden;}
+.kpi .k-t{font-size:29px;font-weight:700;color:var(--muted);margin-bottom:10px;display:flex;align-items:center;gap:12px;}
+.kpi .k-t .ic{font-size:34px;}
+.kpi .k-v{font-size:52px;font-weight:900;color:#fff;direction:ltr;text-align:right;}
+.kpi .k-v .unit{font-size:28px;font-weight:700;color:var(--muted);}
+.kpi .k-sub{font-size:25px;color:var(--green);font-weight:700;margin-top:6px;direction:ltr;text-align:right;}
+.kpi.gold-line::after{content:'';position:absolute;top:0;right:0;width:8px;height:100%;
+  background:linear-gradient(180deg,var(--gold),transparent);}
+#scene4 .k1{animation:fadeUp .5s cubic-bezier(.2,.9,.3,1) 15.55s both;}
+#scene4 .k2{animation:fadeUp .5s cubic-bezier(.2,.9,.3,1) 15.75s both;}
+#scene4 .k3{animation:fadeUp .5s cubic-bezier(.2,.9,.3,1) 15.95s both;}
+#scene4 .k4{animation:fadeUp .5s cubic-bezier(.2,.9,.3,1) 16.15s both;}
+#scene4 .k5{animation:fadeUp .5s cubic-bezier(.2,.9,.3,1) 16.35s both;}
+#scene4 .k6{animation:fadeUp .5s cubic-bezier(.2,.9,.3,1) 16.55s both;}
+#scene4 .k7{animation:fadeUp .5s cubic-bezier(.2,.9,.3,1) 16.75s both;}
+#scene4 .k8{animation:fadeUp .5s cubic-bezier(.2,.9,.3,1) 16.95s both;}
+/* mini bars inside cards */
+.mini-bars{display:flex;align-items:flex-end;gap:10px;height:74px;margin-top:8px;}
+.mini-bars .b{flex:1;border-radius:8px 8px 4px 4px;transform-origin:bottom;
+  background:linear-gradient(180deg,var(--blue2),var(--blue));}
+.mini-bars .b.g{background:linear-gradient(180deg,var(--gold2),var(--gold));}
+.hbar{display:flex;align-items:center;gap:14px;margin-top:10px;font-size:24px;font-weight:600;color:#D7E1FA;}
+.hbar .lbl{width:120px;}
+.hbar .tr{flex:1;height:18px;border-radius:10px;background:rgba(90,141,255,.14);overflow:hidden;}
+.hbar .fl{height:100%;border-radius:10px;transform-origin:right;
+  background:linear-gradient(270deg,var(--gold2),var(--gold));}
+.hbar .fl.bl{background:linear-gradient(270deg,var(--cyan),var(--blue));}
+.hbar .pc{width:70px;font-size:22px;color:var(--muted);direction:ltr;text-align:left;}
+.alert-pill{display:inline-flex;align-items:center;gap:12px;margin-top:10px;border-radius:14px;
+  background:rgba(255,107,107,.13);border:2px solid rgba(255,107,107,.5);padding:10px 20px;
+  font-size:26px;font-weight:700;color:#FFB3B3;animation:blink 1.6s ease-in-out 17.5s infinite;}
+.stars{font-size:34px;letter-spacing:6px;color:var(--gold);margin-top:6px;direction:ltr;text-align:right;}
+/* sparkline SVG */
+.spark path.line{fill:none;stroke:url(#sparkGrad);stroke-width:6;stroke-linecap:round;
+  stroke-dasharray:var(--dash);animation:dashDraw 1.6s cubic-bezier(.3,0,.3,1) 16.1s both;}
+.spark path.area{fill:url(#sparkFill);opacity:0;animation:fadeSpark .8s ease 17.0s both;}
+@keyframes fadeSpark{to{opacity:.35}}
+.report-tags{display:flex;gap:14px;margin-top:12px;}
+.rtag{border-radius:12px;padding:8px 20px;font-size:24px;font-weight:700;
+  background:rgba(46,107,255,.16);border:2px solid rgba(90,141,255,.4);color:#CFE0FF;}
+
+/* ==================================================================
+   SCENE 5 — anywhere / multi-branch (22–27s)
+================================================================== */
+#scene5 .headline{position:absolute;top:300px;width:100%;font-size:66px;font-weight:800;
+  animation:fadeDown .5s ease-out 22.3s both;}
+.phone{position:absolute;top:480px;left:50%;margin-left:-260px;width:520px;height:1040px;border-radius:56px;
+  background:linear-gradient(170deg,#0F1E44,#0A1531);border:3px solid rgba(90,141,255,.4);
+  box-shadow:0 46px 120px rgba(0,0,0,.62), 0 0 0 14px rgba(10,18,40,.95), 0 0 110px rgba(46,107,255,.2);
+  overflow:hidden;animation:pop .65s cubic-bezier(.2,.9,.3,1) 22.45s both;}
+.phone .notch{position:absolute;top:16px;left:50%;width:180px;height:30px;margin-left:-90px;border-radius:16px;background:#060D24;}
+.phone-head{padding:66px 34px 16px;display:flex;justify-content:space-between;align-items:center;}
+.phone-head .t{font-size:32px;font-weight:800;}
+.phone-head .en{color:var(--gold);font-weight:900;font-size:28px;}
+.p-kpi{margin:6px 30px 14px;border-radius:22px;background:rgba(46,107,255,.13);
+  border:2px solid rgba(90,141,255,.3);padding:18px 24px;
+  animation:popSoft .4s ease 22.9s both;}
+.p-kpi .a{font-size:26px;color:var(--muted);font-weight:600;}
+.p-kpi .b{font-size:44px;font-weight:900;direction:ltr;text-align:right;margin-top:2px;}
+.p-kpi .b .unit{font-size:24px;color:var(--muted);}
+.branch{margin:0 30px 16px;border-radius:20px;background:rgba(18,33,72,.9);
+  border:2px solid rgba(90,141,255,.25);padding:18px 24px;display:flex;justify-content:space-between;align-items:center;}
+.branch .nm{font-size:29px;font-weight:700;display:flex;align-items:center;gap:12px;}
+.branch .nm .pin{color:var(--gold);font-size:30px;}
+.branch .val{text-align:left;}
+.branch .val .v{font-size:30px;font-weight:800;direction:ltr;}
+.branch .val .g{font-size:22px;color:var(--green);font-weight:700;direction:ltr;}
+#scene5 .br1{animation:slideInR .45s cubic-bezier(.2,.9,.3,1) 23.15s both;}
+#scene5 .br2{animation:slideInR .45s cubic-bezier(.2,.9,.3,1) 23.45s both;}
+#scene5 .br3{animation:slideInR .45s cubic-bezier(.2,.9,.3,1) 23.75s both;}
+.p-chart{margin:4px 30px;display:flex;align-items:flex-end;gap:12px;height:150px;
+  animation:popSoft .4s ease 24.1s both;}
+.p-alert{margin:22px 30px 0;border-radius:20px;background:rgba(232,184,75,.12);
+  border:2px solid rgba(232,184,75,.45);padding:18px 24px;display:flex;align-items:center;gap:16px;
+  font-size:26px;font-weight:700;color:var(--gold2);
+  animation:slideInR .45s cubic-bezier(.2,.9,.3,1) 24.6s both, pulseSoft 2.6s ease-in-out 25.2s infinite;}
+.p-alert .sub{display:block;font-size:22px;font-weight:500;color:var(--muted);margin-top:4px;}
+.p-chart .b{flex:1;border-radius:8px 8px 4px 4px;transform-origin:bottom;
+  background:linear-gradient(180deg,var(--blue2),var(--blue));animation:growBar .6s cubic-bezier(.2,.9,.3,1) 24.2s both;}
+.p-chart .b.g{background:linear-gradient(180deg,var(--gold2),var(--gold));}
+/* radiating rings behind phone */
+.ring{position:absolute;top:1000px;left:50%;width:700px;height:700px;margin:-350px 0 0 -350px;border-radius:50%;
+  border:3px solid rgba(90,141,255,.5);opacity:0;}
+#scene5 .rg1{animation:ringPing 2.4s ease-out 23.0s infinite;}
+#scene5 .rg2{animation:ringPing 2.4s ease-out 23.8s infinite;}
+/* floating branch tags around phone */
+.btag{position:absolute;display:flex;align-items:center;gap:10px;border-radius:999px;padding:12px 24px;
+  background:rgba(18,33,72,.95);border:2px solid rgba(232,184,75,.5);font-size:27px;font-weight:700;
+  box-shadow:0 16px 40px rgba(0,0,0,.5);}
+#scene5 .bt1{top:640px;right:40px;animation:pop .5s cubic-bezier(.2,.9,.3,1) 24.5s both, pulseSoft 2.4s ease-in-out 25s infinite;}
+#scene5 .bt2{top:900px;left:36px;animation:pop .5s cubic-bezier(.2,.9,.3,1) 24.75s both, pulseSoft 2.4s ease-in-out 25.3s infinite;}
+#scene5 .bt3{top:1310px;right:52px;animation:pop .5s cubic-bezier(.2,.9,.3,1) 25.0s both, pulseSoft 2.4s ease-in-out 25.6s infinite;}
+
+/* ==================================================================
+   SCENE 6 — logo finale (27–30s)
+================================================================== */
+#scene6 .burst{position:absolute;top:830px;left:50%;width:900px;height:900px;margin:-450px 0 0 -450px;
+  border-radius:50%;background:radial-gradient(circle,rgba(232,184,75,.28) 0%,rgba(46,107,255,.12) 40%,transparent 68%);
+  animation:pop .7s cubic-bezier(.2,.9,.3,1) 27.1s both;}
+#scene6 .ring6{position:absolute;top:830px;left:50%;width:560px;height:560px;margin:-280px 0 0 -280px;border-radius:50%;
+  border:3px solid rgba(232,184,75,.6);opacity:0;}
+#scene6 .r6a{animation:ringPing 1.8s ease-out 27.3s infinite;}
+#scene6 .r6b{animation:ringPing 1.8s ease-out 27.9s infinite;}
+.logo-big{position:absolute;top:700px;width:100%;text-align:center;direction:ltr;
+  font-weight:900;font-size:150px;letter-spacing:2px;line-height:1.05;
+  animation:pop .65s cubic-bezier(.2,.9,.3,1) 27.35s both;}
+.logo-big .p1{color:#fff;text-shadow:0 10px 60px rgba(46,107,255,.6);}
+.logo-big .p2{background:linear-gradient(115deg,var(--gold2) 5%,var(--gold) 50%,#C9962F 90%);
+  -webkit-background-clip:text;background-clip:text;color:transparent;}
+.logo-under{width:430px;height:10px;margin:26px auto 0;border-radius:6px;
+  background:linear-gradient(90deg,transparent,var(--gold),transparent);transform-origin:center;
+  animation:wipeIn .5s cubic-bezier(.2,.9,.3,1) 27.7s both;}
+.logo-sub{position:absolute;top:1035px;width:100%;text-align:center;font-size:47px;font-weight:700;color:#DCE7FF;
+  animation:fadeUp .5s ease-out 27.95s both;}
+.cta{position:absolute;top:1215px;left:50%;transform:translateX(-50%);white-space:nowrap;
+  border-radius:999px;padding:30px 84px;font-size:50px;font-weight:900;color:#151E38;
+  background:linear-gradient(120deg,var(--gold2) 0%,var(--gold) 55%,#DEA93E 100%);
+  box-shadow:0 22px 70px rgba(232,184,75,.5);
+  animation:ctaIn .55s cubic-bezier(.2,.9,.3,1) 28.35s both, pulseGlow 1.5s ease-out 29.0s infinite;}
+@keyframes ctaIn{0%{opacity:0;transform:translateX(-50%) scale(.55)}70%{opacity:1;transform:translateX(-50%) scale(1.07)}100%{opacity:1;transform:translateX(-50%) scale(1)}}
+/* food/tech deco icons */
+.deco{position:absolute;font-size:64px;opacity:0;}
+#scene6 .d1{top:585px;right:150px;animation:popSoft .5s ease 28.1s both, pulseSoft 2.6s ease-in-out 28.6s infinite;}
+#scene6 .d2{top:1120px;right:105px;animation:popSoft .5s ease 28.3s both, pulseSoft 2.6s ease-in-out 28.9s infinite;}
+#scene6 .d3{top:610px;left:140px;animation:popSoft .5s ease 28.2s both, pulseSoft 2.6s ease-in-out 28.7s infinite;}
+#scene6 .d4{top:1150px;left:120px;animation:popSoft .5s ease 28.4s both, pulseSoft 2.6s ease-in-out 29.0s infinite;}
+.final-tag{position:absolute;top:1400px;width:100%;text-align:center;font-size:33px;font-weight:500;color:var(--muted);
+  animation:fadeUp .5s ease 28.7s both;}
+</style>
+</head>
+<body>
+<div id="stage">
+
+  <!-- global background -->
+  <div class="bg-grid"></div>
+  <div class="bg-glow a"></div>
+  <div class="bg-glow b"></div>
+  <div id="particles"></div>
+
+  <!-- ============ SCENE 1 ============ -->
+  <section class="scene" id="scene1">
+    <div class="badge-wrap"><div class="badge"><span class="dot"></span><span class="en">Prime POS</span></div></div>
+
+    <div class="vign v1">
+      <svg width="330" height="230" viewBox="0 0 330 230" fill="none">
+        <!-- chef hat + pan: kitchen rush -->
+        <path d="M100 92c-16 0-28-13-28-28 0-14 11-26 25-27 4-15 18-25 34-25s30 10 34 25c14 1 25 13 25 27 0 15-12 28-28 28" stroke="#5A8DFF" stroke-width="7" stroke-linecap="round"/>
+        <path d="M96 92v36c0 6 5 10 10 10h50c6 0 10-4 10-10V92" stroke="#5A8DFF" stroke-width="7" stroke-linecap="round"/>
+        <rect x="212" y="120" width="86" height="14" rx="7" fill="#E8B84B"/>
+        <path d="M226 120c0-22 14-38 30-38s30 16 30 38" stroke="#E8B84B" stroke-width="7" stroke-linecap="round"/>
+        <line x1="40" y1="196" x2="290" y2="196" stroke="#28406F" stroke-width="6" stroke-linecap="round"/>
+      </svg>
+      <div class="puff" style="right:70px;top:36px;animation:steam 1.6s ease-out .4s infinite;"></div>
+      <div class="puff" style="right:96px;top:42px;animation:steam 1.6s ease-out 1.0s infinite;"></div>
+      <div class="cap">المطبخ</div>
+    </div>
+
+    <div class="vign v2">
+      <svg width="300" height="210" viewBox="0 0 300 210" fill="none">
+        <!-- coffee cup -->
+        <path d="M85 84h118v54c0 26-21 46-47 46h-24c-26 0-47-20-47-46V84z" stroke="#E8B84B" stroke-width="7" stroke-linecap="round"/>
+        <path d="M203 96h18c14 0 24 11 24 24s-10 24-24 24h-20" stroke="#E8B84B" stroke-width="7" stroke-linecap="round"/>
+        <line x1="60" y1="196" x2="238" y2="196" stroke="#28406F" stroke-width="6" stroke-linecap="round"/>
+      </svg>
+      <div class="puff" style="left:118px;top:22px;animation:steam 1.5s ease-out .2s infinite;"></div>
+      <div class="puff" style="left:146px;top:26px;animation:steam 1.5s ease-out .8s infinite;"></div>
+      <div class="cap">الكافيه</div>
+    </div>
+
+    <div class="vign v3">
+      <svg width="360" height="230" viewBox="0 0 360 230" fill="none">
+        <!-- serving bell + receipt -->
+        <path d="M60 140c0-38 31-68 69-68s69 30 69 68" stroke="#5A8DFF" stroke-width="7" stroke-linecap="round"/>
+        <line x1="40" y1="142" x2="218" y2="142" stroke="#5A8DFF" stroke-width="7" stroke-linecap="round"/>
+        <circle cx="129" cy="60" r="9" fill="#E8B84B"/>
+        <rect x="248" y="48" width="82" height="120" rx="10" stroke="#E8B84B" stroke-width="6"/>
+        <line x1="264" y1="80"  x2="314" y2="80"  stroke="#E8B84B" stroke-width="5" stroke-linecap="round"/>
+        <line x1="264" y1="106" x2="314" y2="106" stroke="#E8B84B" stroke-width="5" stroke-linecap="round"/>
+        <line x1="264" y1="132" x2="296" y2="132" stroke="#E8B84B" stroke-width="5" stroke-linecap="round"/>
+        <line x1="40" y1="196" x2="330" y2="196" stroke="#28406F" stroke-width="6" stroke-linecap="round"/>
+      </svg>
+      <div class="cap">خدمة العملاء</div>
+    </div>
+
+    <div class="ochip oc1"><span class="tick">✓</span><span>طلب جديد <span class="en">#128</span></span></div>
+    <div class="ochip oc2"><span class="tick">✓</span><span>طلب جديد <span class="en">#129</span></span></div>
+    <div class="ochip oc3"><span class="tick">✓</span><span>طلب جديد <span class="en">#130</span></span></div>
+
+    <h1 class="headline">
+      <span class="h-l1">إدارة مطعمك</span>
+      <span class="h-l2 gold-grad">أصبحت أسهل</span>
+      <span class="h-underline"></span>
+    </h1>
+  </section>
+
+  <!-- ============ SCENE 2 ============ -->
+  <section class="scene" id="scene2">
+    <h2 class="headline">نقطة بيع سريعة وسهلة</h2>
+
+    <div class="pos">
+      <div class="pos-head">
+        <div class="ttl"><span class="logo-mini en">Prime POS</span><span>— شاشة الكاشير</span></div>
+        <div class="time">12:30</div>
+      </div>
+      <div class="pos-body">
+        <div class="inv">
+          <div class="inv-t"><span>الفاتورة</span><span class="no en">#1042</span></div>
+          <div class="inv-rows">
+            <div class="irow ir1"><span><span class="q">1×</span> برجر كلاسيك</span><span class="p en">38</span></div>
+            <div class="irow ir2"><span><span class="q">1×</span> لاتيه بالكراميل</span><span class="p en">19</span></div>
+            <div class="irow ir3"><span><span class="q">1×</span> بطاطس مقلية</span><span class="p en">14</span></div>
+          </div>
+          <div class="inv-tot"><span>الإجمالي</span><span class="amt"><span id="posTotal">0</span> ر.س</span></div>
+          <div class="inv-btn">إصدار الفاتورة</div>
+        </div>
+        <div class="pos-grid">
+          <div class="prod hot"><div class="ico">🍔</div><div class="nm">برجر كلاسيك</div><div class="pr">38 ر.س</div><div class="tapdot tp1"></div></div>
+          <div class="prod"><div class="ico">☕</div><div class="nm">لاتيه بالكراميل</div><div class="pr">19 ر.س</div><div class="tapdot tp2"></div></div>
+          <div class="prod"><div class="ico">🍟</div><div class="nm">بطاطس مقلية</div><div class="pr">14 ر.س</div><div class="tapdot tp3"></div></div>
+          <div class="prod"><div class="ico">🍕</div><div class="nm">بيتزا مارغريتا</div><div class="pr">42 ر.س</div></div>
+          <div class="prod"><div class="ico">🥤</div><div class="nm">عصير برتقال</div><div class="pr">12 ر.س</div></div>
+          <div class="prod"><div class="ico">🍰</div><div class="nm">تشيز كيك</div><div class="pr">24 ر.س</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="receipt">
+      <div class="rc-check">✓</div>
+      <div class="rc-t">تم إصدار الفاتورة</div>
+      <div class="rc-s">فاتورة ضريبية مبسطة — <span class="en">#1042</span></div>
+      <div class="rc-row"><span>برجر كلاسيك</span><span class="v">38.00</span></div>
+      <div class="rc-row"><span>لاتيه بالكراميل</span><span class="v">19.00</span></div>
+      <div class="rc-row"><span>بطاطس مقلية</span><span class="v">14.00</span></div>
+      <div class="rc-row"><span>الضريبة (15٪)</span><span class="v">10.65</span></div>
+      <div class="rc-row last"><span>الإجمالي</span><span class="v">81.65 ر.س</span></div>
+    </div>
+
+    <div class="chips-row">
+      <div class="f-chip fc1"><span class="st">⚡</span><span>طلبات أسرع</span></div>
+      <div class="f-chip fc2"><span class="st">✓</span><span>فواتير دقيقة</span></div>
+      <div class="f-chip fc3"><span class="st">★</span><span>خدمة أفضل</span></div>
+    </div>
+  </section>
+
+  <!-- ============ SCENE 3 ============ -->
+  <section class="scene" id="scene3">
+    <h2 class="headline">إدارة الطلبات والمطبخ لحظة بلحظة</h2>
+
+    <div class="cashier-card">
+      <div class="cc-h"><span class="t">🧾 طلب جديد من الكاشير</span><span class="n en">#131</span></div>
+      <div class="cc-items">2× برجر كلاسيك &nbsp;•&nbsp; 1× سلطة سيزر &nbsp;•&nbsp; 2× عصير برتقال</div>
+    </div>
+
+    <div class="flow"><div class="fl-fill"></div></div>
+    <div class="flow-dot"></div>
+
+    <div class="kds">
+      <div class="kds-head">
+        <div class="t"><span class="ic">👨‍🍳</span><span>شاشة المطبخ</span></div>
+        <div class="live"><span class="d"></span><span>مباشر</span></div>
+      </div>
+      <div class="kds-body">
+        <div class="ticket t3">
+          <div class="tk-h"><span class="no en">#129</span><span class="tm en">05:12</span></div>
+          <div class="tk-items">1× بيتزا مارغريتا<br>1× تشيز كيك</div>
+          <div class="stchip st-prep">قيد التحضير</div>
+        </div>
+        <div class="ticket t2">
+          <div class="tk-h"><span class="no en">#131</span><span class="tm en">00:08</span></div>
+          <div class="tk-items">2× برجر كلاسيك<br>1× سلطة سيزر</div>
+          <div class="st-stack">
+            <div class="stchip st-new m-new">جديد</div>
+            <div class="stchip st-prep m-prep">قيد التحضير</div>
+            <div class="stchip st-done m-done">جاهز ✓</div>
+          </div>
+          <div class="tk-prog"><div class="pf"></div></div>
+        </div>
+        <div class="ticket t1">
+          <div class="tk-h"><span class="no en">#127</span><span class="tm en">08:47</span></div>
+          <div class="tk-items">1× لاتيه بالكراميل<br>1× كرواسون</div>
+          <div class="stchip st-done">جاهز ✓</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="stage-pills">
+      <div class="spill sp1"><span class="num">1</span><span>جديد</span></div>
+      <div class="spill sp2"><span class="num">2</span><span>قيد التحضير</span></div>
+      <div class="spill sp3"><span class="num">3</span><span>جاهز</span></div>
+    </div>
+  </section>
+
+  <!-- ============ SCENE 4 ============ -->
+  <section class="scene" id="scene4">
+    <h2 class="headline">لوحة تحكم شاملة لإدارة أعمالك</h2>
+
+    <div class="dash">
+      <div class="kpi gold-line k1">
+        <div class="k-t"><span class="ic">💰</span>إجمالي المبيعات</div>
+        <div class="k-v"><span class="cnt" data-from="0" data-to="152840" data-start="15.9" data-dur="2.2">0</span> <span class="unit">ر.س</span></div>
+        <div class="k-sub">+18% ▲</div>
+      </div>
+      <div class="kpi k2">
+        <div class="k-t"><span class="ic">🧾</span>عدد الطلبات</div>
+        <div class="k-v"><span class="cnt" data-from="0" data-to="1286" data-start="16.1" data-dur="2.0">0</span></div>
+        <div class="k-sub">+12% ▲</div>
+      </div>
+      <div class="kpi k3">
+        <div class="k-t"><span class="ic">🏆</span>الأكثر مبيعًا</div>
+        <div class="hbar"><span class="lbl">برجر</span><div class="tr"><div class="fl" style="width:92%;animation:growBarX .8s cubic-bezier(.2,.9,.3,1) 16.4s both;"></div></div><span class="pc">92%</span></div>
+        <div class="hbar"><span class="lbl">لاتيه</span><div class="tr"><div class="fl bl" style="width:74%;animation:growBarX .8s cubic-bezier(.2,.9,.3,1) 16.55s both;"></div></div><span class="pc">74%</span></div>
+        <div class="hbar"><span class="lbl">بيتزا</span><div class="tr"><div class="fl bl" style="width:58%;animation:growBarX .8s cubic-bezier(.2,.9,.3,1) 16.7s both;"></div></div><span class="pc">58%</span></div>
+      </div>
+      <div class="kpi k4">
+        <div class="k-t"><span class="ic">🏬</span>أداء الفروع</div>
+        <div class="mini-bars">
+          <div class="b g" style="height:100%;animation:growBar .7s cubic-bezier(.2,.9,.3,1) 16.6s both;"></div>
+          <div class="b" style="height:72%;animation:growBar .7s cubic-bezier(.2,.9,.3,1) 16.75s both;"></div>
+          <div class="b" style="height:56%;animation:growBar .7s cubic-bezier(.2,.9,.3,1) 16.9s both;"></div>
+        </div>
+      </div>
+      <div class="kpi k5">
+        <div class="k-t"><span class="ic">📈</span>المصروفات والأرباح</div>
+        <svg class="spark" width="100%" height="110" viewBox="0 0 380 110" preserveAspectRatio="none">
+          <defs>
+            <linearGradient id="sparkGrad" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0" stop-color="#39C2FF"/><stop offset="1" stop-color="#E8B84B"/>
+            </linearGradient>
+            <linearGradient id="sparkFill" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stop-color="#2E6BFF" stop-opacity=".8"/><stop offset="1" stop-color="#2E6BFF" stop-opacity="0"/>
+            </linearGradient>
+          </defs>
+          <path class="area" d="M10 88 L70 70 L130 78 L190 46 L250 54 L310 24 L370 30 L370 108 L10 108 Z"/>
+          <path class="line" style="--dash:520;" d="M10 88 L70 70 L130 78 L190 46 L250 54 L310 24 L370 30"/>
+        </svg>
+      </div>
+      <div class="kpi k6">
+        <div class="k-t"><span class="ic">📦</span>المخزون والتنبيهات</div>
+        <div class="k-v" style="font-size:44px;"><span class="cnt" data-from="0" data-to="248" data-start="16.9" data-dur="1.6">0</span> <span class="unit">صنف</span></div>
+        <div class="alert-pill">⚠ 3 أصناف على وشك النفاد</div>
+      </div>
+      <div class="kpi k7">
+        <div class="k-t"><span class="ic">👥</span>أداء الموظفين</div>
+        <div class="k-v" style="font-size:44px;"><span class="cnt" data-from="0" data-to="96" data-start="17.1" data-dur="1.5">0</span><span class="unit">%</span></div>
+        <div class="stars">★★★★★</div>
+      </div>
+      <div class="kpi k8">
+        <div class="k-t"><span class="ic">📊</span>التقارير</div>
+        <div class="report-tags">
+          <span class="rtag">تقرير يومي</span>
+          <span class="rtag">تقرير شهري</span>
+        </div>
+        <div class="k-sub" style="color:var(--muted);">جاهزة للتصدير ▼</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ SCENE 5 ============ -->
+  <section class="scene" id="scene5">
+    <h2 class="headline">تابع أعمالك من أي مكان</h2>
+
+    <div class="ring rg1"></div>
+    <div class="ring rg2"></div>
+
+    <div class="phone">
+      <div class="notch"></div>
+      <div class="phone-head"><span class="t">لوحة المتابعة</span><span class="en">Prime POS</span></div>
+      <div class="p-kpi">
+        <div class="a">مبيعات اليوم — جميع الفروع</div>
+        <div class="b"><span class="cnt" data-from="0" data-to="45210" data-start="23.0" data-dur="1.8">0</span> <span class="unit">ر.س</span></div>
+      </div>
+      <div class="branch br1"><span class="nm"><span class="pin">📍</span>فرع الرياض</span><span class="val"><div class="v en">18,540</div><div class="g">+14% ▲</div></span></div>
+      <div class="branch br2"><span class="nm"><span class="pin">📍</span>فرع جدة</span><span class="val"><div class="v en">15,320</div><div class="g">+9% ▲</div></span></div>
+      <div class="branch br3"><span class="nm"><span class="pin">📍</span>فرع الدمام</span><span class="val"><div class="v en">11,350</div><div class="g">+11% ▲</div></span></div>
+      <div class="p-chart">
+        <div class="b g" style="height:100%"></div>
+        <div class="b" style="height:78%"></div>
+        <div class="b" style="height:64%"></div>
+        <div class="b" style="height:88%"></div>
+        <div class="b" style="height:52%"></div>
+        <div class="b g" style="height:96%"></div>
+      </div>
+      <div class="p-alert"><span>🔔</span><span>تنبيه فوري — فرع جدة<span class="sub">انخفاض مخزون حبوب القهوة</span></span></div>
+    </div>
+
+    <div class="btag bt1"><span>🏬</span><span>3 فروع نشطة</span></div>
+    <div class="btag bt2"><span>🔔</span><span>تنبيهات فورية</span></div>
+    <div class="btag bt3"><span>📊</span><span>تقارير مباشرة</span></div>
+  </section>
+
+  <!-- ============ SCENE 6 ============ -->
+  <section class="scene" id="scene6">
+    <div class="burst"></div>
+    <div class="ring6 r6a"></div>
+    <div class="ring6 r6b"></div>
+
+    <div class="logo-big"><span class="p1">Prime </span><span class="p2">POS</span>
+      <div class="logo-under"></div>
+    </div>
+    <div class="logo-sub">نظام نقاط البيع الذكي للمطاعم والكافيهات</div>
+
+    <div class="cta">اطلب تجربتك الآن</div>
+
+    <span class="deco d1">🍔</span>
+    <span class="deco d2">☕</span>
+    <span class="deco d3">🧾</span>
+    <span class="deco d4">📊</span>
+
+    <div class="final-tag">إدارة أذكى … ونجاح أكبر</div>
+  </section>
+
+  <!-- gold sweeps between scenes -->
+  <div class="sweep s1"></div>
+  <div class="sweep s2"></div>
+  <div class="sweep s3"></div>
+  <div class="sweep s4"></div>
+  <div class="sweep s5"></div>
+
+  <div class="vignette"></div>
+</div>
+
+<script>
+/* build background particles (deterministic pseudo-random) */
+(function(){
+  const wrap = document.getElementById('particles');
+  let seed = 42;
+  const rnd = () => { seed = (seed * 9301 + 49297) % 233280; return seed / 233280; };
+  for (let i = 0; i < 26; i++) {
+    const p = document.createElement('div');
+    p.className = 'particle';
+    const gold = rnd() > 0.62;
+    const size = 5 + rnd() * 9;
+    p.style.width = p.style.height = size.toFixed(1) + 'px';
+    p.style.left = (rnd() * 1060).toFixed(0) + 'px';
+    p.style.top = (1750 + rnd() * 260).toFixed(0) + 'px';
+    p.style.background = gold ? 'rgba(232,184,75,.8)' : 'rgba(90,141,255,.7)';
+    p.style.boxShadow = gold ? '0 0 14px rgba(232,184,75,.8)' : '0 0 14px rgba(90,141,255,.8)';
+    const dur = 14 + rnd() * 14;
+    const delay = -(rnd() * dur);
+    p.style.animation = `floatUp ${dur.toFixed(1)}s linear ${delay.toFixed(1)}s infinite`;
+    wrap.appendChild(p);
+  }
+})();
+
+/* animated counters (driven by seek) */
+const counters = Array.from(document.querySelectorAll('.cnt')).map(el => ({
+  el,
+  from: parseFloat(el.dataset.from),
+  to: parseFloat(el.dataset.to),
+  start: parseFloat(el.dataset.start),
+  dur: parseFloat(el.dataset.dur),
+}));
+function easeOutCubic(x){ return 1 - Math.pow(1 - x, 3); }
+function updateCounters(t){
+  for (const c of counters) {
+    let k = (t - c.start) / c.dur;
+    k = Math.max(0, Math.min(1, k));
+    const v = Math.round(c.from + (c.to - c.from) * easeOutCubic(k));
+    c.el.textContent = v.toLocaleString('en-US');
+  }
+}
+/* POS running total in scene 2: 38 → 57 → 71 then receipt shows taxed total */
+function updatePosTotal(t){
+  const el = document.getElementById('posTotal');
+  let v = 0;
+  if (t >= 5.15) v = 38;
+  if (t >= 5.7)  v = 57;
+  if (t >= 6.25) v = 71;
+  el.textContent = v;
+}
+
+/* master seek — pause everything and scrub to t seconds */
+function seek(t){
+  document.getAnimations().forEach(a => { a.pause(); a.currentTime = t * 1000; });
+  updateCounters(t);
+  updatePosTotal(t);
+}
+window.seek = seek;
+seek(0);
+</script>
+</body>
+</html>
