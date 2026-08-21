@@ -4,6 +4,7 @@ import { ChevronLeft, ChevronRight, DoorOpen, LogIn, LogOut, Moon } from "lucide
 import { Badge } from "@/components/ui";
 import { formatDate, formatDateShort } from "@/lib/format";
 import { RESERVATION_STATUS, statusMeta } from "@/lib/status";
+import { OCCUPANCY_LABELS } from "@/server/occupancy";
 import type { CalendarSnapshot, DayEntry } from "@/server/services/calendar.service";
 
 /**
@@ -131,10 +132,14 @@ export function DayAgendaView({
       </div>
 
       <div className="grid grid-cols-3 gap-2">
-        <Tile label="مشغولة" value={summary.occupied} />
-        <Tile label="متاحة" value={summary.available} tone="text-ok-fg" />
-        <Tile label="وصول" value={summary.arrivals} />
-        <Tile label="مغادرة" value={summary.departures} />
+        <Tile label={OCCUPANCY_LABELS.soldOnDate} value={summary.soldOnDate} />
+        <Tile
+          label={OCCUPANCY_LABELS.sellableOnDate}
+          value={summary.sellableOnDate}
+          tone="text-ok-fg"
+        />
+        <Tile label={OCCUPANCY_LABELS.allArrivals} value={summary.allArrivals} />
+        <Tile label={OCCUPANCY_LABELS.allDepartures} value={summary.allDepartures} />
         <Tile
           label="موقوفة"
           value={summary.blocked}
@@ -153,14 +158,16 @@ export function DayAgendaView({
         </p>
       )}
 
+      {/* These headers carry counts, so they are measures and use the same
+          vocabulary as everything else. */}
       <Group
-        title="الوصول"
+        title={OCCUPANCY_LABELS.allArrivals}
         icon={<LogIn className="size-4 text-content-muted" aria-hidden />}
         entries={agenda.arrivals}
         empty="لا وصول في هذا اليوم."
       />
       <Group
-        title="المغادرة"
+        title={OCCUPANCY_LABELS.allDepartures}
         icon={<LogOut className="size-4 text-content-muted" aria-hidden />}
         entries={agenda.departures}
         empty="لا مغادرة في هذا اليوم."
@@ -175,14 +182,14 @@ export function DayAgendaView({
       <section className="rounded-xl border border-line bg-surface p-3">
         <h3 className="mb-2.5 flex items-center gap-2 text-[13px] font-semibold text-content">
           <DoorOpen className="size-4 text-ok-fg" aria-hidden />
-          وحدات متاحة
+          {OCCUPANCY_LABELS.sellableOnDate}
           <span className="rounded-full bg-surface-inset px-2 py-0.5 text-[11px] tabular-nums text-content-muted">
             {agenda.availableUnits.length}
           </span>
         </h3>
         {agenda.availableUnits.length === 0 ? (
           <p className="py-3 text-center text-[12px] text-content-subtle">
-            لا توجد وحدات متاحة في هذا اليوم.
+            لا توجد وحدات قابلة للبيع في هذا اليوم.
           </p>
         ) : (
           <ul className="flex flex-wrap gap-1.5">

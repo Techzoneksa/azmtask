@@ -444,11 +444,11 @@ describe("the day summary", () => {
 
     expect(summary.date).toBe(today);
     expect(summary.units).toBe(3);
-    expect(summary.occupied).toBe(2);
-    expect(summary.arrivals).toBe(1);
-    expect(summary.departures).toBe(1);
+    expect(summary.soldOnDate).toBe(2);
+    expect(summary.allArrivals).toBe(1);
+    expect(summary.allDepartures).toBe(1);
     // Unit 3's guest left this morning, so the room is back on sale.
-    expect(summary.available).toBe(1);
+    expect(summary.sellableOnDate).toBe(1);
   });
 
   it("never counts a room twice when it is both blocked and out of service", async () => {
@@ -470,7 +470,7 @@ describe("the day summary", () => {
     const { agenda } = await calendar();
     const { summary } = agenda;
     // Three rooms, one unsellable for two reasons, two genuinely free.
-    expect(summary.available).toBe(2);
+    expect(summary.sellableOnDate).toBe(2);
     expect(summary.blocked).toBe(1);
     expect(summary.maintenance).toBe(1);
   });

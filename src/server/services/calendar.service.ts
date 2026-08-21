@@ -209,15 +209,27 @@ export type DayAgenda = {
   availableUnits: Array<{ id: string; unitNumber: string; unitTypeName: string }>;
 };
 
+/**
+ * The day's figures, named for what each one measures.
+ *
+ * Deliberately not called "occupied" and "available": those words already mean
+ * something else on the dashboard, which reports the building's present state rather
+ * than a night's inventory. See `@/server/occupancy` for the full vocabulary and why
+ * the two families of question are kept apart.
+ */
 export type DaySummary = {
   date: string;
   units: number;
-  occupied: number;
-  arrivals: number;
-  departures: number;
+  /** Rooms sold for that night. A guest departing that morning is not among them. */
+  soldOnDate: number;
+  /** Everyone arriving that day, whether or not they have checked in. */
+  allArrivals: number;
+  /** Everyone leaving that day, including those already gone. */
+  allDepartures: number;
   blocked: number;
   maintenance: number;
-  available: number;
+  /** Rooms not sold that night, whatever their housekeeping state. */
+  sellableOnDate: number;
   unassignedArrivals: number;
   needsPreparation: number;
 };
@@ -679,14 +691,19 @@ async function describeDay(
   return {
     summary: {
       date: dayIso,
+      /*
+       * `arrivals` already contains the bookings with no room: the day query filters
+       * by property, not by unit, so a confirmed arrival without a room is in it like
+       * any other. Adding the unassigned count on top counted those two guests twice
+       * and reported eight arrivals where the hotel expects six.
+       */
       units: rows.length,
-      occupied: occupiedUnits.size,
-      // A confirmed arrival with no room is still an arrival somebody must receive.
-      arrivals: arrivals.length + unassignedArrivals.length,
-      departures: departures.length,
+      soldOnDate: occupiedUnits.size,
+      allArrivals: arrivals.length,
+      allDepartures: departures.length,
       blocked: rows.filter((row) => blockedUnits.has(row.unitId)).length,
       maintenance,
-      available: availableUnits.length,
+      sellableOnDate: availableUnits.length,
       unassignedArrivals: unassignedArrivals.length,
       needsPreparation,
     },

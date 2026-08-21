@@ -18,6 +18,7 @@ import { can, requirePermission } from "@/lib/auth/guard";
 import { getSession } from "@/lib/auth/session";
 import { formatAmount, formatDate, formatNumber } from "@/lib/format";
 import { RESERVATION_SOURCE } from "@/lib/status";
+import { OCCUPANCY_LABELS } from "@/server/occupancy";
 import { getDashboardSnapshot } from "@/server/services/dashboard.service";
 
 import { KpiCard } from "./components/KpiCard";
@@ -130,15 +131,22 @@ export default async function DashboardPage() {
           icon={Percent}
           emphasis
         />
+        {/*
+          These four describe the building as it stands right now — a guest leaving at
+          eleven still occupies their room, and a room awaiting a clean is not ready to
+          hand to anyone. The calendar answers a different question (what is sold for a
+          given night) and its figures carry different names for that reason. The
+          vocabulary lives in `@/server/occupancy`.
+        */}
         <KpiCard
-          label="الوحدات المشغولة"
+          label={OCCUPANCY_LABELS.occupiedNow}
           value={show(units?.occupied ?? null)}
           hint={units ? `من إجمالي ${units.total} وحدة` : undefined}
           icon={BedDouble}
           href={unitsHref("status=OCCUPIED&view=table")}
         />
         <KpiCard
-          label="الوحدات المتاحة"
+          label={OCCUPANCY_LABELS.readyNow}
           value={show(units?.available ?? null)}
           hint={units ? `${units.reserved} محجوزة لوصول اليوم` : undefined}
           icon={DoorOpen}
@@ -146,9 +154,13 @@ export default async function DashboardPage() {
           href={unitsHref("status=AVAILABLE&view=table")}
         />
         <KpiCard
-          label="وصولات اليوم"
+          label={OCCUPANCY_LABELS.expectedArrivals}
           value={show(arrivalsCount)}
-          hint={departuresCount === null ? undefined : `${departuresCount} مغادرة اليوم`}
+          hint={
+            departuresCount === null
+              ? undefined
+              : `${departuresCount} ${OCCUPANCY_LABELS.remainingDepartures}`
+          }
           icon={CalendarCheck}
           tone="info"
         />
@@ -208,8 +220,10 @@ export default async function DashboardPage() {
         <SectionBody section={snapshot.units}>
           {(data) => (
             <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4 xl:grid-cols-7">
-              <CountChip label="مشغولة" value={data.occupied} tone="brand" />
-              <CountChip label="متاحة" value={data.available} tone="ok" />
+              {/* The same vocabulary as the cards above — these chips are the unit
+                  status column broken out, not a second set of measures. */}
+              <CountChip label={OCCUPANCY_LABELS.occupiedNow} value={data.occupied} tone="brand" />
+              <CountChip label={OCCUPANCY_LABELS.readyNow} value={data.available} tone="ok" />
               <CountChip label="محجوزة" value={data.reserved} tone="info" />
               <CountChip label="تحتاج تنظيف" value={data.dirty} tone="warn" />
               <CountChip label="جارٍ تنظيفها" value={data.cleaning} tone="info" />
@@ -222,7 +236,10 @@ export default async function DashboardPage() {
 
       {/* ---------------- arrivals, departures, alerts ---------------- */}
       <div className="grid gap-4 xl:grid-cols-3">
-        <Panel title="وصولات اليوم" subtitle="حجوزات مؤكدة تبدأ إقامتها اليوم">
+        <Panel
+          title={OCCUPANCY_LABELS.expectedArrivals}
+          subtitle="حجوزات تبدأ إقامتها اليوم ولم يُسجَّل دخولها بعد"
+        >
           <SectionBody
             section={snapshot.arrivals}
             isEmpty={(rows) => rows.length === 0}
@@ -232,7 +249,10 @@ export default async function DashboardPage() {
           </SectionBody>
         </Panel>
 
-        <Panel title="مغادرات اليوم" subtitle="نزلاء تنتهي إقامتهم اليوم">
+        <Panel
+          title={OCCUPANCY_LABELS.remainingDepartures}
+          subtitle="نزلاء ما زالوا في الفندق وتنتهي إقامتهم اليوم"
+        >
           <SectionBody
             section={snapshot.departures}
             isEmpty={(rows) => rows.length === 0}

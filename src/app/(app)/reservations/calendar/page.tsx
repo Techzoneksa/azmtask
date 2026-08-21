@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { CalendarPlus, List } from "lucide-react";
 
 import { PageHeader } from "@/components/ui";
+import { OCCUPANCY_LABELS } from "@/server/occupancy";
 import { can, requirePermission } from "@/lib/auth/guard";
 import { formatNumber } from "@/lib/format";
 import {
@@ -116,15 +117,22 @@ export default async function CalendarPage({ searchParams }: { searchParams: Sea
         }
       />
 
-      {/* Today's operational figures, always about the business date on desktop. */}
+      {/*
+        Night inventory for the business date — not the same questions the dashboard
+        answers, and named so nobody has to guess which. See `@/server/occupancy`.
+      */}
       <section
         aria-label="ملخص اليوم"
         className="hidden grid-cols-3 gap-2 sm:grid lg:grid-cols-6"
       >
-        <Stat label="مشغولة" value={summary.occupied} />
-        <Stat label="متاحة" value={summary.available} tone="text-ok-fg" />
-        <Stat label="وصول اليوم" value={summary.arrivals} />
-        <Stat label="مغادرة اليوم" value={summary.departures} />
+        <Stat label={OCCUPANCY_LABELS.soldOnDate} value={summary.soldOnDate} />
+        <Stat
+          label={OCCUPANCY_LABELS.sellableOnDate}
+          value={summary.sellableOnDate}
+          tone="text-ok-fg"
+        />
+        <Stat label={OCCUPANCY_LABELS.allArrivals} value={summary.allArrivals} />
+        <Stat label={OCCUPANCY_LABELS.allDepartures} value={summary.allDepartures} />
         <Stat
           label="موقوفة"
           value={summary.blocked}
