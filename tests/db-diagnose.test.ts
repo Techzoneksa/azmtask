@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { Prisma } from "@/generated/prisma/client";
 import { toAppError } from "@/server/errors";
 
@@ -178,6 +178,43 @@ describe("the pending-migration banner", () => {
   it("stays silent when every migration has been applied", async () => {
     const { getPendingMigrations } = await import("@/server/schema-state");
     expect(await getPendingMigrations()).toEqual([]);
+  });
+
+  /*
+   * The failure that made this test necessary, on a live deployment: the banner never
+   * appeared while two screens were failing, because a single unreadable read had been
+   * cached as "no pending migrations" — and the healthy answer is deliberately never
+   * re-checked. One transient failure at boot therefore silenced the warning for the
+   * life of the process, on exactly the deployment that needed it.
+   *
+   * The first request after a restart landing before the database is reachable is not
+   * an edge case; it is the normal shape of a restart.
+   */
+  it("retries after a failed read instead of caching silence", async () => {
+    vi.resetModules();
+    const { getPendingMigrations } = await import("@/server/schema-state");
+    const { prisma } = await import("@/lib/db");
+
+    const real = prisma.$queryRawUnsafe.bind(prisma);
+    const spy = vi
+      .spyOn(prisma, "$queryRawUnsafe")
+      .mockRejectedValueOnce(new Error("connection refused"))
+      .mockImplementation((...args: Parameters<typeof real>) => real(...args));
+
+    // The failed read answers "nothing pending" — it cannot honestly say more.
+    expect(await getPendingMigrations()).toEqual([]);
+    expect(spy).toHaveBeenCalledTimes(1);
+
+    /*
+     * The assertion that matters is the call count, not the answer: with the failure
+     * cached, the second request returned the same empty array *without querying*,
+     * and went on doing so for the life of the process. Both versions return [] here;
+     * only the fixed one asks again.
+     */
+    expect(await getPendingMigrations()).toEqual([]);
+    expect(spy).toHaveBeenCalledTimes(2);
+
+    spy.mockRestore();
   });
 
   /*

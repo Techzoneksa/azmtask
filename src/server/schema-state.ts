@@ -18,10 +18,11 @@ import { prisma } from "@/lib/db";
  * reach the browser, so the error boundary can only ever show something generic. So
  * the check happens up front instead, and the shell states the cause plainly.
  *
- * **Cost.** Once a process has seen every migration applied, it never asks again —
- * migrations are not un-applied under a running server. A healthy deployment pays one
- * query per process, ever. A deployment that is behind re-checks at most once a
- * minute, so the banner clears shortly after someone fixes it without a restart.
+ * **Cost.** Once a process has *successfully seen* every migration applied, it never
+ * asks again — migrations are not un-applied under a running server. A healthy
+ * deployment pays one query per process, ever. A deployment that is behind re-checks
+ * at most once a minute, so the banner clears shortly after someone fixes it without a
+ * restart. A read that fails caches nothing, so the next request tries again.
  */
 
 type SchemaState = { pending: string[]; checkedAt: number };
@@ -58,9 +59,15 @@ export async function getPendingMigrations(): Promise<string[]> {
      * The migration table is unreadable, which means either the database is down or
      * it was never initialised. Both have their own visible symptoms already, and
      * guessing between them here would put a wrong explanation on every screen.
+     *
+     * Nothing is cached on this path, and that is the whole point. Recording the
+     * failure as "no pending migrations" poisoned the cache permanently — the healthy
+     * answer is never re-checked, by design — so one unreadable read at boot silenced
+     * the banner for the life of the process. That is exactly when it happens: the
+     * first request after a restart can easily land before the database is reachable,
+     * and the deployment that most needs the warning is the one that never sees it.
      */
     console.error("[schema] could not read the migration state", error);
-    cached = { pending: [], checkedAt: Date.now() };
     return [];
   }
 }
